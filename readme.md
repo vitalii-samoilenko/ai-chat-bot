@@ -155,7 +155,7 @@ You must create twitch account for bot and register an app (refer to [Twitch Dev
 Grant access via https://www.twitch.tv/activate?public=true&device-code=ABCDEFGH
 ```
 
-You must follow this link and activate __DeviceCode__ for the bot account. Alternatively you can set it manually and skip this step (refer to [Device code grant flow](https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/#device-code-grant-flow))
+You must follow given link and activate __DeviceCode__ for the bot account. Alternatively you can set it manually and skip this step (refer to [Device code grant flow](https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/#device-code-grant-flow))
 
 Once started, client will join its' own channel and allow __Moderators__ to execute commands. Supported commands are:
 
@@ -185,7 +185,7 @@ Once started, client will join its' own channel and allow __Moderators__ to exec
 ```
 
 __Join__/__Leave__ will connect/disconnect bot to/from the destination channel.
-Connected bot will listen for messages tagged with its' username. Once received, they will be sent to the model using __Prompt__ format
+Connected bot will listen for messages tagged with its' __Username__. Once received, they will be sent to the model using __Prompt__ format
 
 __Ban__/__Unban__, __Mod__/__Unmod__ and __Promote__/__Demote__ will put/remove usernames to/from __Banned__, __Moderated__ and __Promoted__ list correspondingly
 
@@ -199,11 +199,11 @@ First part is the message __key__, second one is the actual reply yet to be sent
 
 You can __Ban__, __Mod__ and __Timeout__ bot itself
 
-__Delay__ will set time span between bots' subsequent replies
+__Delay__ will set time span between subsequent replies
 
 __Instruct__ puts a system message for the model
 
-__Find__, __Get__ and __Remove__ could be used to manipulate conversation context
+__Find__, __Get__ and __Remove__ could be used to manipulate conversation history
 
 ## Extensibility
 
