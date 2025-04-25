@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "AI.Chat.Host.Console": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
