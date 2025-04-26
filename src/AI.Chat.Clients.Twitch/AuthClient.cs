@@ -100,7 +100,7 @@ namespace TwitchLib.Client
                             "token"
                             + $"?client_id={clientId}"
                             + $"&grant_type=urn:ietf:params:oauth:grant-type:device_code"
-                            + $"device_code={deviceCode}"
+                            + $"&device_code={deviceCode}"
                             + $"&scopes={scopes}",
                             System.UriKind.Relative)
                     })
