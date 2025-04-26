@@ -18,21 +18,29 @@
 
         private long _queued;
         private long _completed;
-        private readonly System.Threading.ManualResetEventSlim _lock;
+        private readonly System.Threading.ManualResetEventSlim _event;
 
         public Slim()
         {
             _queued = 0;
             _completed = 0;
-            _lock = new System.Threading.ManualResetEventSlim(true);
+            _event = new System.Threading.ManualResetEventSlim(true);
         }
 
         public void ExecuteRead(System.Action action)
         {
+            var spinner = new System.Threading.SpinWait();
             for (var current = System.Threading.Interlocked.Add(ref _queued, ReadStep);
                 WriteStep < current - System.Threading.Interlocked.Read(ref _completed);)
             {
-                _lock.Wait();
+                if (_event.IsSet)
+                {
+                    spinner.SpinOnce();
+                }
+                else
+                {
+                    _event.Wait();
+                }
             }
             try
             {
@@ -45,10 +53,18 @@
         }
         public T ExecuteRead<T>(System.Func<T> action)
         {
+            var spinner = new System.Threading.SpinWait();
             for (var current = System.Threading.Interlocked.Add(ref _queued, ReadStep);
                 WriteStep < current - System.Threading.Interlocked.Read(ref _completed);)
             {
-                _lock.Wait();
+                if (_event.IsSet)
+                {
+                    spinner.SpinOnce();
+                }
+                else
+                {
+                    _event.Wait();
+                }
             }
             try
             {
@@ -61,10 +77,18 @@
         }
         public System.Collections.Generic.IEnumerable<T> ExecuteRead<T>(System.Func<System.Collections.Generic.IEnumerable<T>> action)
         {
+            var spinner = new System.Threading.SpinWait();
             for (var current = System.Threading.Interlocked.Add(ref _queued, ReadStep);
                 WriteStep < current - System.Threading.Interlocked.Read(ref _completed);)
             {
-                _lock.Wait();
+                if (_event.IsSet)
+                {
+                    spinner.SpinOnce();
+                }
+                else
+                {
+                    _event.Wait();
+                }
             }
             try
             {
@@ -80,12 +104,20 @@
         }
         public void ExecuteWrite(System.Action action)
         {
+            var spinner = new System.Threading.SpinWait();
             for (var current = System.Threading.Interlocked.Add(ref _queued, WriteStep);
                 WriteStep < current - System.Threading.Interlocked.Read(ref _completed);)
             {
-                _lock.Wait();
+                if (_event.IsSet)
+                {
+                    spinner.SpinOnce();
+                }
+                else
+                {
+                    _event.Wait();
+                }
             }
-            _lock.Reset();
+            _event.Reset();
             try
             {
                 action();
@@ -93,17 +125,25 @@
             finally
             {
                 System.Threading.Interlocked.Add(ref _completed, WriteStep);
-                _lock.Set();
+                _event.Set();
             }
         }
         public T ExecuteWrite<T>(System.Func<T> action)
         {
+            var spinner = new System.Threading.SpinWait();
             for (var current = System.Threading.Interlocked.Add(ref _queued, WriteStep);
                 WriteStep < current - System.Threading.Interlocked.Read(ref _completed);)
             {
-                _lock.Wait();
+                if (_event.IsSet)
+                {
+                    spinner.SpinOnce();
+                }
+                else
+                {
+                    _event.Wait();
+                }
             }
-            _lock.Reset();
+            _event.Reset();
             try
             {
                 return action();
@@ -111,16 +151,24 @@
             finally
             {
                 System.Threading.Interlocked.Add(ref _completed, WriteStep);
-                _lock.Set();
+                _event.Set();
             }
         }
 
         public async System.Threading.Tasks.Task ExecuteReadAsync(System.Func<System.Threading.Tasks.Task> actionAsync)
         {
+            var spinner = new System.Threading.SpinWait();
             for (var current = System.Threading.Interlocked.Add(ref _queued, ReadStep);
                 WriteStep < current - System.Threading.Interlocked.Read(ref _completed);)
             {
-                _lock.Wait();
+                if (_event.IsSet)
+                {
+                    spinner.SpinOnce();
+                }
+                else
+                {
+                    _event.Wait();
+                }
             }
             try
             {
@@ -134,10 +182,18 @@
         }
         public async System.Threading.Tasks.Task<T> ExecuteReadAsync<T>(System.Func<System.Threading.Tasks.Task<T>> actionAsync)
         {
+            var spinner = new System.Threading.SpinWait();
             for (var current = System.Threading.Interlocked.Add(ref _queued, ReadStep);
                 WriteStep < current - System.Threading.Interlocked.Read(ref _completed);)
             {
-                _lock.Wait();
+                if (_event.IsSet)
+                {
+                    spinner.SpinOnce();
+                }
+                else
+                {
+                    _event.Wait();
+                }
             }
             try
             {
@@ -151,12 +207,20 @@
         }
         public async System.Threading.Tasks.Task ExecuteWriteAsync(System.Func<System.Threading.Tasks.Task> actionAsync)
         {
+            var spinner = new System.Threading.SpinWait();
             for (var current = System.Threading.Interlocked.Add(ref _queued, WriteStep);
                 WriteStep < current - System.Threading.Interlocked.Read(ref _completed);)
             {
-                _lock.Wait();
+                if (_event.IsSet)
+                {
+                    spinner.SpinOnce();
+                }
+                else
+                {
+                    _event.Wait();
+                }
             }
-            _lock.Reset();
+            _event.Reset();
             try
             {
                 await actionAsync()
@@ -165,17 +229,25 @@
             finally
             {
                 System.Threading.Interlocked.Add(ref _completed, WriteStep);
-                _lock.Set();
+                _event.Set();
             }
         }
         public async System.Threading.Tasks.Task<T> ExecuteWriteAsync<T>(System.Func<System.Threading.Tasks.Task<T>> actionAsync)
         {
+            var spinner = new System.Threading.SpinWait();
             for (var current = System.Threading.Interlocked.Add(ref _queued, WriteStep);
                 WriteStep < current - System.Threading.Interlocked.Read(ref _completed);)
             {
-                _lock.Wait();
+                if (_event.IsSet)
+                {
+                    spinner.SpinOnce();
+                }
+                else
+                {
+                    _event.Wait();
+                }
             }
-            _lock.Reset();
+            _event.Reset();
             try
             {
                 return await actionAsync()
@@ -184,7 +256,7 @@
             finally
             {
                 System.Threading.Interlocked.Add(ref _completed, WriteStep);
-                _lock.Set();
+                _event.Set();
             }
         }
     }
