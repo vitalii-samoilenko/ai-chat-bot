@@ -18,6 +18,8 @@ namespace AI.Chat.Clients
         private readonly AI.Chat.IBot _bot;
         private readonly AI.Chat.IScope _scope;
 
+        private readonly System.Collections.Generic.HashSet<string> _greeted;
+
         public Twitch(
                 Options.Bot botOptions,
                 Options.Twitch.Client clientOptions,
@@ -46,6 +48,8 @@ namespace AI.Chat.Clients
             _moderator = moderator;
             _bot = bot;
             _scope = scope;
+
+            _greeted = new System.Collections.Generic.HashSet<string>();
         }
 
         public async System.Threading.Tasks.Task StartAsync()
@@ -144,8 +148,88 @@ namespace AI.Chat.Clients
                     _clientOptions.Username,
                     _clientOptions.Auth.AccessToken),
                 _clientOptions.Channel);
+            System.Func<object, TwitchLib.Client.Events.OnUserJoinedArgs, System.Threading.Tasks.Task> welcomeAsync = async (sender, args) =>
+            {
+                if (!_moderator.IsAllowed(_clientOptions.Username, args.Username)
+                    || !_moderator.IsWelcomed(_clientOptions.Username, args.Username)
+                    || _scope.ExecuteRead(() => _greeted.Contains(args.Username)))
+                {
+                    return;
+                }
+
+                var message = string.Format(_clientOptions.Welcome.Prompt, args.Username);
+
+                _logger.LogInformation(message);
+
+                (var messageKey, var replyKey) = await _bot.ReplyAsync(message)
+                    .ConfigureAwait(false);
+
+                if (_bot.TryGet(replyKey, out var reply))
+                {
+                    _logger.LogInformation(reply);
+
+                    System.Func<System.Threading.Tasks.Task> sendReplyAsync =
+                        async () => await _scope.ExecuteWriteAsync(
+                                async () =>
+                                {
+                                    _userClient.SendMessage(
+                                        args.Channel,
+                                        reply);
+                                    await System.Threading.Tasks.Task.Delay(
+                                            _clientOptions.Delay)
+                                        .ConfigureAwait(false);
+                                })
+                            .ConfigureAwait(false);
+
+                    if (!_moderator.IsAllowed(_clientOptions.Username, args.Username)
+                        || !_moderator.IsWelcomed(_clientOptions.Username, args.Username)
+                        || !_scope.ExecuteWrite(() => _greeted.Add(args.Username)))
+                    {
+                        _bot.Remove(messageKey, replyKey);
+                        return;
+                    }
+                    if (_moderator.IsModerated(_clientOptions.Username, args.Username))
+                    {
+                        _moderator.Hold(replyKey,
+                        (
+                            sendReplyAsync,
+                            () =>
+                            {
+                                _bot.Remove(messageKey, replyKey);
+                                return System.Threading.Tasks.Task.CompletedTask;
+                            }
+                        ));
+                        _moderatorClient.SendMessage(
+                            _moderatorClient.JoinedChannels[0],
+                            $"{replyKey}: {reply}");
+                        return;
+                    }
+
+                    await sendReplyAsync()
+                        .ConfigureAwait(false);
+                }
+            };
+            _userClient.OnUserJoined += async (sender, args) =>
+            {
+                if (!_scope.ExecuteRead(() => _clientOptions.Welcome.Mode == Options.Twitch.WelcomeMode.OnJoin))
+                {
+                    return;
+                }
+                await welcomeAsync(sender, args)
+                    .ConfigureAwait(false);
+            };
             _userClient.OnMessageReceived += async (sender, args) =>
             {
+                if (_scope.ExecuteRead(() => _clientOptions.Welcome.Mode == Options.Twitch.WelcomeMode.OnFirstMessage))
+                {
+                    await welcomeAsync(sender, new TwitchLib.Client.Events.OnUserJoinedArgs
+                        {
+                            Channel = args.ChatMessage.Channel,
+                            Username = args.ChatMessage.Username
+                        })
+                        .ConfigureAwait(false);
+                }
+
                 if (!args.ChatMessage.Message.Contains($"@{_clientOptions.Username}")
                     || !_moderator.IsAllowed(_clientOptions.Username, args.ChatMessage.Username))
                 {

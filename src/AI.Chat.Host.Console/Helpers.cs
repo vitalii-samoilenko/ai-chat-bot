@@ -15,7 +15,8 @@
                             {
                                 Promoted = options.Promoted,
                                 Banned = options.Banned,
-                                Moderated = options.Moderated
+                                Moderated = options.Moderated,
+                                Welcomed = options.Welcomed
                             }
                         }
                     },

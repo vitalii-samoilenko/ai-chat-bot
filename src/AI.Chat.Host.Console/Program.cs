@@ -175,6 +175,28 @@ switch (client)
                         scope);
                 });
 
+            builder.Services.AddTransient<AI.Chat.Commands.Twitch.Cheerful>(
+                serviceProvider =>
+                {
+                    var options = serviceProvider
+                        .GetRequiredService<IOptions<AI.Chat.Options.Twitch.Client>>()
+                        .Value;
+
+                    return new AI.Chat.Commands.Twitch.Cheerful(
+                        options);
+                });
+            builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Twitch.Cheerful>>(
+                serviceProvider =>
+                {
+                    var command = serviceProvider
+                        .GetRequiredService<AI.Chat.Commands.Twitch.Delay>();
+                    var scope = serviceProvider
+                        .GetRequiredKeyedService<AI.Chat.IScope>("user");
+
+                    return new AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Twitch.Cheerful>(
+                        command,
+                        scope);
+                });
             builder.Services.AddTransient<AI.Chat.Commands.Twitch.Delay>(
                 serviceProvider =>
                 {
@@ -264,6 +286,7 @@ switch (client)
                         scope);
                 });
 
+            commandOverrides.Add(typeof(AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Twitch.Cheerful>), typeof(AI.Chat.Commands.Twitch.Cheerful).Name);
             commandOverrides.Add(typeof(AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Twitch.Delay>), typeof(AI.Chat.Commands.Twitch.Delay).Name);
             commandOverrides.Add(typeof(AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Twitch.Join>), typeof(AI.Chat.Commands.Twitch.Join).Name);
             commandOverrides.Add(typeof(AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Twitch.Leave>), typeof(AI.Chat.Commands.Twitch.Leave).Name);
@@ -395,7 +418,6 @@ builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Demote>();
 builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Deny>();
 builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Instruct>();
 builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Mod>();
-builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Mode>();
 builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Promote>();
 builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Remove>(
     serviceProvider =>
@@ -414,6 +436,8 @@ builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Remove>(
 builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Timeout>();
 builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Unban>();
 builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Unmod>();
+builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Unwelcome>();
+builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Welcome>();
 
 builder.Services.AddTransient<AI.Chat.ICommandExecutor, AI.Chat.CommandExecutors.Slim>(
     serviceProvider =>

@@ -24,6 +24,10 @@
         {
             return _moderator.IsAllowed(usernames);
         }
+        public bool IsWelcomed(params string[] usernames)
+        {
+            return _moderator.IsWelcomed(usernames);
+        }
 
         public void Ban(params string[] usernames)
         {
@@ -59,9 +63,15 @@
             _moderator.Demote(usernames);
             Host.Console.Helpers.Save(_options);
         }
-        public void SetMode(Options.ModeratorMode mode)
+        public void Welcome(params string[] usernames)
         {
-            _moderator.SetMode(mode);
+            _moderator.Welcome(usernames);
+            Host.Console.Helpers.Save(_options);
+        }
+        public void Unwelcome(params string[] usernames)
+        {
+            _moderator.Unwelcome(usernames);
+            Host.Console.Helpers.Save(_options);
         }
 
         public void Hold(string key, (System.Func<System.Threading.Tasks.Task> onAllowAsync, System.Func<System.Threading.Tasks.Task> onDenyAsync) callbacks)

@@ -31,18 +31,29 @@
         public bool IsAllowed(params string[] usernames)
         {
             var now = System.DateTime.UtcNow;
+            var promoted = false;
             foreach (var username in usernames)
             {
                 if (_options.Banned.Contains(username)
-                    || (_options.Mode == Options.ModeratorMode.Restricted
-                        && !_options.Promoted.Contains(username))
                     || (_timeouts.TryGetValue(username, out var until)
                         && now < until))
                 {
                     return false;
                 }
+                promoted |= _options.Promoted.Contains(username);
             }
-            return true;
+            return promoted;
+        }
+        public bool IsWelcomed(params string[] usernames)
+        {
+            foreach (var username in usernames)
+            {
+                if (_options.Welcomed.Contains(username))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         public void Ban(params string[] usernames)
@@ -95,9 +106,19 @@
                 _options.Promoted.Remove(username);
             }
         }
-        public void SetMode(Options.ModeratorMode mode)
+        public void Welcome(params string[] usernames)
         {
-            _options.Mode = mode;
+            foreach (var username in usernames)
+            {
+                _options.Welcomed.Add(username);
+            }
+        }
+        public void Unwelcome(params string[] usernames)
+        {
+            foreach (var username in usernames)
+            {
+                _options.Welcomed.Remove(username);
+            }
         }
 
         public void Hold(string key, (System.Func<System.Threading.Tasks.Task> onAllowAsync, System.Func<System.Threading.Tasks.Task> onDenyAsync) callbacks)

@@ -24,6 +24,10 @@
         {
             return _scope.ExecuteRead(() => _moderator.IsAllowed(usernames));
         }
+        public bool IsWelcomed(params string[] usernames)
+        {
+            return _scope.ExecuteRead(() => _moderator.IsWelcomed(usernames));
+        }
 
         public void Ban(params string[] usernames)
         {
@@ -53,9 +57,13 @@
         {
             _scope.ExecuteWrite(() => _moderator.Demote(usernames));
         }
-        public void SetMode(Options.ModeratorMode mode)
+        public void Welcome(params string[] usernames)
         {
-            _scope.ExecuteWrite(() => _moderator.SetMode(mode));
+            _scope.ExecuteWrite(() => _moderator.Welcome(usernames));
+        }
+        public void Unwelcome(params string[] usernames)
+        {
+            _scope.ExecuteWrite(() => _moderator.Unwelcome(usernames));
         }
 
         public void Hold(string key, (System.Func<System.Threading.Tasks.Task> onAllowAsync, System.Func<System.Threading.Tasks.Task> onDenyAsync) callbacks)

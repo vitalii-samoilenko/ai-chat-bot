@@ -1,20 +1,17 @@
 ﻿namespace AI.Chat.Commands
 {
-    public class Mode : ICommand
+    public class Unwelcome : ICommand
     {
         private readonly IModerator _moderator;
 
-        public Mode(IModerator moderator)
+        public Unwelcome(IModerator moderator)
         {
             _moderator = moderator;
         }
 
         public System.Threading.Tasks.Task ExecuteAsync(string args)
         {
-            if (System.Enum.TryParse(args, true, out Options.ModeratorMode mode))
-            {
-                _moderator.SetMode(mode);
-            }
+            _moderator.Unwelcome(args.Split(' '));
             return System.Threading.Tasks.Task.CompletedTask;
         }
     }

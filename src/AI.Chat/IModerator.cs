@@ -5,6 +5,7 @@
         bool IsModerator(string username);
         bool IsAllowed(params string[] usernames);
         bool IsModerated(params string[] usernames);
+        bool IsWelcomed(params string[] usernames);
 
         void Ban(params string[] usernames);
         void Unban(params string[] usernames);
@@ -13,7 +14,8 @@
         void Unmoderate(params string[] usernames);
         void Promote(params string[] usernames);
         void Demote(params string[] usernames);
-        void SetMode(Options.ModeratorMode mode);
+        void Welcome(params string[] usernames);
+        void Unwelcome(params string[] usernames);
 
         void Hold(string key, (System.Func<System.Threading.Tasks.Task> onAllowAsync, System.Func<System.Threading.Tasks.Task> onDenyAsync) callbacks);
         System.Func<System.Threading.Tasks.Task> Allow(params string[] keys);
