@@ -189,7 +189,7 @@ switch (client)
                 serviceProvider =>
                 {
                     var command = serviceProvider
-                        .GetRequiredService<AI.Chat.Commands.Twitch.Delay>();
+                        .GetRequiredService<AI.Chat.Commands.Twitch.Cheerful>();
                     var scope = serviceProvider
                         .GetRequiredKeyedService<AI.Chat.IScope>("user");
 

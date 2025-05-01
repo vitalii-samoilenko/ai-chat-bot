@@ -1,1 +1,5 @@
-service + admin
+service
+admin
+docker
+jaeger
+telemetry

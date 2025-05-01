@@ -234,7 +234,7 @@
             bool TryFind(EntryKey key, out Entry<T> entry)
             {
                 entry = default;
-                bool adjusted = true;
+                var adjusted = true;
                 for (var hour = key.Point.Hour; hour < 24; ++hour, adjusted = false)
                 {
                     if (_buckets[hour] == null)

@@ -6,7 +6,7 @@
         private readonly ICommand _command;
         private readonly IScope _scope;
 
-        public ThreadSafe(ICommand command, IScope scope)
+        public ThreadSafe(TCommand command, IScope scope)
         {
             _command = command;
             _scope = scope;
