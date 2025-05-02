@@ -16,7 +16,7 @@
             if (args == "all")
             {
                 _bot.RemoveAll();
-                _bot.Instruct(_options.Context);
+                _bot.Instruct(string.Format(_options.Context, _options.Name));
             }
             else
             {
