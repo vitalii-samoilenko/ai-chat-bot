@@ -19,14 +19,11 @@
     public class Welcome
     {
         public WelcomeMode Mode { get; set; }
-        public string Prompt { get; set; }
     }
     public class Client
     {
-        public string Username { get; set; }
         public string Channel { get; set; }
         public System.TimeSpan Delay { get; set; }
-        public string Prompt { get; set; }
         public Welcome Welcome { get; set; }
         public OAuth Auth { get; set; }
         public TwitchLib.Communication.Models.ClientOptions Communication { get; set; }

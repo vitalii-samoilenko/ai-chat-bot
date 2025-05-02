@@ -1,5 +1,7 @@
-service
-admin
 docker
-jaeger
-telemetry
+logs (loki)
+telemetry (tempo)
+metrics (prometheus)
+grafana
+healthcheck
+admin

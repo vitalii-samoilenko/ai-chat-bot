@@ -5,6 +5,7 @@
         private readonly Options.Moderator _options;
         private readonly System.Collections.Generic.Dictionary<string, System.DateTime> _timeouts;
         private readonly System.Collections.Generic.Dictionary<string, (System.Func<System.Threading.Tasks.Task>, System.Func<System.Threading.Tasks.Task>)> _onHold;
+        private readonly System.Collections.Generic.HashSet<string> _greeted;
 
         public Slim(Options.Moderator options)
         {
@@ -46,14 +47,20 @@
         }
         public bool IsWelcomed(params string[] usernames)
         {
+            var welcomed = false;
             foreach (var username in usernames)
             {
-                if (_options.Welcomed.Contains(username))
+                if (!_options.Welcomed.Contains(username))
                 {
-                    return true;
+                    continue;
                 }
+                if (_greeted.Contains(username))
+                {
+                    return false;
+                }
+                welcomed = true;
             }
-            return false;
+            return welcomed;
         }
 
         public void Ban(params string[] usernames)
@@ -202,6 +209,11 @@
                         .ConfigureAwait(false);
                 }
             };
+        }
+
+        public bool Greet(string username)
+        {
+            return _greeted.Add(username);
         }
     }
 }

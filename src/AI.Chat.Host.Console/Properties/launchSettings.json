@@ -6,5 +6,6 @@
         "DOTNET_ENVIRONMENT": "Development"
       }
     }
-  }
+  },
+  "$schema": "https://json.schemastore.org/launchsettings.json"
 }

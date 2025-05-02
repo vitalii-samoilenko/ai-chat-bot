@@ -22,5 +22,7 @@
         System.Func<System.Threading.Tasks.Task> AllowAll();
         System.Func<System.Threading.Tasks.Task> Deny(params string[] keys);
         System.Func<System.Threading.Tasks.Task> DenyAll();
+
+        bool Greet(string username);
     }
 }

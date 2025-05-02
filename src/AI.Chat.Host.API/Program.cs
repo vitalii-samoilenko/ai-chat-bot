@@ -1,11 +1,7 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NLog.Extensions.Logging;
 
-var builder = Host.CreateApplicationBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders();
 builder.Logging.AddNLog();
@@ -293,7 +289,7 @@ switch (client)
             commandOverrides.Add(typeof(AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Twitch.Join>), typeof(AI.Chat.Commands.Twitch.Join).Name);
             commandOverrides.Add(typeof(AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Twitch.Leave>), typeof(AI.Chat.Commands.Twitch.Leave).Name);
 
-            builder.Services.AddHostedService<AI.Chat.Host.Console.Services.Twitch>(
+            builder.Services.AddHostedService<AI.Chat.Host.API.Services.Twitch>(
                 serviceProvider =>
                 {
                     var options = serviceProvider
@@ -302,7 +298,7 @@ switch (client)
                     var client = serviceProvider
                         .GetRequiredService<AI.Chat.Clients.Twitch>();
 
-                    return new AI.Chat.Host.Console.Services.Twitch(
+                    return new AI.Chat.Host.API.Services.Twitch(
                         options,
                         client);
                 });
@@ -388,7 +384,7 @@ builder.Services.AddSingleton<AI.Chat.Moderators.Slim>(
         return new AI.Chat.Moderators.Slim(
             options);
     });
-builder.Services.AddSingleton<AI.Chat.Moderators.Console.Persistent<AI.Chat.Moderators.Slim>>(
+builder.Services.AddSingleton<AI.Chat.Moderators.API.Persistent<AI.Chat.Moderators.Slim>>(
     serviceProvider =>
     {
         var options = serviceProvider
@@ -397,19 +393,19 @@ builder.Services.AddSingleton<AI.Chat.Moderators.Console.Persistent<AI.Chat.Mode
         var moderator = serviceProvider
             .GetRequiredService<AI.Chat.Moderators.Slim>();
 
-        return new AI.Chat.Moderators.Console.Persistent<AI.Chat.Moderators.Slim>(
+        return new AI.Chat.Moderators.API.Persistent<AI.Chat.Moderators.Slim>(
             options,
             moderator);
     });
-builder.Services.AddSingleton<AI.Chat.IModerator, AI.Chat.Moderators.ThreadSafe<AI.Chat.Moderators.Console.Persistent<AI.Chat.Moderators.Slim>>>(
+builder.Services.AddSingleton<AI.Chat.IModerator, AI.Chat.Moderators.ThreadSafe<AI.Chat.Moderators.API.Persistent<AI.Chat.Moderators.Slim>>>(
     serviceProvider =>
     {
         var moderator = serviceProvider
-            .GetRequiredService<AI.Chat.Moderators.Console.Persistent<AI.Chat.Moderators.Slim>>();
+            .GetRequiredService<AI.Chat.Moderators.API.Persistent<AI.Chat.Moderators.Slim>>();
         var scope = serviceProvider
             .GetRequiredKeyedService<AI.Chat.IScope>("moderator");
 
-        return new AI.Chat.Moderators.ThreadSafe<AI.Chat.Moderators.Console.Persistent<AI.Chat.Moderators.Slim>>(
+        return new AI.Chat.Moderators.ThreadSafe<AI.Chat.Moderators.API.Persistent<AI.Chat.Moderators.Slim>>(
             moderator,
             scope);
     });
@@ -469,9 +465,18 @@ builder.Services.AddTransient<AI.Chat.ICommandExecutor, AI.Chat.CommandExecutors
             commandOverrides);
     });
 
-using var host = builder.Build();
+builder.Services.AddControllers();
+builder.Services.AddOpenApi();
 
-await host.RunAsync();
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+}
+app.MapControllers();
+
+await app.RunAsync();
 
 enum Adapters
 {

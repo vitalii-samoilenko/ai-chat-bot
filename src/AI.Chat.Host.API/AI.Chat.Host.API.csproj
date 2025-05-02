@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>91434eae-7141-44db-9b5c-4cb1a5b4bb85</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>..\..</DockerfileContext>
+    <DockerComposeProjectPath>..\AI.Chat.Host.Docker\AI.Chat.Host.Docker.dcproj</DockerComposeProjectPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.4" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.2" />
+    <PackageReference Include="NLog.Extensions.Logging" Version="5.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AI.Chat.Adapters.OpenAI\AI.Chat.Adapters.OpenAI.csproj" />
+    <ProjectReference Include="..\AI.Chat.Clients.Twitch\AI.Chat.Clients.Twitch.csproj" />
+    <ProjectReference Include="..\AI.Chat\AI.Chat.csproj" />
+  </ItemGroup>
+
+</Project>

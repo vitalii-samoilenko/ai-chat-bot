@@ -1,0 +1,6 @@
+services:
+  ai.chat.host.api:
+    image: ${DOCKER_REGISTRY-}aichathostapi
+    build:
+      context: .
+      dockerfile: src/AI.Chat.Host.API/Dockerfile

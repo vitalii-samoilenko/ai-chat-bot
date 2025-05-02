@@ -86,5 +86,10 @@
         {
             return _scope.ExecuteWrite(() => _moderator.DenyAll());
         }
+
+        public bool Greet(string username)
+        {
+            return _scope.ExecuteWrite(() => _moderator.Greet(username));
+        }
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace AI.Chat.Moderators.Console
+﻿namespace AI.Chat.Moderators.API
 {
     internal class Persistent<TModerator> : IModerator
         where TModerator : IModerator
@@ -32,12 +32,12 @@
         public void Ban(params string[] usernames)
         {
             _moderator.Ban(usernames);
-            Host.Console.Helpers.Save(_options);
+            Host.API.Helpers.Save(_options);
         }
         public void Unban(params string[] usernames)
         {
             _moderator.Unban(usernames);
-            Host.Console.Helpers.Save(_options);
+            Host.API.Helpers.Save(_options);
         }
         public void Timeout(params (string username, System.TimeSpan timeout)[] args)
         {
@@ -46,32 +46,32 @@
         public void Moderate(params string[] usernames)
         {
             _moderator.Moderate(usernames);
-            Host.Console.Helpers.Save(_options);
+            Host.API.Helpers.Save(_options);
         }
         public void Unmoderate(params string[] usernames)
         {
             _moderator.Unmoderate(usernames);
-            Host.Console.Helpers.Save(_options);
+            Host.API.Helpers.Save(_options);
         }
         public void Promote(params string[] usernames)
         {
             _moderator.Unmoderate(usernames);
-            Host.Console.Helpers.Save(_options);
+            Host.API.Helpers.Save(_options);
         }
         public void Demote(params string[] usernames)
         {
             _moderator.Demote(usernames);
-            Host.Console.Helpers.Save(_options);
+            Host.API.Helpers.Save(_options);
         }
         public void Welcome(params string[] usernames)
         {
             _moderator.Welcome(usernames);
-            Host.Console.Helpers.Save(_options);
+            Host.API.Helpers.Save(_options);
         }
         public void Unwelcome(params string[] usernames)
         {
             _moderator.Unwelcome(usernames);
-            Host.Console.Helpers.Save(_options);
+            Host.API.Helpers.Save(_options);
         }
 
         public void Hold(string key, (System.Func<System.Threading.Tasks.Task> onAllowAsync, System.Func<System.Threading.Tasks.Task> onDenyAsync) callbacks)

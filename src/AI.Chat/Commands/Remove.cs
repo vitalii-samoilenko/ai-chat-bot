@@ -2,10 +2,10 @@
 {
     public class Remove : ICommand
     {
-        private readonly Options.Bot _options;
+        private readonly Options.User _options;
         private readonly IBot _bot;
 
-        public Remove(Options.Bot options, IBot bot)
+        public Remove(Options.User options, IBot bot)
         {
             _options = options;
             _bot = bot;
@@ -16,7 +16,7 @@
             if (args == "all")
             {
                 _bot.RemoveAll();
-                _bot.Instruct(_options.Prompt);
+                _bot.Instruct(_options.Context);
             }
             else
             {
