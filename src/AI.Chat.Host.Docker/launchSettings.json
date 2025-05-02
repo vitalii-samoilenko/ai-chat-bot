@@ -4,7 +4,7 @@
       "commandName": "DockerCompose",
       "commandVersion": "1.0",
       "serviceActions": {
-        "ai.chat.host.api": "StartDebugging"
+        "ai-chat-host-api": "StartDebugging"
       }
     }
   }

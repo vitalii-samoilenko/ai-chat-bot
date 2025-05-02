@@ -1,30 +1,39 @@
-# See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
-
-# This stage is used when running from VS in fast mode (Default for Debug configuration)
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
-EXPOSE 8081
 
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS restore
+COPY ["src/AI.Chat/AI.Chat.csproj", "/src/AI.Chat/"]
+COPY ["src/AI.Chat.Adapters.OpenAI/AI.Chat.Adapters.OpenAI.csproj", "/src/AI.Chat.Adapters.OpenAI/"]
+COPY ["src/System.Collections.Generic.TimeSeries/System.Collections.Generic.TimeSeries.csproj", "/src/System.Collections.Generic.TimeSeries/"]
+COPY ["src/AI.Chat.Clients.Twitch/AI.Chat.Clients.Twitch.csproj", "/src/AI.Chat.Clients.Twitch/"]
+COPY ["src/AI.Chat.Host.API/AI.Chat.Host.API.csproj", "/src/AI.Chat.Host.API/"]
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
+	dotnet restore "/src/AI.Chat.Host.API/AI.Chat.Host.API.csproj"
 
-# This stage is used to build the service project
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM restore AS build
 ARG BUILD_CONFIGURATION=Release
-WORKDIR /src
-COPY ["src/AI.Chat.Host.API/AI.Chat.Host.API.csproj", "src/AI.Chat.Host.API/"]
-RUN dotnet restore "./src/AI.Chat.Host.API/AI.Chat.Host.API.csproj"
-COPY . .
-WORKDIR "/src/src/AI.Chat.Host.API"
-RUN dotnet build "./AI.Chat.Host.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
+COPY ["src/AI.Chat", "/src/AI.Chat"]
+COPY ["src/AI.Chat.Adapters.OpenAI", "/src/AI.Chat.Adapters.OpenAI"]
+COPY ["src/System.Collections.Generic.TimeSeries", "/src/System.Collections.Generic.TimeSeries"]
+COPY ["src/AI.Chat.Clients.Twitch", "/src/AI.Chat.Clients.Twitch"]
+COPY ["src/AI.Chat.Host.API", "/src/AI.Chat.Host.API"]
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
+	dotnet build "/src/AI.Chat.Host.API/AI.Chat.Host.API.csproj" -c $BUILD_CONFIGURATION --no-restore
 
-# This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./AI.Chat.Host.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
+	dotnet publish "/src/AI.Chat.Host.API/AI.Chat.Host.API.csproj" -c $BUILD_CONFIGURATION -o /app /p:UseAppHost=false --no-restore
 
-# This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
-FROM base AS final
-WORKDIR /app
-COPY --from=publish /app/publish .
+FROM base AS install
+USER root
+RUN apt-get update && apt-get install -y curl
+USER $APP_UID
+
+FROM install AS host
+COPY --from=publish /app .
 ENTRYPOINT ["dotnet", "AI.Chat.Host.API.dll"]
+HEALTHCHECK --interval=15s --timeout=3s \
+	CMD curl -f http://localhost:8080/health || exit 1

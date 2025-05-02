@@ -1,6 +1,15 @@
 services:
-  ai.chat.host.api:
-    image: ${DOCKER_REGISTRY-}aichathostapi
+  ai-chat-host-api:
+    container_name: ai-chat-host-api
+    image: ai.chat.host.api
     build:
-      context: .
+      context: ../..
       dockerfile: src/AI.Chat.Host.API/Dockerfile
+    ports:
+      - 5117:8080
+    networks:
+      - ai-chat-host-docker
+
+networks:
+  ai-chat-host-docker:
+    external: true
