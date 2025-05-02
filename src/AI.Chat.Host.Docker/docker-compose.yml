@@ -1,3 +1,6 @@
+name:
+  ai-chat-host-docker
+
 services:
   ai-chat-host-api:
     container_name: ai-chat-host-api

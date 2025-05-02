@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "Docker Compose": {
+    "Docker Compose Up": {
       "commandName": "DockerCompose",
       "commandVersion": "1.0",
       "serviceActions": {

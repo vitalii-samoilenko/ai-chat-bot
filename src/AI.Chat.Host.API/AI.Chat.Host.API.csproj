@@ -7,7 +7,6 @@
     <UserSecretsId>91434eae-7141-44db-9b5c-4cb1a5b4bb85</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>..\..</DockerfileContext>
-    <DockerComposeProjectPath>..\AI.Chat.Host.Docker\AI.Chat.Host.Docker.dcproj</DockerComposeProjectPath>
     <DockerfileTag>ai.chat.host.api</DockerfileTag>
     <DockerfileRunArguments>-l com.docker.compose.project=ai-chat-host-docker --name ai-chat-host-api --network ai-chat-host-docker</DockerfileRunArguments>
   </PropertyGroup>
