@@ -6,7 +6,7 @@ services:
     container_name: loki
     image: grafana/loki
     volumes:
-      - ./loki/config.yaml:/etc/loki/config.yaml
+      - ./loki:/etc/loki
     command: 
       - -config.file=/etc/loki/config.yaml
     networks:
@@ -16,7 +16,7 @@ services:
     container_name: tempo
     image: grafana/tempo
     volumes:
-      - ./tempo/config.yaml:/etc/tempo/config.yaml
+      - ./tempo:/etc/tempo
     command: 
       - -config.file=/etc/tempo/config.yaml
     networks:
@@ -26,7 +26,7 @@ services:
     container_name: prometheus
     image: prom/prometheus
     volumes:
-      - ./prometheus/config.yaml:/etc/prometheus/config.yaml
+      - ./prometheus:/etc/prometheus
     command: 
       - --config.file=/etc/prometheus/config.yaml
       - --web.enable-remote-write-receiver
@@ -44,7 +44,7 @@ services:
       - prometheus
     image: grafana/alloy
     volumes:
-      - ./alloy/config.alloy:/etc/alloy/config.alloy
+      - ./alloy:/etc/alloy
     command:
       - run
       - --server.http.listen-addr=0.0.0.0:3300
@@ -65,6 +65,8 @@ services:
       - tempo
       - prometheus
     image: grafana/grafana
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
     ports:
       - 3000:3000
     networks:
