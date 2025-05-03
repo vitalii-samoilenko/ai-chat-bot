@@ -12,6 +12,7 @@
             _options = options;
             _timeouts = new System.Collections.Generic.Dictionary<string, System.DateTime>();
             _onHold = new System.Collections.Generic.Dictionary<string, (System.Func<System.Threading.Tasks.Task>, System.Func<System.Threading.Tasks.Task>)>();
+            _greeted = new System.Collections.Generic.HashSet<string>();
         }
 
         public bool IsModerator(string username)
