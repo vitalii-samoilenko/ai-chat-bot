@@ -2,10 +2,14 @@
 {
     internal static class Helpers
     {
+        public const string Common = "external/common.json";
+        public const string Moderated = "external/moderated.json";
+        public const string OAuth = "external/oauth.json";
+
         public static void Save(AI.Chat.Options.Moderator options)
         {
             System.IO.File.WriteAllText(
-                "moderated.json",
+                Moderated,
                 System.Text.Json.JsonSerializer.Serialize(
                     new
                     {
@@ -31,7 +35,7 @@
         public static void Save(AI.Chat.Options.Twitch.Client options)
         {
             System.IO.File.WriteAllText(
-                "oauth.json",
+                OAuth,
                 System.Text.Json.JsonSerializer.Serialize(
                     new
                     {

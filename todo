@@ -1,7 +1,1 @@
-docker
-logs (loki)
-telemetry (tempo)
-metrics (prometheus)
-grafana
-healthcheck
 admin

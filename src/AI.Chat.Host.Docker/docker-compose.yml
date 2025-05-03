@@ -13,6 +13,8 @@ services:
     environment:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4317
       - OTEL_SERVICE_NAME=ai-chat-host-api
+    volumes:
+      - ai.chat.host.config:/app/external
     ports:
       - 5117:8080
     networks:
@@ -20,4 +22,8 @@ services:
 
 networks:
   ai-chat-host-docker:
+    external: true
+
+volumes:
+  ai.chat.host.config:
     external: true

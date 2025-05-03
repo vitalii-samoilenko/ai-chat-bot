@@ -13,7 +13,8 @@ builder.Logging.AddOpenTelemetry(logging =>
     logging.IncludeScopes = true;
 });
 
-builder.Configuration.AddJsonFile("moderated.json", true);
+builder.Configuration.AddJsonFile(AI.Chat.Host.API.Helpers.Common, true);
+builder.Configuration.AddJsonFile(AI.Chat.Host.API.Helpers.Moderated, true);
 
 builder.Services.Configure<AI.Chat.Options.Bot>(
         builder.Configuration.GetSection("Chat:Bot"));
@@ -94,7 +95,7 @@ switch (client)
 {
     case Clients.Twitch:
         {
-            builder.Configuration.AddJsonFile("oauth.json", true);
+            builder.Configuration.AddJsonFile(AI.Chat.Host.API.Helpers.OAuth, true);
 
             builder.Services.Configure<AI.Chat.Options.Twitch.Client>(
                 builder.Configuration.GetSection("Chat:Client"));
@@ -308,19 +309,19 @@ switch (client)
             commandOverrides.Add(typeof(AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Twitch.Join>), typeof(AI.Chat.Commands.Twitch.Join).Name);
             commandOverrides.Add(typeof(AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Twitch.Leave>), typeof(AI.Chat.Commands.Twitch.Leave).Name);
 
-            //builder.Services.AddHostedService<AI.Chat.Host.API.Services.Twitch>(
-            //    serviceProvider =>
-            //    {
-            //        var options = serviceProvider
-            //            .GetRequiredService<IOptions<AI.Chat.Options.Twitch.Client>>()
-            //            .Value;
-            //        var client = serviceProvider
-            //            .GetRequiredService<AI.Chat.Clients.Twitch>();
+            builder.Services.AddHostedService<AI.Chat.Host.API.Services.Twitch>(
+                serviceProvider =>
+                {
+                    var options = serviceProvider
+                        .GetRequiredService<IOptions<AI.Chat.Options.Twitch.Client>>()
+                        .Value;
+                    var client = serviceProvider
+                        .GetRequiredService<AI.Chat.Clients.Twitch>();
 
-            //        return new AI.Chat.Host.API.Services.Twitch(
-            //            options,
-            //            client);
-            //    });
+                    return new AI.Chat.Host.API.Services.Twitch(
+                        options,
+                        client);
+                });
         }
         break;
     default:

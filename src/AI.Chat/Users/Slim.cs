@@ -30,7 +30,8 @@
             {
                 if (!_moderator.IsAllowed(_options.Name, username)
                     || !_moderator.IsWelcomed(_options.Name, username)
-                    || !_moderator.Greet(username))
+                    || (username != _options.Name
+                        && !_moderator.Greet(username)))
                 {
                     _bot.Remove(greetingKey, replyKey);
                     return;
