@@ -1,10 +1,17 @@
 using Microsoft.Extensions.Options;
-using NLog.Extensions.Logging;
+using OpenTelemetry;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders();
-builder.Logging.AddNLog();
+builder.Logging.AddConsole();
+builder.Logging.AddOpenTelemetry(logging =>
+{
+    logging.IncludeFormattedMessage = true;
+    logging.IncludeScopes = true;
+});
 
 builder.Configuration.AddJsonFile("moderated.json", true);
 
@@ -14,6 +21,18 @@ builder.Services.Configure<AI.Chat.Options.Moderator>(
         builder.Configuration.GetSection("Chat:Moderator"));
 builder.Services.Configure<AI.Chat.Options.User>(
         builder.Configuration.GetSection("Chat:User"));
+
+builder.Services.AddOpenTelemetry()
+    .WithMetrics(metrics =>
+    {
+        metrics.AddAspNetCoreInstrumentation();
+    })
+    .WithTracing(tracing =>
+    {
+        tracing.AddAspNetCoreInstrumentation();
+        tracing.AddHttpClientInstrumentation();
+    })
+    .UseOtlpExporter();
 
 var commandOverrides = new System.Collections.Generic.Dictionary<System.Type, string>();
 
@@ -289,19 +308,19 @@ switch (client)
             commandOverrides.Add(typeof(AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Twitch.Join>), typeof(AI.Chat.Commands.Twitch.Join).Name);
             commandOverrides.Add(typeof(AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Twitch.Leave>), typeof(AI.Chat.Commands.Twitch.Leave).Name);
 
-            builder.Services.AddHostedService<AI.Chat.Host.API.Services.Twitch>(
-                serviceProvider =>
-                {
-                    var options = serviceProvider
-                        .GetRequiredService<IOptions<AI.Chat.Options.Twitch.Client>>()
-                        .Value;
-                    var client = serviceProvider
-                        .GetRequiredService<AI.Chat.Clients.Twitch>();
+            //builder.Services.AddHostedService<AI.Chat.Host.API.Services.Twitch>(
+            //    serviceProvider =>
+            //    {
+            //        var options = serviceProvider
+            //            .GetRequiredService<IOptions<AI.Chat.Options.Twitch.Client>>()
+            //            .Value;
+            //        var client = serviceProvider
+            //            .GetRequiredService<AI.Chat.Clients.Twitch>();
 
-                    return new AI.Chat.Host.API.Services.Twitch(
-                        options,
-                        client);
-                });
+            //        return new AI.Chat.Host.API.Services.Twitch(
+            //            options,
+            //            client);
+            //    });
         }
         break;
     default:
@@ -467,6 +486,7 @@ builder.Services.AddTransient<AI.Chat.ICommandExecutor, AI.Chat.CommandExecutors
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
@@ -475,6 +495,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 await app.RunAsync();
 

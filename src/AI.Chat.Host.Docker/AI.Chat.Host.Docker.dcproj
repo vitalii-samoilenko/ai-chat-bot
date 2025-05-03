@@ -7,9 +7,15 @@
     <ProjectGuid>81dded9d-158b-e303-5f62-77a2896d2a5a</ProjectGuid>
     <DockerComposeProjectName>ai-chat-host-docker</DockerComposeProjectName>
     <DockerDevelopmentMode>Regular</DockerDevelopmentMode>
+    <AdditionalComposeFilePaths>docker-compose.infrastructure.yml</AdditionalComposeFilePaths>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'" />
   <ItemGroup>
+    <None Include="alloy\config.alloy" />
+    <None Include="docker-compose.infrastructure.yml" />
     <None Include="docker-compose.yml" />
+    <None Include="loki\config.yaml" />
+    <None Include="prometheus\config.yaml" />
+    <None Include="tempo\config.yaml" />
   </ItemGroup>
 </Project>

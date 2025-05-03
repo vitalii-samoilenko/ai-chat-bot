@@ -1,10 +1,14 @@
 {
   "profiles": {
-    "Docker Compose Up": {
+    "Docker Compose": {
       "commandName": "DockerCompose",
       "commandVersion": "1.0",
       "serviceActions": {
-        "ai-chat-host-api": "StartDebugging"
+        "ai-chat-host-api": "StartDebugging",
+        "loki": "StartWithoutDebugging",
+        "tempo": "StartWithoutDebugging",
+        "prometheus": "StartWithoutDebugging",
+        "grafana": "StartWithoutDebugging"
       }
     }
   }

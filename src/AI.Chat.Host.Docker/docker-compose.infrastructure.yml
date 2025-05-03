@@ -1,0 +1,75 @@
+name:
+  ai-chat-host-docker
+
+services:
+  loki:
+    container_name: loki
+    image: grafana/loki
+    volumes:
+      - ./loki/config.yaml:/etc/loki/config.yaml
+    command: 
+      - -config.file=/etc/loki/config.yaml
+    networks:
+      - ai-chat-host-docker
+
+  tempo:
+    container_name: tempo
+    image: grafana/tempo
+    volumes:
+      - ./tempo/config.yaml:/etc/tempo/config.yaml
+    command: 
+      - -config.file=/etc/tempo/config.yaml
+    networks:
+      - ai-chat-host-docker
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus
+    volumes:
+      - ./prometheus/config.yaml:/etc/prometheus/config.yaml
+    command: 
+      - --config.file=/etc/prometheus/config.yaml
+      - --web.enable-remote-write-receiver
+      - --enable-feature=native-histograms
+    ports:
+      - 9090:9090
+    networks:
+      - ai-chat-host-docker
+
+  alloy:
+    container_name: alloy
+    depends_on:
+      - loki
+      - tempo
+      - prometheus
+    image: grafana/alloy
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:3300
+      - /etc/alloy/config.alloy
+    ports:
+      - 3300:3300
+      - 4317:4317
+    networks:
+      - ai-chat-host-docker
+
+  grafana:
+    container_name: grafana
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    depends_on:
+      - loki
+      - tempo
+      - prometheus
+    image: grafana/grafana
+    ports:
+      - 3000:3000
+    networks:
+      - ai-chat-host-docker
+
+networks:
+  ai-chat-host-docker:
+    external: true
