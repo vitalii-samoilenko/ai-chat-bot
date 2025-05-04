@@ -5,6 +5,7 @@ EXPOSE 8080
 
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS restore
 COPY ["src/AI.Chat/AI.Chat.csproj", "/src/AI.Chat/"]
+COPY ["src/AI.Chat.Diagnostics/AI.Chat.Diagnostics.csproj", "/src/AI.Chat.Diagnostics/"]
 COPY ["src/AI.Chat.Adapters.OpenAI/AI.Chat.Adapters.OpenAI.csproj", "/src/AI.Chat.Adapters.OpenAI/"]
 COPY ["src/System.Collections.Generic.TimeSeries/System.Collections.Generic.TimeSeries.csproj", "/src/System.Collections.Generic.TimeSeries/"]
 COPY ["src/AI.Chat.Clients.Twitch/AI.Chat.Clients.Twitch.csproj", "/src/AI.Chat.Clients.Twitch/"]
@@ -15,6 +16,7 @@ RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
 FROM restore AS build
 ARG BUILD_CONFIGURATION=Release
 COPY ["src/AI.Chat", "/src/AI.Chat"]
+COPY ["src/AI.Chat.Diagnostics", "/src/AI.Chat.Diagnostics"]
 COPY ["src/AI.Chat.Adapters.OpenAI", "/src/AI.Chat.Adapters.OpenAI"]
 COPY ["src/System.Collections.Generic.TimeSeries", "/src/System.Collections.Generic.TimeSeries"]
 COPY ["src/AI.Chat.Clients.Twitch", "/src/AI.Chat.Clients.Twitch"]

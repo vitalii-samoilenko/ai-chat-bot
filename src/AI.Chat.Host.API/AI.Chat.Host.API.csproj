@@ -23,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\AI.Chat.Adapters.OpenAI\AI.Chat.Adapters.OpenAI.csproj" />
     <ProjectReference Include="..\AI.Chat.Clients.Twitch\AI.Chat.Clients.Twitch.csproj" />
+    <ProjectReference Include="..\AI.Chat.Diagnostics\AI.Chat.Diagnostics.csproj" />
     <ProjectReference Include="..\AI.Chat\AI.Chat.csproj" />
   </ItemGroup>
 

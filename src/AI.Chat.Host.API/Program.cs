@@ -32,6 +32,15 @@ builder.Services.AddOpenTelemetry()
     {
         tracing.AddAspNetCoreInstrumentation();
         tracing.AddHttpClientInstrumentation();
+
+        tracing.AddSource(AI.Chat.Diagnostics.ActivitySources.Adapters.Name);
+        tracing.AddSource(AI.Chat.Diagnostics.ActivitySources.Bots.Name);
+        tracing.AddSource(AI.Chat.Diagnostics.ActivitySources.CommandExecutors.Name);
+        tracing.AddSource(AI.Chat.Diagnostics.ActivitySources.Commands.Name);
+        tracing.AddSource(AI.Chat.Diagnostics.ActivitySources.Filters.Name);
+        tracing.AddSource(AI.Chat.Diagnostics.ActivitySources.Moderators.Name);
+        tracing.AddSource(AI.Chat.Diagnostics.ActivitySources.Scopes.Name);
+        tracing.AddSource(AI.Chat.Diagnostics.ActivitySources.Users.Name);
     })
     .UseOtlpExporter();
 
@@ -39,6 +48,9 @@ var commandOverrides = new System.Collections.Generic.Dictionary<System.Type, st
 
 var adapter = builder.Configuration.GetValue<Adapters>("Chat:Adapter:Type");
 var client = builder.Configuration.GetValue<Clients>("Chat:Client:Type");
+
+builder.Services.AddTransient<AI.Chat.Scopes.Slim>();
+builder.Services.AddTransient<AI.Chat.Scopes.Diagnostics.Trace<AI.Chat.Scopes.Slim>>();
 
 switch (adapter)
 {
@@ -61,28 +73,30 @@ switch (adapter)
                     );
                 });
             builder.Services.AddTransient<AI.Chat.Adapters.OpenAI>();
-            builder.Services.AddTransient<AI.Chat.Adapters.Delayed<AI.Chat.Adapters.OpenAI>>(
+            builder.Services.AddTransient<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.OpenAI>>();
+            builder.Services.AddTransient<AI.Chat.Adapters.Delayed<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.OpenAI>>>(
                 serviceProvider =>
                 {
                     var options = serviceProvider
                         .GetRequiredService<IOptions<AI.Chat.Options.OpenAI.Adapter>>()
                         .Value;
                     var adapter = serviceProvider
-                        .GetRequiredService<AI.Chat.Adapters.OpenAI>();
-                    return new AI.Chat.Adapters.Delayed<AI.Chat.Adapters.OpenAI>(
+                        .GetRequiredService<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.OpenAI>>();
+                    return new AI.Chat.Adapters.Delayed<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.OpenAI>>(
                         options,
                         adapter);
                 });
+            builder.Services.AddTransient<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.Delayed<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.OpenAI>>>>();
             switch (client)
             {
                 case Clients.Twitch:
                     {
-                        builder.Services.AddTransient<AI.Chat.IAdapter, AI.Chat.Adapters.Twitch.Formatted<AI.Chat.Adapters.Delayed<AI.Chat.Adapters.OpenAI>>>();
+                        builder.Services.AddTransient<AI.Chat.IAdapter, AI.Chat.Adapters.Twitch.Formatted<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.Delayed<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.OpenAI>>>>>();
                     }
                     break;
                 default:
                     {
-                        builder.Services.AddTransient<AI.Chat.IAdapter, AI.Chat.Adapters.Delayed<AI.Chat.Adapters.OpenAI>>();
+                        builder.Services.AddTransient<AI.Chat.IAdapter, AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.Delayed<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.OpenAI>>>>();
                     }
                     break;
             }
@@ -147,7 +161,7 @@ switch (client)
                 builder.Services.AddKeyedSingleton<TwitchLib.Client.Interfaces.ITwitchClient, TwitchLib.Client.TwitchClient>("user");
                 builder.Services.AddKeyedSingleton<TwitchLib.Client.Interfaces.ITwitchClient, TwitchLib.Client.TwitchClient>("moderator");
             }
-            builder.Services.AddKeyedSingleton<AI.Chat.IScope, AI.Chat.Scopes.Slim>("user");
+            builder.Services.AddKeyedSingleton<AI.Chat.IScope, AI.Chat.Scopes.Diagnostics.Trace<AI.Chat.Scopes.Slim>>("user");
             builder.Services.AddTransient<AI.Chat.Clients.Twitch>(
                 serviceProvider =>
                 {
@@ -203,18 +217,20 @@ switch (client)
                     return new AI.Chat.Commands.Twitch.Cheerful(
                         options);
                 });
-            builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Twitch.Cheerful>>(
+            builder.Services.AddTransient<AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Cheerful>>();
+            builder.Services.AddTransient<AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Cheerful>>>(
                 serviceProvider =>
                 {
                     var command = serviceProvider
-                        .GetRequiredService<AI.Chat.Commands.Twitch.Cheerful>();
+                        .GetRequiredService<AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Cheerful>>();
                     var scope = serviceProvider
                         .GetRequiredKeyedService<AI.Chat.IScope>("user");
 
-                    return new AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Twitch.Cheerful>(
+                    return new AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Cheerful>>(
                         command,
                         scope);
                 });
+            builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Cheerful>>>>();
             builder.Services.AddTransient<AI.Chat.Commands.Twitch.Delay>(
                 serviceProvider =>
                 {
@@ -225,19 +241,21 @@ switch (client)
                     return new AI.Chat.Commands.Twitch.Delay(
                         options);
                 });
-            builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Twitch.Delay>>(
+            builder.Services.AddTransient<AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Delay>>();
+            builder.Services.AddTransient<AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Delay>>>(
                 serviceProvider =>
                 {
                     var command = serviceProvider
-                        .GetRequiredService<AI.Chat.Commands.Twitch.Delay>();
+                        .GetRequiredService<AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Delay>>();
                     var scope = serviceProvider
                         .GetRequiredKeyedService<AI.Chat.IScope>("user");
 
-                    return new AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Twitch.Delay>(
+                    return new AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Delay>>(
                         command,
                         scope);
                 });
-            builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Twitch.Find>(
+            builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Delay>>>>();
+            builder.Services.AddTransient<AI.Chat.Commands.Twitch.Find>(
                 serviceProvider =>
                 {
                     var bot = serviceProvider
@@ -249,7 +267,8 @@ switch (client)
                         bot,
                         client);
                 });
-            builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Twitch.Get>(
+            builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Find>>();
+            builder.Services.AddTransient<AI.Chat.Commands.Twitch.Get>(
                 serviceProvider =>
                 {
                     var bot = serviceProvider
@@ -261,6 +280,7 @@ switch (client)
                         bot,
                         client);
                 });
+            builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Get>>();
             builder.Services.AddTransient<AI.Chat.Commands.Twitch.Join>(
                 serviceProvider =>
                 {
@@ -270,18 +290,20 @@ switch (client)
                     return new AI.Chat.Commands.Twitch.Join(
                         client);
                 });
-            builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Twitch.Join>>(
+            builder.Services.AddTransient<AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Join>>();
+            builder.Services.AddTransient<AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Join>>>(
                 serviceProvider =>
                 {
                     var command = serviceProvider
-                        .GetRequiredService<AI.Chat.Commands.Twitch.Join>();
+                        .GetRequiredService<AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Join>>();
                     var scope = serviceProvider
                         .GetRequiredKeyedService<AI.Chat.IScope>("user");
 
-                    return new AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Twitch.Join>(
+                    return new AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Join>>(
                         command,
                         scope);
                 });
+            builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Join>>>>();
             builder.Services.AddTransient<AI.Chat.Commands.Twitch.Leave>(
                 serviceProvider =>
                 {
@@ -291,23 +313,27 @@ switch (client)
                     return new AI.Chat.Commands.Twitch.Leave(
                         client);
                 });
-            builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Twitch.Leave>>(
+            builder.Services.AddTransient<AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Leave>>();
+            builder.Services.AddTransient<AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Leave>>>(
                 serviceProvider =>
                 {
                     var command = serviceProvider
-                        .GetRequiredService<AI.Chat.Commands.Twitch.Leave>();
+                        .GetRequiredService<AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Leave>>();
                     var scope = serviceProvider
                         .GetRequiredKeyedService<AI.Chat.IScope>("user");
 
-                    return new AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Twitch.Leave>(
+                    return new AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Leave>>(
                         command,
                         scope);
                 });
+            builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Leave>>>>();
 
-            commandOverrides.Add(typeof(AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Twitch.Cheerful>), typeof(AI.Chat.Commands.Twitch.Cheerful).Name);
-            commandOverrides.Add(typeof(AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Twitch.Delay>), typeof(AI.Chat.Commands.Twitch.Delay).Name);
-            commandOverrides.Add(typeof(AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Twitch.Join>), typeof(AI.Chat.Commands.Twitch.Join).Name);
-            commandOverrides.Add(typeof(AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Twitch.Leave>), typeof(AI.Chat.Commands.Twitch.Leave).Name);
+            commandOverrides.Add(typeof(AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Cheerful>>>), typeof(AI.Chat.Commands.Twitch.Cheerful).Name);
+            commandOverrides.Add(typeof(AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Delay>>>), typeof(AI.Chat.Commands.Twitch.Delay).Name);
+            commandOverrides.Add(typeof(AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Find>), typeof(AI.Chat.Commands.Twitch.Find).Name);
+            commandOverrides.Add(typeof(AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Get>), typeof(AI.Chat.Commands.Twitch.Get).Name);
+            commandOverrides.Add(typeof(AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Join>>>), typeof(AI.Chat.Commands.Twitch.Join).Name);
+            commandOverrides.Add(typeof(AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.ThreadSafe<AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Twitch.Leave>>>), typeof(AI.Chat.Commands.Twitch.Leave).Name);
 
             builder.Services.AddHostedService<AI.Chat.Host.API.Services.Twitch>(
                 serviceProvider =>
@@ -342,16 +368,18 @@ builder.Services.AddTransient<System.Collections.Generic.IEnumerable<AI.Chat.IFi
             {
                 case AI.Chat.Options.FilterType.Length:
                     {
-                        filter = new AI.Chat.Filters.Length(
-                            filterOptions.Prompt,
-                            int.Parse(filterOptions.Args[0]));
+                        filter = new AI.Chat.Filters.Diagnostics.Trace<AI.Chat.Filters.Length>(
+                            new AI.Chat.Filters.Length(
+                                filterOptions.Prompt,
+                                int.Parse(filterOptions.Args[0])));
                     }
                     break;
                 case AI.Chat.Options.FilterType.Regex:
                     {
-                        filter = new AI.Chat.Filters.Regex(
-                            filterOptions.Prompt,
-                            filterOptions.Args[0]);
+                        filter = new AI.Chat.Filters.Diagnostics.Trace<AI.Chat.Filters.Regex>(
+                            new AI.Chat.Filters.Regex(
+                                filterOptions.Prompt,
+                                filterOptions.Args[0]));
                     }
                     break;
                 default:
@@ -362,8 +390,8 @@ builder.Services.AddTransient<System.Collections.Generic.IEnumerable<AI.Chat.IFi
         return filters;
     });
 
-builder.Services.AddKeyedSingleton<AI.Chat.IScope, AI.Chat.Scopes.Slim>("bot");
-builder.Services.AddKeyedSingleton<AI.Chat.IScope, AI.Chat.Scopes.Slim>("moderator");
+builder.Services.AddKeyedSingleton<AI.Chat.IScope, AI.Chat.Scopes.Diagnostics.Trace<AI.Chat.Scopes.Slim>>("bot");
+builder.Services.AddKeyedSingleton<AI.Chat.IScope, AI.Chat.Scopes.Diagnostics.Trace<AI.Chat.Scopes.Slim>>("moderator");
 
 builder.Services.AddSingleton<AI.Chat.Bots.Filtered>(
     serviceProvider =>
@@ -381,18 +409,20 @@ builder.Services.AddSingleton<AI.Chat.Bots.Filtered>(
             adapter,
             filters);
     });
-builder.Services.AddSingleton<AI.Chat.IBot, AI.Chat.Bots.ThreadSafe<AI.Chat.Bots.Filtered>>(
+builder.Services.AddSingleton<AI.Chat.Bots.Diagnostics.Trace<AI.Chat.Bots.Filtered>>();
+builder.Services.AddSingleton<AI.Chat.Bots.ThreadSafe<AI.Chat.Bots.Diagnostics.Trace<AI.Chat.Bots.Filtered>>>(
     serviceProvider =>
     {
         var bot = serviceProvider
-            .GetRequiredService<AI.Chat.Bots.Filtered>();
+            .GetRequiredService<AI.Chat.Bots.Diagnostics.Trace<AI.Chat.Bots.Filtered>>();
         var scope = serviceProvider
             .GetRequiredKeyedService<AI.Chat.IScope>("bot");
 
-        return new AI.Chat.Bots.ThreadSafe<AI.Chat.Bots.Filtered>(
+        return new AI.Chat.Bots.ThreadSafe<AI.Chat.Bots.Diagnostics.Trace<AI.Chat.Bots.Filtered>>(
             bot,
             scope);
     });
+builder.Services.AddSingleton<AI.Chat.IBot, AI.Chat.Bots.Diagnostics.Trace<AI.Chat.Bots.ThreadSafe<AI.Chat.Bots.Diagnostics.Trace<AI.Chat.Bots.Filtered>>>>();
 
 builder.Services.AddSingleton<AI.Chat.Moderators.Slim>(
     serviceProvider =>
@@ -404,33 +434,36 @@ builder.Services.AddSingleton<AI.Chat.Moderators.Slim>(
         return new AI.Chat.Moderators.Slim(
             options);
     });
-builder.Services.AddSingleton<AI.Chat.Moderators.API.Persistent<AI.Chat.Moderators.Slim>>(
+builder.Services.AddSingleton<AI.Chat.Moderators.Diagnostics.Trace<AI.Chat.Moderators.Slim>>();
+builder.Services.AddSingleton<AI.Chat.Moderators.API.Persistent<AI.Chat.Moderators.Diagnostics.Trace<AI.Chat.Moderators.Slim>>>(
     serviceProvider =>
     {
         var options = serviceProvider
             .GetRequiredService<IOptions<AI.Chat.Options.Moderator>>()
             .Value;
         var moderator = serviceProvider
-            .GetRequiredService<AI.Chat.Moderators.Slim>();
+            .GetRequiredService<AI.Chat.Moderators.Diagnostics.Trace<AI.Chat.Moderators.Slim>>();
 
-        return new AI.Chat.Moderators.API.Persistent<AI.Chat.Moderators.Slim>(
+        return new AI.Chat.Moderators.API.Persistent<AI.Chat.Moderators.Diagnostics.Trace<AI.Chat.Moderators.Slim>>(
             options,
             moderator);
     });
-builder.Services.AddSingleton<AI.Chat.IModerator, AI.Chat.Moderators.ThreadSafe<AI.Chat.Moderators.API.Persistent<AI.Chat.Moderators.Slim>>>(
+builder.Services.AddSingleton<AI.Chat.Moderators.Diagnostics.Trace<AI.Chat.Moderators.API.Persistent<AI.Chat.Moderators.Diagnostics.Trace<AI.Chat.Moderators.Slim>>>>();
+builder.Services.AddSingleton<AI.Chat.Moderators.ThreadSafe<AI.Chat.Moderators.Diagnostics.Trace<AI.Chat.Moderators.API.Persistent<AI.Chat.Moderators.Diagnostics.Trace<AI.Chat.Moderators.Slim>>>>>(
     serviceProvider =>
     {
         var moderator = serviceProvider
-            .GetRequiredService<AI.Chat.Moderators.API.Persistent<AI.Chat.Moderators.Slim>>();
+            .GetRequiredService<AI.Chat.Moderators.Diagnostics.Trace<AI.Chat.Moderators.API.Persistent<AI.Chat.Moderators.Diagnostics.Trace<AI.Chat.Moderators.Slim>>>>();
         var scope = serviceProvider
             .GetRequiredKeyedService<AI.Chat.IScope>("moderator");
 
-        return new AI.Chat.Moderators.ThreadSafe<AI.Chat.Moderators.API.Persistent<AI.Chat.Moderators.Slim>>(
+        return new AI.Chat.Moderators.ThreadSafe<AI.Chat.Moderators.Diagnostics.Trace<AI.Chat.Moderators.API.Persistent<AI.Chat.Moderators.Diagnostics.Trace<AI.Chat.Moderators.Slim>>>>(
             moderator,
             scope);
     });
+builder.Services.AddSingleton<AI.Chat.IModerator, AI.Chat.Moderators.Diagnostics.Trace<AI.Chat.Moderators.ThreadSafe<AI.Chat.Moderators.Diagnostics.Trace<AI.Chat.Moderators.API.Persistent<AI.Chat.Moderators.Diagnostics.Trace<AI.Chat.Moderators.Slim>>>>>>();
 
-builder.Services.AddSingleton<AI.Chat.IUser, AI.Chat.Users.Slim>(
+builder.Services.AddSingleton<AI.Chat.Users.Slim>(
     serviceProvider =>
     {
         var options = serviceProvider
@@ -446,15 +479,23 @@ builder.Services.AddSingleton<AI.Chat.IUser, AI.Chat.Users.Slim>(
             moderator,
             bot);
     });
+builder.Services.AddSingleton<AI.Chat.IUser, AI.Chat.Users.Diagnostics.Trace<AI.Chat.Users.Slim>>();
 
-builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Allow>();
-builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Ban>();
-builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Demote>();
-builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Deny>();
-builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Instruct>();
-builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Mod>();
-builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Promote>();
-builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Remove>(
+builder.Services.AddTransient<AI.Chat.Commands.Allow>();
+builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Allow>>();
+builder.Services.AddTransient<AI.Chat.Commands.Ban>();
+builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Ban>>();
+builder.Services.AddTransient<AI.Chat.Commands.Demote>();
+builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Demote>>();
+builder.Services.AddTransient<AI.Chat.Commands.Deny>();
+builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Deny>>();
+builder.Services.AddTransient<AI.Chat.Commands.Instruct>();
+builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Instruct>>();
+builder.Services.AddTransient<AI.Chat.Commands.Mod>();
+builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Mod>>();
+builder.Services.AddTransient<AI.Chat.Commands.Promote>();
+builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Promote>>();
+builder.Services.AddTransient<AI.Chat.Commands.Remove>(
     serviceProvider =>
     {
         var options = serviceProvider
@@ -467,14 +508,34 @@ builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Remove>(
             options,
             bot);
     });
+builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Remove>>();
 
-builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Timeout>();
-builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Unban>();
-builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Unmod>();
-builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Unwelcome>();
-builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Welcome>();
+builder.Services.AddTransient<AI.Chat.Commands.Timeout>();
+builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Timeout>>();
+builder.Services.AddTransient<AI.Chat.Commands.Unban>();
+builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Unban>>();
+builder.Services.AddTransient<AI.Chat.Commands.Unmod>();
+builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Unmod>>();
+builder.Services.AddTransient<AI.Chat.Commands.Unwelcome>();
+builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Unwelcome>>();
+builder.Services.AddTransient<AI.Chat.Commands.Welcome>();
+builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Welcome>>();
 
-builder.Services.AddTransient<AI.Chat.ICommandExecutor, AI.Chat.CommandExecutors.Slim>(
+commandOverrides.Add(typeof(AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Allow>), typeof(AI.Chat.Commands.Allow).Name);
+commandOverrides.Add(typeof(AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Ban>), typeof(AI.Chat.Commands.Ban).Name);
+commandOverrides.Add(typeof(AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Demote>), typeof(AI.Chat.Commands.Demote).Name);
+commandOverrides.Add(typeof(AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Deny>), typeof(AI.Chat.Commands.Deny).Name);
+commandOverrides.Add(typeof(AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Instruct>), typeof(AI.Chat.Commands.Instruct).Name);
+commandOverrides.Add(typeof(AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Mod>), typeof(AI.Chat.Commands.Mod).Name);
+commandOverrides.Add(typeof(AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Promote>), typeof(AI.Chat.Commands.Promote).Name);
+commandOverrides.Add(typeof(AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Remove>), typeof(AI.Chat.Commands.Remove).Name);
+commandOverrides.Add(typeof(AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Timeout>), typeof(AI.Chat.Commands.Timeout).Name);
+commandOverrides.Add(typeof(AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Unban>), typeof(AI.Chat.Commands.Unban).Name);
+commandOverrides.Add(typeof(AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Unmod>), typeof(AI.Chat.Commands.Unmod).Name);
+commandOverrides.Add(typeof(AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Unwelcome>), typeof(AI.Chat.Commands.Unwelcome).Name);
+commandOverrides.Add(typeof(AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Welcome>), typeof(AI.Chat.Commands.Welcome).Name);
+
+builder.Services.AddTransient<AI.Chat.CommandExecutors.Slim>(
     serviceProvider =>
     {
         var commands = serviceProvider
@@ -484,6 +545,7 @@ builder.Services.AddTransient<AI.Chat.ICommandExecutor, AI.Chat.CommandExecutors
             commands,
             commandOverrides);
     });
+builder.Services.AddTransient<AI.Chat.ICommandExecutor, AI.Chat.CommandExecutors.Diagnostics.Trace<AI.Chat.CommandExecutors.Slim>>();
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
