@@ -14,6 +14,9 @@
     <None Include="alloy\config.alloy" />
     <None Include="docker-compose.infrastructure.yml" />
     <None Include="docker-compose.yml" />
+    <None Include="grafana\dashboards\logs.json" />
+    <None Include="grafana\dashboards\scopes.json" />
+    <None Include="grafana\provisioning\dashboards\automatic.yaml" />
     <None Include="grafana\provisioning\datasources\automatic.yaml" />
     <None Include="loki\config.yaml" />
     <None Include="prometheus\config.yaml" />
@@ -21,7 +24,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="grafana\provisioning\alerting\" />
-    <Folder Include="grafana\provisioning\dashboards\" />
     <Folder Include="grafana\provisioning\plugins\" />
   </ItemGroup>
 </Project>

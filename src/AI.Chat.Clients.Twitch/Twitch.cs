@@ -150,7 +150,7 @@ namespace AI.Chat.Clients
             };
             System.Func<string, string, System.Threading.Tasks.Task> welcomeAsync = async (username, channel) =>
             {
-                _logger.LogInformation($"{username} joined");
+                //_logger.LogInformation($"{username} joined");
 
                 await _user.WelcomeAsync(username,
                         async (string greeting) => await _scope.ExecuteWriteAsync(

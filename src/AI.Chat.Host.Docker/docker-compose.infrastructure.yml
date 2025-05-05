@@ -67,6 +67,7 @@ services:
     image: grafana/grafana
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
     ports:
       - 3000:3000
     networks:

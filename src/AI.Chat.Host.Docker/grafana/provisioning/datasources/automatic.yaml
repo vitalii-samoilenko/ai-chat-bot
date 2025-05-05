@@ -3,6 +3,7 @@ apiVersion: 1
 datasources:
   - name: loki
     type: loki
+    uid: logs
     access: proxy
     url: http://loki:3100
     user:
@@ -13,6 +14,7 @@ datasources:
 
   - name: prometheus
     type: prometheus
+    uid: metrics
     access: proxy
     url: http://prometheus:9090
     user:
@@ -25,6 +27,7 @@ datasources:
 
   - name: tempo
     type: tempo
+    uid: traces
     access: proxy
     url: http://tempo:3200
     user:
