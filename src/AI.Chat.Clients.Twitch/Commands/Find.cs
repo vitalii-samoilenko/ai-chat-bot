@@ -38,8 +38,10 @@
                     break;
                 }
             }
-            var message = messageBuilder.Remove(0, 1)
-                .ToString();
+            var message = 0 < messageBuilder.Length
+                ? messageBuilder.Remove(0, 1)
+                    .ToString()
+                : null;
             if (!string.IsNullOrWhiteSpace(message))
             {
                 _client.SendMessage(_client.JoinedChannels[0], message);
