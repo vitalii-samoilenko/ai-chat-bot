@@ -41,6 +41,9 @@ builder.Services.AddOpenTelemetry()
         tracing.AddSource(AI.Chat.Diagnostics.ActivitySources.Moderators.Name);
         tracing.AddSource(AI.Chat.Diagnostics.ActivitySources.Scopes.Name);
         tracing.AddSource(AI.Chat.Diagnostics.ActivitySources.Users.Name);
+        tracing.AddSource(AI.Chat.Diagnostics.ActivitySources.Clients.Name);
+
+        tracing.AddSource(TwitchLib.Client.Diagnostics.ActivitySources.Client.Name);
     })
     .UseOtlpExporter();
 
@@ -139,7 +142,7 @@ switch (client)
             }
             else
             {
-                builder.Services.AddHttpClient<TwitchLib.Client.Interfaces.IAuthClient, TwitchLib.Client.AuthClient>(
+                builder.Services.AddHttpClient<TwitchLib.Client.AuthClient>(
                         (serviceProvider, httpClient) =>
                         {
                             var options = serviceProvider
@@ -148,6 +151,7 @@ switch (client)
                             httpClient.BaseAddress = new Uri(
                                 options.Auth.Uri);
                         });
+                builder.Services.AddTransient<TwitchLib.Client.Interfaces.IAuthClient, TwitchLib.Client.Diagnostics.AuthClient>();
 
                 builder.Services.AddTransient<TwitchLib.Communication.Interfaces.IClient, TwitchLib.Communication.Clients.WebSocketClient>(
                         serviceProvider =>
@@ -158,8 +162,9 @@ switch (client)
                             return new TwitchLib.Communication.Clients.WebSocketClient(
                                 options.Communication);
                         });
-                builder.Services.AddKeyedSingleton<TwitchLib.Client.Interfaces.ITwitchClient, TwitchLib.Client.TwitchClient>("user");
-                builder.Services.AddKeyedSingleton<TwitchLib.Client.Interfaces.ITwitchClient, TwitchLib.Client.TwitchClient>("moderator");
+                builder.Services.AddTransient<TwitchLib.Client.TwitchClient>();
+                builder.Services.AddKeyedSingleton<TwitchLib.Client.Interfaces.ITwitchClient, TwitchLib.Client.Diagnostics.TwitchClient>("user");
+                builder.Services.AddKeyedSingleton<TwitchLib.Client.Interfaces.ITwitchClient, TwitchLib.Client.Diagnostics.TwitchClient>("moderator");
             }
             builder.Services.AddKeyedSingleton<AI.Chat.IScope, AI.Chat.Scopes.Diagnostics.Trace<AI.Chat.Scopes.Slim>>("user");
             builder.Services.AddTransient<AI.Chat.Clients.Twitch>(
@@ -206,6 +211,7 @@ switch (client)
                         user,
                         scope);
                 });
+            builder.Services.AddTransient<AI.Chat.Clients.ITwitch, AI.Chat.Clients.Diagnostics.Twitch>();
 
             builder.Services.AddTransient<AI.Chat.Commands.Twitch.Cheerful>(
                 serviceProvider =>
@@ -342,7 +348,7 @@ switch (client)
                         .GetRequiredService<IOptions<AI.Chat.Options.Twitch.Client>>()
                         .Value;
                     var client = serviceProvider
-                        .GetRequiredService<AI.Chat.Clients.Twitch>();
+                        .GetRequiredService<AI.Chat.Clients.ITwitch>();
 
                     return new AI.Chat.Host.API.Services.Twitch(
                         options,

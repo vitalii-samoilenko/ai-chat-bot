@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AI.Chat.Clients.Twitch\AI.Chat.Clients.Twitch.csproj" />
+    <ProjectReference Include="..\AI.Chat.Diagnostics\AI.Chat.Diagnostics.csproj" />
+  </ItemGroup>
+
+</Project>

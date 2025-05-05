@@ -21,14 +21,14 @@
         }
         public T ExecuteRead<T>(System.Func<T> action)
         {
-            using (var activity = AI.Chat.Diagnostics.ActivitySources.Scopes.StartActivity($"{ScopeName}.{nameof(ExecuteRead)}WithResult"))
+            using (var activity = AI.Chat.Diagnostics.ActivitySources.Scopes.StartActivity($"{ScopeName}.{nameof(ExecuteRead)}"))
             {
                 return _scope.ExecuteRead(action);
             }
         }
         public System.Collections.Generic.IEnumerable<T> ExecuteRead<T>(System.Func<System.Collections.Generic.IEnumerable<T>> action)
         {
-            using (var activity = AI.Chat.Diagnostics.ActivitySources.Scopes.StartActivity($"{ScopeName}.{nameof(ExecuteRead)}WithResultCollection"))
+            using (var activity = AI.Chat.Diagnostics.ActivitySources.Scopes.StartActivity($"{ScopeName}.{nameof(ExecuteRead)}"))
             {
                 foreach (var result in _scope.ExecuteRead(action))
                 {
@@ -45,7 +45,7 @@
         }
         public T ExecuteWrite<T>(System.Func<T> action)
         {
-            using (var activity = AI.Chat.Diagnostics.ActivitySources.Scopes.StartActivity($"{ScopeName}.{nameof(ExecuteWrite)}WithResult"))
+            using (var activity = AI.Chat.Diagnostics.ActivitySources.Scopes.StartActivity($"{ScopeName}.{nameof(ExecuteWrite)}"))
             {
                 return _scope.ExecuteWrite(action);
             }
@@ -61,7 +61,7 @@
         }
         public async System.Threading.Tasks.Task<T> ExecuteReadAsync<T>(System.Func<System.Threading.Tasks.Task<T>> actionAsync)
         {
-            using (var activity = AI.Chat.Diagnostics.ActivitySources.Scopes.StartActivity($"{ScopeName}.{nameof(ExecuteReadAsync)}WithResult"))
+            using (var activity = AI.Chat.Diagnostics.ActivitySources.Scopes.StartActivity($"{ScopeName}.{nameof(ExecuteReadAsync)}"))
             {
                 return await _scope.ExecuteReadAsync(actionAsync)
                     .ConfigureAwait(false);
@@ -77,7 +77,7 @@
         }
         public async System.Threading.Tasks.Task<T> ExecuteWriteAsync<T>(System.Func<System.Threading.Tasks.Task<T>> actionAsync)
         {
-            using (var activity = AI.Chat.Diagnostics.ActivitySources.Scopes.StartActivity($"{ScopeName}.{nameof(ExecuteWriteAsync)}WithResult"))
+            using (var activity = AI.Chat.Diagnostics.ActivitySources.Scopes.StartActivity($"{ScopeName}.{nameof(ExecuteWriteAsync)}"))
             {
                 return await _scope.ExecuteWriteAsync(actionAsync)
                     .ConfigureAwait(false);

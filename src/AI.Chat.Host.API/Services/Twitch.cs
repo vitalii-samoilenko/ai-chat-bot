@@ -3,9 +3,9 @@
     internal class Twitch : IHostedService
     {
         private Options.Twitch.Client _options;
-        private Clients.Twitch _client;
+        private Clients.ITwitch _client;
 
-        public Twitch(Options.Twitch.Client options, Clients.Twitch client)
+        public Twitch(Options.Twitch.Client options, Clients.ITwitch client)
         {
             _options = options;
             _client = client;

@@ -2,7 +2,12 @@
 
 namespace AI.Chat.Clients
 {
-    public class Twitch
+    public interface ITwitch
+    {
+        System.Threading.Tasks.Task StartAsync();
+    }
+
+    public class Twitch : ITwitch
     {
         private readonly Options.User _userOptions;
         private readonly Options.Twitch.Client _clientOptions;
