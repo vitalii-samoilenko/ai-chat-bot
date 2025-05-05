@@ -27,6 +27,8 @@ builder.Services.AddOpenTelemetry()
     .WithMetrics(metrics =>
     {
         metrics.AddAspNetCoreInstrumentation();
+
+        metrics.AddMeter(AI.Chat.Diagnostics.Counters.Scopes.Name);
     })
     .WithTracing(tracing =>
     {
@@ -53,7 +55,8 @@ var adapter = builder.Configuration.GetValue<Adapters>("Chat:Adapter:Type");
 var client = builder.Configuration.GetValue<Clients>("Chat:Client:Type");
 
 builder.Services.AddTransient<AI.Chat.Scopes.Slim>();
-builder.Services.AddTransient<AI.Chat.Scopes.Diagnostics.Trace<AI.Chat.Scopes.Slim>>();
+builder.Services.AddTransient<AI.Chat.Scopes.Diagnostics.OpenClose<AI.Chat.Scopes.Slim>>();
+builder.Services.AddTransient<AI.Chat.Scopes.Diagnostics.Trace<AI.Chat.Scopes.Diagnostics.OpenClose<AI.Chat.Scopes.Slim>>>();
 
 switch (adapter)
 {
@@ -166,7 +169,7 @@ switch (client)
                 builder.Services.AddKeyedSingleton<TwitchLib.Client.Interfaces.ITwitchClient, TwitchLib.Client.Diagnostics.TwitchClient>("user");
                 builder.Services.AddKeyedSingleton<TwitchLib.Client.Interfaces.ITwitchClient, TwitchLib.Client.Diagnostics.TwitchClient>("moderator");
             }
-            builder.Services.AddKeyedSingleton<AI.Chat.IScope, AI.Chat.Scopes.Diagnostics.Trace<AI.Chat.Scopes.Slim>>("user");
+            builder.Services.AddKeyedSingleton<AI.Chat.IScope, AI.Chat.Scopes.Diagnostics.Trace<AI.Chat.Scopes.Diagnostics.OpenClose<AI.Chat.Scopes.Slim>>>("user");
             builder.Services.AddTransient<AI.Chat.Clients.Twitch>(
                 serviceProvider =>
                 {
@@ -396,8 +399,8 @@ builder.Services.AddTransient<System.Collections.Generic.IEnumerable<AI.Chat.IFi
         return filters;
     });
 
-builder.Services.AddKeyedSingleton<AI.Chat.IScope, AI.Chat.Scopes.Diagnostics.Trace<AI.Chat.Scopes.Slim>>("bot");
-builder.Services.AddKeyedSingleton<AI.Chat.IScope, AI.Chat.Scopes.Diagnostics.Trace<AI.Chat.Scopes.Slim>>("moderator");
+builder.Services.AddKeyedSingleton<AI.Chat.IScope, AI.Chat.Scopes.Diagnostics.Trace<AI.Chat.Scopes.Diagnostics.OpenClose<AI.Chat.Scopes.Slim>>>("bot");
+builder.Services.AddKeyedSingleton<AI.Chat.IScope, AI.Chat.Scopes.Diagnostics.Trace<AI.Chat.Scopes.Diagnostics.OpenClose<AI.Chat.Scopes.Slim>>>("moderator");
 
 builder.Services.AddSingleton<AI.Chat.Bots.Filtered>(
     serviceProvider =>
