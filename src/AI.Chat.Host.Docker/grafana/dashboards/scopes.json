@@ -102,15 +102,37 @@
       },
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "fixedColor": "green",
+            "mode": "fixed"
+          },
           "custom": {
+            "fillOpacity": 80,
+            "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
-            "scaleDistribution": {
-              "type": "linear"
+            "lineWidth": 1,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
             }
+          },
+          "fieldMinMax": false,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 100000
+              }
+            ]
           }
         },
         "overrides": []
@@ -123,37 +145,17 @@
       },
       "id": 2,
       "options": {
-        "calculate": false,
-        "cellGap": 1,
-        "color": {
-          "exponent": 0.5,
-          "fill": "dark-orange",
-          "mode": "scheme",
-          "reverse": false,
-          "scale": "exponential",
-          "scheme": "Spectral",
-          "steps": 64
-        },
-        "exemplars": {
-          "color": "rgba(255,0,255,0.7)"
-        },
-        "filterValues": {
-          "le": 1e-9
-        },
+        "combine": true,
         "legend": {
-          "show": false
-        },
-        "rowsFrame": {
-          "layout": "auto"
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
         },
         "tooltip": {
-          "mode": "single",
-          "showColorScale": false,
-          "yHistogram": false
-        },
-        "yAxis": {
-          "axisPlacement": "left",
-          "reverse": false
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
         }
       },
       "pluginVersion": "11.6.1",
@@ -169,15 +171,15 @@
           "expr": "traces_spanmetrics_latency{source=\"tempo\", span_name=~\"AI[.]Chat[.]Scopes[.].*ExecuteRead.*\"}",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
-          "instant": false,
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
+          "range": false,
           "refId": "A",
           "useBackend": false
         }
       ],
       "title": "Read",
-      "type": "heatmap"
+      "type": "histogram"
     },
     {
       "datasource": {
@@ -260,15 +262,37 @@
       },
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "fixedColor": "green",
+            "mode": "fixed"
+          },
           "custom": {
+            "fillOpacity": 80,
+            "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
-            "scaleDistribution": {
-              "type": "linear"
+            "lineWidth": 1,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
             }
+          },
+          "fieldMinMax": false,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 100000
+              }
+            ]
           }
         },
         "overrides": []
@@ -281,37 +305,17 @@
       },
       "id": 4,
       "options": {
-        "calculate": false,
-        "cellGap": 1,
-        "color": {
-          "exponent": 0.5,
-          "fill": "dark-orange",
-          "mode": "scheme",
-          "reverse": false,
-          "scale": "exponential",
-          "scheme": "Spectral",
-          "steps": 64
-        },
-        "exemplars": {
-          "color": "rgba(255,0,255,0.7)"
-        },
-        "filterValues": {
-          "le": 1e-9
-        },
+        "combine": true,
         "legend": {
-          "show": false
-        },
-        "rowsFrame": {
-          "layout": "auto"
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
         },
         "tooltip": {
-          "mode": "single",
-          "showColorScale": false,
-          "yHistogram": false
-        },
-        "yAxis": {
-          "axisPlacement": "left",
-          "reverse": false
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
         }
       },
       "pluginVersion": "11.6.1",
@@ -322,20 +326,20 @@
             "uid": "metrics"
           },
           "disableTextWrap": false,
-          "editorMode": "code",
+          "editorMode": "builder",
           "exemplar": false,
           "expr": "traces_spanmetrics_latency{source=\"tempo\", span_name=~\"AI[.]Chat[.]Scopes[.].*ExecuteWrite.*\"}",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
-          "instant": false,
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
+          "range": false,
           "refId": "A",
           "useBackend": false
         }
       ],
       "title": "Write",
-      "type": "heatmap"
+      "type": "histogram"
     }
   ],
   "preload": false,
