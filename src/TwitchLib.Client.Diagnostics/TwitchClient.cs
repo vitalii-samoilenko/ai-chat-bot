@@ -77,6 +77,9 @@ namespace TwitchLib.Client.Diagnostics
             {
                 _client.OnMessageReceived += (sender, args) =>
                 {
+                    Meters.MessageLength.Record(args.ChatMessage.Message.Length,
+                        new KeyValuePair<string, object>("user.name", args.ChatMessage.Username));
+
                     var temp = Activity.Current;
                     Activity.Current = null;
                     using (var activity = ActivitySources.Client.StartActivity($"{ClientName}.{nameof(OnMessageReceived)}"))

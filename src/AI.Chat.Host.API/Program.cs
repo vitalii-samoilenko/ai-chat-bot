@@ -28,7 +28,11 @@ builder.Services.AddOpenTelemetry()
     {
         metrics.AddAspNetCoreInstrumentation();
 
-        metrics.AddMeter(AI.Chat.Diagnostics.Counters.Scopes.Name);
+        metrics.AddMeter(AI.Chat.Diagnostics.Meters.Adapters.Name);
+        metrics.AddMeter(AI.Chat.Diagnostics.Meters.Scopes.Name);
+        metrics.AddMeter(AI.Chat.Diagnostics.Meters.Users.Name);
+
+        metrics.AddMeter(TwitchLib.Client.Diagnostics.Meters.Client.Name);
     })
     .WithTracing(tracing =>
     {
@@ -55,8 +59,8 @@ var adapter = builder.Configuration.GetValue<Adapters>("Chat:Adapter:Type");
 var client = builder.Configuration.GetValue<Clients>("Chat:Client:Type");
 
 builder.Services.AddTransient<AI.Chat.Scopes.Slim>();
-builder.Services.AddTransient<AI.Chat.Scopes.Diagnostics.OpenClose<AI.Chat.Scopes.Slim>>();
-builder.Services.AddTransient<AI.Chat.Scopes.Diagnostics.Trace<AI.Chat.Scopes.Diagnostics.OpenClose<AI.Chat.Scopes.Slim>>>();
+builder.Services.AddTransient<AI.Chat.Scopes.Diagnostics.Trace<AI.Chat.Scopes.Slim>>();
+builder.Services.AddTransient<AI.Chat.Scopes.Diagnostics.OpenClose<AI.Chat.Scopes.Diagnostics.Trace<AI.Chat.Scopes.Slim>>>();
 
 switch (adapter)
 {
@@ -80,29 +84,30 @@ switch (adapter)
                 });
             builder.Services.AddTransient<AI.Chat.Adapters.OpenAI>();
             builder.Services.AddTransient<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.OpenAI>>();
-            builder.Services.AddTransient<AI.Chat.Adapters.Delayed<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.OpenAI>>>(
+            builder.Services.AddTransient<AI.Chat.Adapters.Diagnostics.ReplyLength<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.OpenAI>>>();
+            builder.Services.AddTransient<AI.Chat.Adapters.Delayed<AI.Chat.Adapters.Diagnostics.ReplyLength<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.OpenAI>>>>(
                 serviceProvider =>
                 {
                     var options = serviceProvider
                         .GetRequiredService<IOptions<AI.Chat.Options.OpenAI.Adapter>>()
                         .Value;
                     var adapter = serviceProvider
-                        .GetRequiredService<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.OpenAI>>();
-                    return new AI.Chat.Adapters.Delayed<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.OpenAI>>(
+                        .GetRequiredService<AI.Chat.Adapters.Diagnostics.ReplyLength<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.OpenAI>>>();
+                    return new AI.Chat.Adapters.Delayed<AI.Chat.Adapters.Diagnostics.ReplyLength<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.OpenAI>>>(
                         options,
                         adapter);
                 });
-            builder.Services.AddTransient<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.Delayed<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.OpenAI>>>>();
+            builder.Services.AddTransient<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.Delayed<AI.Chat.Adapters.Diagnostics.ReplyLength<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.OpenAI>>>>>();
             switch (client)
             {
                 case Clients.Twitch:
                     {
-                        builder.Services.AddTransient<AI.Chat.IAdapter, AI.Chat.Adapters.Twitch.Formatted<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.Delayed<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.OpenAI>>>>>();
+                        builder.Services.AddTransient<AI.Chat.IAdapter, AI.Chat.Adapters.Twitch.Formatted<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.Delayed<AI.Chat.Adapters.Diagnostics.ReplyLength<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.OpenAI>>>>>>();
                     }
                     break;
                 default:
                     {
-                        builder.Services.AddTransient<AI.Chat.IAdapter, AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.Delayed<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.OpenAI>>>>();
+                        builder.Services.AddTransient<AI.Chat.IAdapter, AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.Delayed<AI.Chat.Adapters.Diagnostics.ReplyLength<AI.Chat.Adapters.Diagnostics.Trace<AI.Chat.Adapters.OpenAI>>>>>();
                     }
                     break;
             }
@@ -169,7 +174,7 @@ switch (client)
                 builder.Services.AddKeyedSingleton<TwitchLib.Client.Interfaces.ITwitchClient, TwitchLib.Client.Diagnostics.TwitchClient>("user");
                 builder.Services.AddKeyedSingleton<TwitchLib.Client.Interfaces.ITwitchClient, TwitchLib.Client.Diagnostics.TwitchClient>("moderator");
             }
-            builder.Services.AddKeyedSingleton<AI.Chat.IScope, AI.Chat.Scopes.Diagnostics.Trace<AI.Chat.Scopes.Diagnostics.OpenClose<AI.Chat.Scopes.Slim>>>("user");
+            builder.Services.AddKeyedSingleton<AI.Chat.IScope, AI.Chat.Scopes.Diagnostics.OpenClose<AI.Chat.Scopes.Diagnostics.Trace<AI.Chat.Scopes.Slim>>>("user");
             builder.Services.AddTransient<AI.Chat.Clients.Twitch>(
                 serviceProvider =>
                 {
@@ -399,8 +404,8 @@ builder.Services.AddTransient<System.Collections.Generic.IEnumerable<AI.Chat.IFi
         return filters;
     });
 
-builder.Services.AddKeyedSingleton<AI.Chat.IScope, AI.Chat.Scopes.Diagnostics.Trace<AI.Chat.Scopes.Diagnostics.OpenClose<AI.Chat.Scopes.Slim>>>("bot");
-builder.Services.AddKeyedSingleton<AI.Chat.IScope, AI.Chat.Scopes.Diagnostics.Trace<AI.Chat.Scopes.Diagnostics.OpenClose<AI.Chat.Scopes.Slim>>>("moderator");
+builder.Services.AddKeyedSingleton<AI.Chat.IScope, AI.Chat.Scopes.Diagnostics.OpenClose<AI.Chat.Scopes.Diagnostics.Trace<AI.Chat.Scopes.Slim>>>("bot");
+builder.Services.AddKeyedSingleton<AI.Chat.IScope, AI.Chat.Scopes.Diagnostics.OpenClose<AI.Chat.Scopes.Diagnostics.Trace<AI.Chat.Scopes.Slim>>>("moderator");
 
 builder.Services.AddSingleton<AI.Chat.Bots.Filtered>(
     serviceProvider =>
@@ -488,7 +493,8 @@ builder.Services.AddSingleton<AI.Chat.Users.Slim>(
             moderator,
             bot);
     });
-builder.Services.AddSingleton<AI.Chat.IUser, AI.Chat.Users.Diagnostics.Trace<AI.Chat.Users.Slim>>();
+builder.Services.AddSingleton<AI.Chat.Users.Diagnostics.Trace<AI.Chat.Users.Slim>>();
+builder.Services.AddSingleton<AI.Chat.IUser, AI.Chat.Users.Diagnostics.MessageLength<AI.Chat.Users.Diagnostics.Trace<AI.Chat.Users.Slim>>>();
 
 builder.Services.AddTransient<AI.Chat.Commands.Allow>();
 builder.Services.AddTransient<AI.Chat.ICommand, AI.Chat.Commands.Diagnostics.Trace<AI.Chat.Commands.Allow>>();
