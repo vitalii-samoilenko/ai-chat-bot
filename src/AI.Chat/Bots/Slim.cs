@@ -1,48 +1,24 @@
-﻿namespace AI.Chat.Bots
+﻿using AI.Chat.Extensions;
+
+namespace AI.Chat.Bots
 {
     public class Slim : IBot
     {
         private readonly IAdapter _adapter;
+        private readonly IHistory _history;
 
-        public Slim(IAdapter adapter)
+        public Slim(IAdapter adapter, IHistory history)
         {
             _adapter = adapter;
+            _history = history;
         }
 
-        public bool TryGet(string key, out string message)
+        public async System.Threading.Tasks.Task<(System.DateTime messageKey, System.DateTime replyKey)> ReplyAsync(string username, string message)
         {
-            return _adapter.TryGet(key, out message);
-        }
-        public void Remove(params string[] keys)
-        {
-            foreach (var key in keys)
-            {
-                _adapter.Remove(key);
-            }
-        }
-        public void RemoveAll()
-        {
-            _adapter.RemoveAll();
-        }
-        public string Instruct(string message)
-        {
-            return _adapter.AddInstruction(message);
-        }
-        public System.Collections.Generic.IEnumerable<string> Find(string fromKey, string toKey)
-        {
-            return _adapter.Find(fromKey, toKey);
-        }
-        public System.Collections.Generic.IEnumerable<string> FindAll()
-        {
-            return _adapter.FindAll();
-        }
-
-        public async System.Threading.Tasks.Task<(string messageKey, string replyKey)> ReplyAsync(string message)
-        {
-            var messageKey = _adapter.AddMessage(message);
-            var reply = await _adapter.GetReplyAsync()
+            var messageKey = _history.AddUserMessage(username, message);
+            (var reply, _) = await _adapter.GetReplyAsync()
                 .ConfigureAwait(false);
-            var replyKey = _adapter.AddReply(reply);
+            var replyKey = _history.AddModelMessage(reply);
             return (messageKey, replyKey);
         }
     }

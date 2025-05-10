@@ -11,7 +11,7 @@
 
         public System.Threading.Tasks.Task ExecuteAsync(string args)
         {
-            if (System.TimeSpan.TryParseExact(args, "HH:mm:ss", null, out var delay))
+            if (System.TimeSpan.TryParseExact(args, Constants.TimeSpanFormat, null, out var delay))
             {
                 _options.Delay = delay;
             }

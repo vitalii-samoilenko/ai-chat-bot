@@ -105,14 +105,14 @@
             }
         }
 
-        public void Hold(string key, (System.Func<System.Threading.Tasks.Task> onAllowAsync, System.Func<System.Threading.Tasks.Task> onDenyAsync) callbacks)
+        public void Hold(System.DateTime key, (System.Func<System.Threading.Tasks.Task> onAllowAsync, System.Func<System.Threading.Tasks.Task> onDenyAsync) callbacks)
         {
             using (var activity = AI.Chat.Diagnostics.ActivitySources.Moderators.StartActivity($"{ModeratorName}.{nameof(Hold)}"))
             {
                 _moderator.Hold(key, callbacks);
             }
         }
-        public System.Func<System.Threading.Tasks.Task> Allow(params string[] keys)
+        public System.Func<System.Threading.Tasks.Task> Allow(params System.DateTime[] keys)
         {
             using (var activity = AI.Chat.Diagnostics.ActivitySources.Moderators.StartActivity($"{ModeratorName}.{nameof(Allow)}"))
             {
@@ -126,7 +126,7 @@
                 return _moderator.AllowAll();
             }
         }
-        public System.Func<System.Threading.Tasks.Task> Deny(params string[] keys)
+        public System.Func<System.Threading.Tasks.Task> Deny(params System.DateTime[] keys)
         {
             using (var activity = AI.Chat.Diagnostics.ActivitySources.Moderators.StartActivity($"{ModeratorName}.{nameof(Deny)}"))
             {

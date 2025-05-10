@@ -12,13 +12,11 @@
             _filter = filter;
         }
 
-        public string Prompt => _filter.Prompt;
-
-        public bool IsDenied(string message)
+        public bool IsDenied(string message, out string reason)
         {
             using (var activity = AI.Chat.Diagnostics.ActivitySources.Filters.StartActivity($"{FilterName}.{nameof(IsDenied)}"))
             {
-                return _filter.IsDenied(message);
+                return _filter.IsDenied(message, out reason);
             }
         }
     }

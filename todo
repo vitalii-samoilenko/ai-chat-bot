@@ -1,12 +1,12 @@
 welcome active users
-joined spam into logs
-additional metrics
 grafana dashboards
  - logs
- - scope metrcis
  - client metrics
  - thread pool metrics
 *stream ownership*
 exception not logged
 admin
-timeseries db?
+drop native histogram?
+readwrite commands
+command return type
+google adapter with caching

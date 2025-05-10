@@ -8,7 +8,7 @@
     public class Filter
     {
         public FilterType Type { get; set; }
-        public string Prompt { get; set; }
+        public string Reason { get; set; }
         public string[] Args { get; set; }
     }
     public class Bot

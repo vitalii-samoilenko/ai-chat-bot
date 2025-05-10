@@ -2,19 +2,18 @@
 {
     public class Regex : IFilter
     {
-        private readonly string _prompt;
+        private readonly string _reason;
         private readonly System.Text.RegularExpressions.Regex _regex;
 
-        public Regex(string prompt, string pattern)
+        public Regex(string reason, string pattern)
         {
-            _prompt = prompt;
+            _reason = reason;
             _regex = new System.Text.RegularExpressions.Regex(pattern);
         }
 
-        public string Prompt => _prompt;
-
-        public bool IsDenied(string message)
+        public bool IsDenied(string message, out string reason)
         {
+            reason = _reason;
             return _regex.IsMatch(message);
         }
     }

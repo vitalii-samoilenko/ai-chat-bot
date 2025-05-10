@@ -1,21 +1,24 @@
-﻿namespace AI.Chat.Commands.Twitch
+﻿using AI.Chat.Extensions;
+
+namespace AI.Chat.Commands.Twitch
 {
     public class Get : ICommand
     {
-        private readonly IBot _bot;
+        private readonly IHistory _history;
         private readonly TwitchLib.Client.Interfaces.ITwitchClient _client;
 
-        public Get(IBot bot, TwitchLib.Client.Interfaces.ITwitchClient client)
+        public Get(IHistory history, TwitchLib.Client.Interfaces.ITwitchClient client)
         {
-            _bot = bot;
+            _history = history;
             _client = client;
         }
 
         public System.Threading.Tasks.Task ExecuteAsync(string args)
         {
-            if (_bot.TryGet(args, out var message))
+            if (args.TryParseKey(out var key)
+                && _history.TryGet(key, out var record))
             {
-                _client.SendMessage(_client.JoinedChannels[0], message);
+                _client.SendMessage(_client.JoinedChannels[0], record.Message);
             }
             return System.Threading.Tasks.Task.CompletedTask;
         }

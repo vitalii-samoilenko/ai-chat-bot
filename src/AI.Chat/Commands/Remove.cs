@@ -1,26 +1,34 @@
-﻿namespace AI.Chat.Commands
+﻿using AI.Chat.Extensions;
+
+namespace AI.Chat.Commands
 {
     public class Remove : ICommand
     {
-        private readonly Options.User _options;
-        private readonly IBot _bot;
+        private readonly IHistory _history;
 
-        public Remove(Options.User options, IBot bot)
+        public Remove(IHistory history)
         {
-            _options = options;
-            _bot = bot;
+            _history = history;
         }
 
         public System.Threading.Tasks.Task ExecuteAsync(string args)
         {
-            if (args == "all")
+            if (args == Constants.ArgsAll)
             {
-                _bot.RemoveAll();
-                _bot.Instruct(string.Format(_options.Context, _options.Name));
+                _history.Clear();
             }
             else
             {
-                _bot.Remove(args.Split(' '));
+                var keys = new System.Collections.Generic.List<System.DateTime>();
+                foreach (var arg in args.Split(' '))
+                {
+                    if (!arg.TryParseKey(out var key))
+                    {
+                        continue;
+                    }
+                    keys.Add(key);
+                }
+                _history.Remove(keys.ToArray());
             }
             return System.Threading.Tasks.Task.CompletedTask;
         }

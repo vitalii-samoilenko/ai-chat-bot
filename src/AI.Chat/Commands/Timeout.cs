@@ -19,11 +19,12 @@
             var tuples = new System.Collections.Generic.List<(string, System.TimeSpan)>();
             for (int i = 0; i < tokens.Length; i += 2)
             {
-                var username = tokens[i];
-                if (System.TimeSpan.TryParseExact(tokens[i + 1], "HH:mm:ss", null, out var timeout))
+                if (!System.TimeSpan.TryParseExact(tokens[i + 1], Constants.TimeSpanFormat, null, out var timeout))
                 {
-                    tuples.Add((username, timeout));
+                    continue;
                 }
+                var username = tokens[i];
+                tuples.Add((username, timeout));
             }
             _moderator.Timeout(tuples.ToArray());
             return System.Threading.Tasks.Task.CompletedTask;

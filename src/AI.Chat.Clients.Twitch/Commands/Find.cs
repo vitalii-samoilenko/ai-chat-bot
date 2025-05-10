@@ -1,46 +1,58 @@
-﻿namespace AI.Chat.Commands.Twitch
+﻿using AI.Chat.Extensions;
+
+namespace AI.Chat.Commands.Twitch
 {
     public class Find : ICommand
     {
-        private readonly IBot _bot;
+        private readonly IHistory _history;
         private readonly TwitchLib.Client.Interfaces.ITwitchClient _client;
 
-        public Find(IBot bot, TwitchLib.Client.Interfaces.ITwitchClient client)
+        public Find(IHistory history, TwitchLib.Client.Interfaces.ITwitchClient client)
         {
-            _bot = bot;
+            _history = history;
             _client = client;
         }
 
         public System.Threading.Tasks.Task ExecuteAsync(string args)
         {
-            System.Collections.Generic.IEnumerable<string> keys = null;
-            if (args == "all")
+            var fromKey = System.DateTime.MinValue;
+            var toKey = System.DateTime.MaxValue;
+            if (args.StartsWith(Constants.ArgsAll))
             {
-                keys = _bot.FindAll();
+                args = args.Substring(Constants.ArgsAll.Length);
             }
             else
             {
-                var tokens = args.Split(' ');
-                if (tokens.Length != 2)
+                var previous = 0;
+                var next = args.IndexOf(' ', previous);
+                if (next < 0
+                    || !args.Substring(previous, next - previous).TryParseKey(out fromKey))
                 {
                     return System.Threading.Tasks.Task.CompletedTask;
                 }
-                keys = _bot.Find(tokens[0], tokens[1]);
+                previous = next + 1;
+                next = args.IndexOf(' ', previous);
+                if (next < 0
+                    || !args.Substring(previous, next - previous).TryParseKey(out toKey))
+                {
+                    return System.Threading.Tasks.Task.CompletedTask;
+                }
+                args = args.Substring(next + 1);
             }
+            var maxLength = 499 - 500 % Constants.HistoryKeyFormat.Length;
             var messageBuilder = new System.Text.StringBuilder();
-            foreach (var key in keys)
+            foreach (var key in _history.Find(fromKey, toKey, args.Split(new char[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries)))
             {
                 messageBuilder.Append('-');
-                messageBuilder.Append(key);
-                if (490 < messageBuilder.Length)
+                messageBuilder.Append(key.ToKeyString());
+                if (maxLength < messageBuilder.Length)
                 {
                     messageBuilder.Append('-');
                     break;
                 }
             }
             var message = 0 < messageBuilder.Length
-                ? messageBuilder.Remove(0, 1)
-                    .ToString()
+                ? messageBuilder.Remove(0, 1).ToString()
                 : null;
             if (!string.IsNullOrWhiteSpace(message))
             {

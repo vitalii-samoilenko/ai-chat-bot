@@ -4,14 +4,14 @@
     {
         private readonly Options.Moderator _options;
         private readonly System.Collections.Generic.Dictionary<string, System.DateTime> _timeouts;
-        private readonly System.Collections.Generic.Dictionary<string, (System.Func<System.Threading.Tasks.Task>, System.Func<System.Threading.Tasks.Task>)> _onHold;
+        private readonly System.Collections.Generic.Dictionary<System.DateTime, (System.Func<System.Threading.Tasks.Task>, System.Func<System.Threading.Tasks.Task>)> _onHold;
         private readonly System.Collections.Generic.HashSet<string> _greeted;
 
         public Slim(Options.Moderator options)
         {
             _options = options;
             _timeouts = new System.Collections.Generic.Dictionary<string, System.DateTime>();
-            _onHold = new System.Collections.Generic.Dictionary<string, (System.Func<System.Threading.Tasks.Task>, System.Func<System.Threading.Tasks.Task>)>();
+            _onHold = new System.Collections.Generic.Dictionary<System.DateTime, (System.Func<System.Threading.Tasks.Task>, System.Func<System.Threading.Tasks.Task>)>();
             _greeted = new System.Collections.Generic.HashSet<string>();
         }
 
@@ -129,21 +129,22 @@
             }
         }
 
-        public void Hold(string key, (System.Func<System.Threading.Tasks.Task> onAllowAsync, System.Func<System.Threading.Tasks.Task> onDenyAsync) callbacks)
+        public void Hold(System.DateTime key, (System.Func<System.Threading.Tasks.Task> onAllowAsync, System.Func<System.Threading.Tasks.Task> onDenyAsync) callbacks)
         {
             _onHold[key] = callbacks;
         }
-        public System.Func<System.Threading.Tasks.Task> Allow(params string[] keys)
+        public System.Func<System.Threading.Tasks.Task> Allow(params System.DateTime[] keys)
         {
             var callbacks = new System.Collections.Generic.List<System.Func<System.Threading.Tasks.Task>>();
             foreach (var key in keys)
             {
-                if (_onHold.TryGetValue(key, out var pair))
+                if (!_onHold.TryGetValue(key, out var pair))
                 {
-                    (var onAllowAsync, _) = pair;
-                    _onHold.Remove(key);
-                    callbacks.Add(onAllowAsync);
+                    continue;
                 }
+                (var onAllowAsync, _) = pair;
+                _onHold.Remove(key);
+                callbacks.Add(onAllowAsync);
             }
             return async () =>
             {
@@ -172,17 +173,18 @@
                 }
             };
         }
-        public System.Func<System.Threading.Tasks.Task> Deny(params string[] keys)
+        public System.Func<System.Threading.Tasks.Task> Deny(params System.DateTime[] keys)
         {
             var callbacks = new System.Collections.Generic.List<System.Func<System.Threading.Tasks.Task>>();
             foreach (var key in keys)
             {
-                if (_onHold.TryGetValue(key, out var pair))
+                if (!_onHold.TryGetValue(key, out var pair))
                 {
-                    (_, var onDenyAsync) = pair;
-                    _onHold.Remove(key);
-                    callbacks.Add(onDenyAsync);
+                    continue;
                 }
+                (_, var onDenyAsync) = pair;
+                _onHold.Remove(key);
+                callbacks.Add(onDenyAsync);
             }
             return async () =>
             {

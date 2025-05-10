@@ -74,11 +74,11 @@
             Host.Console.Helpers.Save(_options);
         }
 
-        public void Hold(string key, (System.Func<System.Threading.Tasks.Task> onAllowAsync, System.Func<System.Threading.Tasks.Task> onDenyAsync) callbacks)
+        public void Hold(System.DateTime key, (System.Func<System.Threading.Tasks.Task> onAllowAsync, System.Func<System.Threading.Tasks.Task> onDenyAsync) callbacks)
         {
             _moderator.Hold(key, callbacks);
         }
-        public System.Func<System.Threading.Tasks.Task> Allow(params string[] keys)
+        public System.Func<System.Threading.Tasks.Task> Allow(params System.DateTime[] keys)
         {
             return _moderator.Allow(keys);
         }
@@ -86,7 +86,7 @@
         {
             return _moderator.AllowAll();
         }
-        public System.Func<System.Threading.Tasks.Task> Deny(params string[] keys)
+        public System.Func<System.Threading.Tasks.Task> Deny(params System.DateTime[] keys)
         {
             return _moderator.Deny(keys);
         }

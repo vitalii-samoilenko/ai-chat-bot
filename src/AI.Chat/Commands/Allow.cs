@@ -1,4 +1,6 @@
-﻿namespace AI.Chat.Commands
+﻿using AI.Chat.Extensions;
+
+namespace AI.Chat.Commands
 {
     public class Allow : ICommand
     {
@@ -11,9 +13,24 @@
 
         public async System.Threading.Tasks.Task ExecuteAsync(string args)
         {
-            var callback = args == "all"
-                ? _moderator.AllowAll()
-                : _moderator.Allow(args.Split(' '));
+            System.Func<System.Threading.Tasks.Task> callback;
+            if (args == Constants.ArgsAll)
+            {
+                callback = _moderator.AllowAll();
+            }
+            else
+            {
+                var keys = new System.Collections.Generic.List<System.DateTime>();
+                foreach (var arg in args.Split(' '))
+                {
+                    if (!arg.TryParseKey(out var key))
+                    {
+                        continue;
+                    }
+                    keys.Add(key);
+                }
+                callback = _moderator.Allow(keys.ToArray());
+            }
             await callback()
                 .ConfigureAwait(false);
         }

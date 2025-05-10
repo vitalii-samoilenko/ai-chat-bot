@@ -24,13 +24,13 @@
 
         public async System.Threading.Tasks.Task<bool> ExecuteAsync(string command, string args)
         {
-            if (_commands.TryGetValue(command, out var target))
+            if (!_commands.TryGetValue(command, out var target))
             {
-                await target.ExecuteAsync(args)
-                    .ConfigureAwait(false);
-                return true;
+                return false;
             }
-            return false;
+            await target.ExecuteAsync(args)
+                .ConfigureAwait(false);
+            return true;
         }
     }
 }

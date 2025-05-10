@@ -2,19 +2,18 @@
 {
     public class Length : IFilter
     {
-        private readonly string _prompt;
+        private readonly string _reason;
         private readonly int _length;
 
-        public Length(string prompt, int length)
+        public Length(string reason, int length)
         {
-            _prompt = prompt;
+            _reason = reason;
             _length = length;
         }
 
-        public string Prompt => _prompt;
-
-        public bool IsDenied(string message)
+        public bool IsDenied(string message, out string reason)
         {
+            reason = _reason;
             return _length < message.Length;
         }
     }

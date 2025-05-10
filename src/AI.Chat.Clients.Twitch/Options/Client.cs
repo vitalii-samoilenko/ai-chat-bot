@@ -20,7 +20,7 @@
     {
         public WelcomeMode Mode { get; set; }
     }
-    public class Client
+    public class Client : Options.Client
     {
         public string Channel { get; set; }
         public System.TimeSpan Delay { get; set; }

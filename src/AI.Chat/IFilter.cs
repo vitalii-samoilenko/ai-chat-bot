@@ -2,8 +2,6 @@
 {
     public interface IFilter
     {
-        string Prompt { get; }
-
-        bool IsDenied(string message);
+        bool IsDenied(string message, out string reason);
     }
 }

@@ -1,53 +1,52 @@
 ﻿namespace System.Collections.Generic
 {
-    public struct EntryKey
-    {
-        private const string Format = "HHmmss";
-
-        public static bool TryParse(string s, out EntryKey result)
-        {
-            result = default;
-            return Format.Length < s.Length
-                && DateTime.TryParseExact(s.Substring(0, Format.Length), Format, null, Globalization.DateTimeStyles.None, out result.Point)
-                && int.TryParse(s.Substring(Format.Length), out result.Index)
-                && !(result.Index < 0);
-        }
-
-        public DateTime Point;
-        public int Index;
-
-        public static bool operator <(EntryKey lhs, EntryKey rhs)
-        {
-            var lhsPoint = new DateTime(1, 1, 1, lhs.Point.Hour, lhs.Point.Minute, lhs.Point.Second);
-            var rhsPoint = new DateTime(1, 1, 1, rhs.Point.Hour, rhs.Point.Minute, rhs.Point.Second);
-            return lhsPoint < rhsPoint
-                || !(rhsPoint < lhsPoint)
-                    && lhs.Index < rhs.Index;
-        }
-        public static bool operator >(EntryKey lhs, EntryKey rhs)
-        {
-            return rhs < lhs;
-        }
-        public override string ToString()
-        {
-            return $"{Point.ToString(Format)}{Index}";
-        }
-    }
-
     public class Entry<T>
     {
-        public EntryKey Key { get; internal set; }
-        public T Item { get; internal set; }
+        public DateTime Key { get; internal set; }
+        public T Value { get; internal set; }
         public Entry<T> Previous { get; internal set; }
         public Entry<T> Next { get; internal set; }
     }
 
+    public class EntryComparer<T> : IComparer<Entry<T>>
+    {
+        public int Compare(Entry<T> x, Entry<T> y)
+        {
+            return x.Key.CompareTo(y.Key);
+        }
+    }
+
     public class TimeSeries<T> : IEnumerable<T>
     {
-        private List<Entry<T>>[][][] _buckets;
+        private static readonly IComparer<Entry<T>> EntryComparer = new EntryComparer<T>();
+
+        private readonly DateTime _start;
+        private readonly List<List<Entry<T>>[][][][][]> _buckets;
         private Entry<T> _head;
         private Entry<T> _tail;
+        private int _count;
 
+        public TimeSeries()
+            : this(DateTime.UtcNow)
+        {
+
+        }
+        public TimeSeries(DateTime start)
+        {
+            _start = start.ToUniversalTime();
+            _buckets = new List<List<Entry<T>>[][][][][]>();
+            _head = null;
+            _tail = null;
+            _count = 0;
+        }
+
+        public DateTime Start
+        {
+            get
+            {
+                return _start;
+            }
+        }
         public IEnumerable<Entry<T>> Entries
         {
             get
@@ -58,81 +57,146 @@
                 }
             }
         }
+        public int Count
+        {
+            get
+            {
+                return _count;
+            }
+        }
 
         public Entry<T> Add(T item)
         {
-            var now = DateTime.UtcNow;
-            if (_buckets == null)
+            return Add(DateTime.UtcNow, item);
+        }
+
+        public Entry<T> Add(DateTime key, T value)
+        {
+            key = key.ToUniversalTime();
+            if (key < _start)
             {
-                _buckets = new List<Entry<T>>[24][][];
+                throw new ArgumentOutOfRangeException(nameof(key));
             }
-            if (_buckets[now.Hour] == null)
-            {
-                _buckets[now.Hour] = new List<Entry<T>>[60][];
-            }
-            if (_buckets[now.Hour][now.Minute] == null)
-            {
-                _buckets[now.Hour][now.Minute] = new List<Entry<T>>[60];
-            }
-            if (_buckets[now.Hour][now.Minute][now.Second] == null)
-            {
-                _buckets[now.Hour][now.Minute][now.Second] = new List<Entry<T>>();
-            }
-            var bucket = _buckets[now.Hour][now.Minute][now.Second];
-            var index = bucket.Count;
+            var year = key.Year - _start.Year;
+            var month = key.Month - 1;
+            var day = key.Day - 1;
 
             var entry = new Entry<T>
             {
-                Key = new EntryKey
-                {
-                    Point = new DateTime(1, 1, 1, now.Hour, now.Minute, now.Second),
-                    Index = index
-                },
-                Item = item
+                Key = new DateTime(key.Year, key.Month, key.Day, key.Hour, key.Minute, key.Second, key.Millisecond, DateTimeKind.Utc),
+                Value = value
             };
-            bucket.Add(entry);
             if (_tail == null)
             {
                 _head = entry;
                 _tail = entry;
             }
+            else if (TryFind(entry.Key, out var next))
+            {
+                if (!(entry.Key < next.Key))
+                {
+                    throw new ArgumentException("Entry already exists", nameof(key));
+                }
+                next.Previous.Next = entry;
+                entry.Previous = next.Previous;
+                entry.Next = next;
+                next.Previous = entry;
+            }
             else
             {
-                _tail.Next = entry;
                 entry.Previous = _tail;
+                _tail.Next = entry;
                 _tail = entry;
             }
 
+            while (_buckets.Count < year + 1)
+            {
+                _buckets.Add(null);
+            }
+            if (_buckets[year] == null)
+            {
+                _buckets[year] = new List<Entry<T>>[12][][][][];
+            }
+            if (_buckets[year][month] == null)
+            {
+                _buckets[year][month] = new List<Entry<T>>[31][][][];
+            }
+            if (_buckets[year][month][day] == null)
+            {
+                _buckets[year][month][day] = new List<Entry<T>>[24][][];
+            }
+            var dayBucket = _buckets[year][month][day];
+
+            if (dayBucket[key.Hour] == null)
+            {
+                dayBucket[key.Hour] = new List<Entry<T>>[60][];
+            }
+            if (dayBucket[key.Hour][key.Minute] == null)
+            {
+                dayBucket[key.Hour][key.Minute] = new List<Entry<T>>[60];
+            }
+            if (dayBucket[key.Hour][key.Minute][key.Second] == null)
+            {
+                dayBucket[key.Hour][key.Minute][key.Second] = new List<Entry<T>>();
+            }
+            var secondBucket = dayBucket[key.Hour][key.Minute][key.Second];
+
+            var index = ~secondBucket.BinarySearch(entry, EntryComparer);
+            secondBucket.Insert(index, entry);
+            ++_count;
+
             return entry;
         }
-        public bool Remove(EntryKey key)
+        public bool Remove(DateTime key)
         {
-            var result = false;
-
-            if (_buckets == null
-                || _buckets[key.Point.Hour] == null
-                || _buckets[key.Point.Hour][key.Point.Minute] == null
-                || _buckets[key.Point.Hour][key.Point.Minute][key.Point.Second] == null)
+            key = key.ToUniversalTime();
+            if (key < _start)
             {
-                return result;
+                return false;
             }
-            var bucket = _buckets[key.Point.Hour][key.Point.Minute][key.Point.Second];
+            var year = key.Year - _start.Year;
+            var month = key.Month - 1;
+            var day = key.Day - 1;
 
-            if (key.Index < 0
-                || !(key.Index < bucket.Count))
+            if (!(year < _buckets.Count)
+                || _buckets[year] == null
+                || _buckets[year][month] == null
+                || _buckets[year][month][day] == null)
             {
-                return result;
+                return false;
             }
-            var entry = bucket[key.Index];
+            var dayBucket = _buckets[year][month][day];
 
-            bucket[key.Index] = null;
+            if (dayBucket[key.Hour] == null
+                || dayBucket[key.Hour][key.Minute] == null
+                || dayBucket[key.Hour][key.Minute][key.Second] == null)
+            {
+                return false;
+            }
+            var secondBucket = dayBucket[key.Hour][key.Minute][key.Second];
+
+            var entry = new Entry<T>
+            {
+                Key = new DateTime(key.Year, key.Month, key.Day, key.Hour, key.Minute, key.Second, key.Millisecond, DateTimeKind.Utc)
+            };
+            var index = secondBucket.BinarySearch(entry, EntryComparer);
+            if (index < 0)
+            {
+                return false;
+            }
+            entry = secondBucket[index];
+
+            var previousKey = key;
             if (entry.Previous != null)
             {
                 entry.Previous.Next = entry.Next;
+                previousKey = entry.Previous.Key;
             }
+            var nextKey = key;
             if (entry.Next != null)
             {
                 entry.Next.Previous = entry.Previous;
+                nextKey = entry.Next.Key;
             }
             if (entry == _tail)
             {
@@ -142,138 +206,124 @@
             {
                 _head = entry.Next;
             }
-            result = true;
-
-            if (_tail == null)
+            secondBucket.RemoveAt(index);
+            --_count;
+            var previousBucketIsDifferent = previousKey.Year < key.Year;
+            var nextBucketIsDifferent = key.Year < nextKey.Year;
+            if (previousBucketIsDifferent && nextBucketIsDifferent)
             {
-                _buckets = null;
-                return result;
+                _buckets[key.Year] = null;
+                return true;
             }
-            if (entry.Previous == null
-                || entry.Key.Point.Hour != entry.Previous.Key.Point.Hour)
+            previousBucketIsDifferent |= previousKey.Month < key.Month;
+            nextBucketIsDifferent |= key.Month < nextKey.Month;
+            if (previousBucketIsDifferent && nextBucketIsDifferent)
             {
-                if (entry.Next == null
-                    || entry.Key.Point.Hour != entry.Next.Key.Point.Hour)
-                {
-                    _buckets[entry.Key.Point.Hour] = null;
-                    return result;
-                }
+                _buckets[key.Year][key.Month] = null;
+                return true;
             }
-            if (entry.Previous == null
-                || entry.Key.Point.Hour != entry.Previous.Key.Point.Hour
-                || entry.Key.Point.Minute != entry.Previous.Key.Point.Minute)
+            previousBucketIsDifferent |= previousKey.Day < key.Day;
+            nextBucketIsDifferent |= key.Day < nextKey.Day;
+            if (previousBucketIsDifferent && nextBucketIsDifferent)
             {
-                if (entry.Next == null
-                    || entry.Key.Point.Hour != entry.Next.Key.Point.Hour
-                    || entry.Key.Point.Minute != entry.Next.Key.Point.Minute)
-                {
-                    _buckets[entry.Key.Point.Hour][entry.Key.Point.Minute] = null;
-                    return result;
-                }
+                _buckets[key.Year][key.Month][key.Day] = null;
+                return true;
             }
-            foreach (var _ in bucket)
+            previousBucketIsDifferent |= previousKey.Hour < key.Hour;
+            nextBucketIsDifferent |= key.Hour < nextKey.Hour;
+            if (previousBucketIsDifferent && nextBucketIsDifferent)
             {
-                if (_ != null)
-                {
-                    return result;
-                }
+                dayBucket[key.Hour] = null;
+                return true;
             }
-            _buckets[key.Point.Hour][key.Point.Minute][key.Point.Second] = null;
-            return result;
-        }
-        public void Clear()
-        {
-            _buckets = null;
-            _head = null;
-            _tail = null;
-        }
-        public bool TryGet(EntryKey key, out Entry<T> entry)
-        {
-            entry = default;
-
-            if (_buckets == null
-                || _buckets[key.Point.Hour] == null
-                || _buckets[key.Point.Hour][key.Point.Minute] == null
-                || _buckets[key.Point.Hour][key.Point.Minute][key.Point.Second] == null)
+            previousBucketIsDifferent |= previousKey.Minute < key.Minute;
+            nextBucketIsDifferent |= key.Minute < nextKey.Minute;
+            if (previousBucketIsDifferent && nextBucketIsDifferent)
             {
-                return false;
+                dayBucket[key.Hour][key.Minute] = null;
+                return true;
             }
-            var bucket = _buckets[key.Point.Hour][key.Point.Minute][key.Point.Second];
-
-            if (key.Index < 0
-                || !(key.Index < bucket.Count))
+            if (secondBucket.Count < 1)
             {
-                return false;
+                dayBucket[key.Hour][key.Minute][key.Second] = null;
             }
-            entry = bucket[key.Index];
 
             return true;
         }
-        public IEnumerable<Entry<T>> Find(EntryKey fromKey, EntryKey toKey)
+        public void Clear()
         {
-            if (_buckets == null)
+            _buckets.Clear();
+            _head = null;
+            _tail = null;
+            _count = 0;
+        }
+        public bool TryGet(DateTime key, out Entry<T> entry)
+        {
+            key = key.ToUniversalTime();
+            entry = default;
+            if (key < _start)
+            {
+                return false;
+            }
+            var year = key.Year - _start.Year;
+            var month = key.Month - 1;
+            var day = key.Day - 1;
+
+            if (!(year < _buckets.Count)
+                || _buckets[year] == null
+                || _buckets[year][month] == null
+                || _buckets[year][month][day] == null)
+            {
+                return false;
+            }
+            var dayBucket = _buckets[year][month][day];
+
+            if (dayBucket[key.Hour] == null
+                || dayBucket[key.Hour][key.Minute] == null
+                || dayBucket[key.Hour][key.Minute][key.Second] == null)
+            {
+                return false;
+            }
+            var secondBucket = dayBucket[key.Hour][key.Minute][key.Second];
+
+            entry = new Entry<T>
+            {
+                Key = new DateTime(key.Year, key.Month, key.Day, key.Hour, key.Minute, key.Second, key.Millisecond, DateTimeKind.Utc)
+            };
+            var index = secondBucket.BinarySearch(entry, EntryComparer);
+            if (index < 0)
+            {
+                return false;
+            }
+            entry = secondBucket[index];
+
+            return true;
+        }
+        public IEnumerable<Entry<T>> Find(DateTime fromKey, DateTime toKey)
+        {
+            if (toKey < fromKey)
+            {
+                throw new ArgumentException("Invalid time range");
+            }
+            fromKey = fromKey.ToUniversalTime();
+            toKey = toKey.ToUniversalTime();
+            fromKey = new DateTime(fromKey.Year, fromKey.Month, fromKey.Day, fromKey.Hour, fromKey.Minute, fromKey.Second, DateTimeKind.Utc);
+            toKey = new DateTime(toKey.Year, toKey.Month, toKey.Day, toKey.Hour, toKey.Minute, toKey.Second, DateTimeKind.Utc);
+            if (toKey < _start)
             {
                 yield break;
             }
-            if (toKey < fromKey)
+            if (fromKey < _start)
             {
-                foreach (var key in Find(fromKey, new EntryKey
-                {
-                    Point = new DateTime(1, 1, 1, 23, 59, 59),
-                    Index = int.MaxValue
-                }))
-                {
-                    yield return key;
-                }
-                fromKey = new EntryKey
-                {
-                    Point = new DateTime(1, 1, 1, 0, 0, 0),
-                    Index = 0
-                };
+                fromKey = _start;
             }
-            bool TryFind(EntryKey key, out Entry<T> entry)
+            if (!TryFind(fromKey, out var current))
             {
-                entry = default;
-                var adjusted = true;
-                for (var hour = key.Point.Hour; hour < 24; ++hour, adjusted = false)
-                {
-                    if (_buckets[hour] == null)
-                    {
-                        continue;
-                    }
-                    for (var minute = adjusted ? key.Point.Minute : 0; minute < 60; ++minute, adjusted = false)
-                    {
-                        if (_buckets[hour][minute] == null)
-                        {
-                            continue;
-                        }
-                        for (var second = adjusted ? key.Point.Second : 0; second < 60; ++second, adjusted = false)
-                        {
-                            if (_buckets[hour][minute][second] == null)
-                            {
-                                continue;
-                            }
-                            var bucket = _buckets[hour][minute][second];
-                            for (var i = adjusted ? key.Index : 0; i < bucket.Count; ++i)
-                            {
-                                if (bucket[i] == null)
-                                {
-                                    continue;
-                                }
-                                entry = bucket[i];
-                                return true;
-                            }
-                        }
-                    }
-                }
-                return false;
+                yield break;
             }
-            if (TryFind(fromKey, out var current))
+            for (; current != null && !(toKey < current.Key); current = current.Next)
             {
-                for (; current != null && !(toKey < current.Key) && !(current.Key < fromKey); current = current.Next)
-                {
-                    yield return current;
-                }
+                yield return current;
             }
         }
 
@@ -281,12 +331,79 @@
         {
             foreach (var entry in Entries)
             {
-                yield return entry.Item;
+                yield return entry.Value;
             }
         }
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        private bool TryFind(DateTime key, out Entry<T> entry)
+        {
+            entry = default;
+            var adjusted = true;
+            for (var year = key.Year - _start.Year; year < _buckets.Count; ++year, adjusted = false)
+            {
+                if (_buckets[year] == null)
+                {
+                    continue;
+                }
+                for (var month = adjusted ? key.Month - 1 : 0; month < 12; ++month, adjusted = false)
+                {
+                    if (_buckets[year][month] == null)
+                    {
+                        continue;
+                    }
+                    for (var day = adjusted ? key.Day - 1 : 0; day < 31; ++day, adjusted = false)
+                    {
+                        if (_buckets[year][month][day] == null)
+                        {
+                            continue;
+                        }
+                        var dayBucket = _buckets[year][month][day];
+                        for (var hour = adjusted ? key.Hour : 0; hour < 24; ++hour, adjusted = false)
+                        {
+                            if (dayBucket[hour] == null)
+                            {
+                                continue;
+                            }
+                            for (var minute = adjusted ? key.Minute : 0; minute < 60; ++minute, adjusted = false)
+                            {
+                                if (dayBucket[hour][minute] == null)
+                                {
+                                    continue;
+                                }
+                                for (var second = adjusted ? key.Second : 0; second < 60; ++second, adjusted = false)
+                                {
+                                    if (dayBucket[hour][minute][second] == null)
+                                    {
+                                        continue;
+                                    }
+                                    var secondBucket = dayBucket[hour][minute][second];
+
+                                    entry = new Entry<T>
+                                    {
+                                        Key = new DateTime(year + 1, month + 1, day + 1, hour, minute, second, adjusted ? key.Millisecond : 0, DateTimeKind.Utc)
+                                    };
+                                    var index = secondBucket.BinarySearch(entry, EntryComparer);
+                                    if (index < 0)
+                                    {
+                                        index = ~index;
+                                        if (!(index < secondBucket.Count))
+                                        {
+                                            continue;
+                                        }
+                                    }
+                                    entry = secondBucket[index];
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
         }
     }
 }
