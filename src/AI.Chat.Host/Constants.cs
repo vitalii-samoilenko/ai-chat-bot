@@ -1,4 +1,4 @@
-﻿namespace AI.Chat.Host.Console
+﻿namespace AI.Chat.Host
 {
     public static class Constants
     {

@@ -1,4 +1,4 @@
-﻿namespace AI.Chat.Histories.Console
+﻿namespace AI.Chat.Histories.Host
 {
     public class Persistent<THistory> : IHistory
         where THistory : IHistory
@@ -13,18 +13,18 @@
         public System.DateTime Add(Record record)
         {
             var key = _history.Add(record);
-            Host.Console.Helpers.AppendLog(key, record);
+            AI.Chat.Host.Helpers.AppendLog(key, record);
             return key;
         }
         public void Remove(params System.DateTime[] keys)
         {
             _history.Remove(keys);
-            Host.Console.Helpers.DeleteLog(keys);
+            AI.Chat.Host.Helpers.DeleteLog(keys);
         }
         public void Clear()
         {
             _history.Clear();
-            Host.Console.Helpers.DeleteLog();
+            AI.Chat.Host.Helpers.DeleteLog();
         }
         public System.Collections.Generic.IEnumerable<System.DateTime> Find(System.DateTime fromKey, System.DateTime toKey, params string[] tags)
         {

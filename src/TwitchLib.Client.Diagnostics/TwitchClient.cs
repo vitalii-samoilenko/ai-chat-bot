@@ -8,13 +8,14 @@ using TwitchLib.Communication.Events;
 
 namespace TwitchLib.Client.Diagnostics
 {
-    public class TwitchClient : ITwitchClient
+    public class TwitchClient<TTwitchClient> : ITwitchClient
+        where TTwitchClient : ITwitchClient
     {
-        private static string ClientName = $"{typeof(Client.TwitchClient).Namespace}.{typeof(Client.TwitchClient).Name}";
+        private static string ClientName = $"{typeof(TTwitchClient).Namespace}.{typeof(TTwitchClient).Name}";
 
-        private readonly Client.TwitchClient _client;
+        private readonly ITwitchClient _client;
 
-        public TwitchClient(Client.TwitchClient client)
+        public TwitchClient(TTwitchClient client)
         {
             _client = client;
         }

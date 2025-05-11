@@ -1,12 +1,13 @@
 ﻿namespace AI.Chat.Clients.Diagnostics
 {
-    public class Twitch : ITwitch
+    public class Twitch<TTwitch> : ITwitch
+        where TTwitch : ITwitch
     {
-        private static string ClientName = $"{typeof(Clients.Twitch).Namespace}.{typeof(Clients.Twitch).Name}";
+        private static string ClientName = $"{typeof(TTwitch).Namespace}.{typeof(TTwitch).Name}";
 
-        private readonly Clients.Twitch _client;
+        private readonly ITwitch _client;
 
-        public Twitch(Clients.Twitch client)
+        public Twitch(TTwitch client)
         {
             _client = client;
         }

@@ -4,11 +4,14 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyVersion>0.9.1.0</AssemblyVersion>
+    <FileVersion>0.9.1.0</FileVersion>
+    <Version>0.9.1</Version>
     <UserSecretsId>91434eae-7141-44db-9b5c-4cb1a5b4bb85</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>..\..</DockerfileContext>
-    <DockerfileTag>ai.chat.host.api</DockerfileTag>
-    <DockerfileRunArguments>-l com.docker.compose.project=ai-chat-host-docker --name ai-chat-host-api --network ai-chat-host-docker</DockerfileRunArguments>
+    <DockerfileTag>ai.chat.hosts.api</DockerfileTag>
+    <DockerfileRunArguments>-l com.docker.compose.project=ai-chat-hosts-docker --name ai-chat-hosts-api --network ai-chat-hosts-docker</DockerfileRunArguments>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,12 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AI.Chat.Adapters.OpenAI\AI.Chat.Adapters.OpenAI.csproj" />
-    <ProjectReference Include="..\AI.Chat.Clients.Twitch.Diagnostics\AI.Chat.Clients.Twitch.Diagnostics.csproj" />
-    <ProjectReference Include="..\AI.Chat.Clients.Twitch\AI.Chat.Clients.Twitch.csproj" />
-    <ProjectReference Include="..\AI.Chat.Diagnostics\AI.Chat.Diagnostics.csproj" />
-    <ProjectReference Include="..\AI.Chat\AI.Chat.csproj" />
-    <ProjectReference Include="..\TwitchLib.Client.Diagnostics\TwitchLib.Client.Diagnostics.csproj" />
+    <ProjectReference Include="..\AI.Chat.Host\AI.Chat.Host.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,6 @@
 ﻿using AI.Chat.Extensions;
 
-namespace AI.Chat.Host.Console
+namespace AI.Chat.Host
 {
     internal static class Helpers
     {
@@ -57,7 +57,8 @@ namespace AI.Chat.Host.Console
         {
             System.IO.File.AppendAllLines(
                 Constants.LogHistory,
-                [
+                new[]
+                {
                     System.Text.Json.JsonSerializer.Serialize(
                         new System.Collections.Generic.KeyValuePair<string, AI.Chat.Record>(
                             key.ToKeyString(), record),
@@ -66,7 +67,7 @@ namespace AI.Chat.Host.Console
                                 Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(
                                     System.Text.Unicode.UnicodeRanges.All)
                             })
-                ]);
+                });
         }
         public static void DeleteLog(params System.DateTime[] keys)
         {

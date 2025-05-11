@@ -1,11 +1,13 @@
-﻿namespace AI.Chat.Host.API.Services
+﻿using Microsoft.Extensions.Hosting;
+
+namespace AI.Chat.Host.Services
 {
     internal class Twitch : IHostedService
     {
-        private Options.Twitch.Client _options;
-        private Clients.ITwitch _client;
+        private AI.Chat.Options.Twitch.Client _options;
+        private AI.Chat.Clients.ITwitch _client;
 
-        public Twitch(Options.Twitch.Client options, Clients.ITwitch client)
+        public Twitch(Options.Twitch.Client options, AI.Chat.Clients.ITwitch client)
         {
             _options = options;
             _client = client;
@@ -15,11 +17,12 @@
         {
             try
             {
-                await _client.StartAsync();
+                await _client.StartAsync()
+                    .ConfigureAwait(false);
             }
             finally
             {
-                Helpers.Save(_options);
+                AI.Chat.Host.Helpers.Save(_options);
             }
         }
 

@@ -1,12 +1,13 @@
 ﻿namespace TwitchLib.Client.Diagnostics
 {
-    public class AuthClient : Interfaces.IAuthClient
+    public class AuthClient<TAuthClient> : Interfaces.IAuthClient
+        where TAuthClient : Interfaces.IAuthClient
     {
-        private static string ClientName = $"{typeof(Client.AuthClient).Namespace}.{typeof(Client.AuthClient).Name}";
+        private static string ClientName = $"{typeof(TAuthClient).Namespace}.{typeof(TAuthClient).Name}";
 
-        private readonly Client.AuthClient _client;
+        private readonly Interfaces.IAuthClient _client;
 
-        public AuthClient(Client.AuthClient client)
+        public AuthClient(TAuthClient client)
         {
             _client = client;
         }
