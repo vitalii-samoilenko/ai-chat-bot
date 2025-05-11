@@ -39,7 +39,7 @@ namespace AI.Chat.Commands.Twitch
                 }
                 args = args.Substring(next + 1);
             }
-            var maxLength = 499 - Constants.HistoryKeyFormat.Length;
+            var maxLength = 501 - Constants.HistoryKeyFormat.Length;
             var messageBuilder = new System.Text.StringBuilder();
             foreach (var key in _history.Find(fromKey, toKey, args.Split(new char[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries)))
             {
