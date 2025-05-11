@@ -7,7 +7,7 @@
 
         private readonly IHistory _history;
 
-        public Trace(THistory history, IScope scope)
+        public Trace(THistory history)
         {
             _history = history;
         }

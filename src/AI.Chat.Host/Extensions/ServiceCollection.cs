@@ -148,7 +148,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
                             twitchClientType = typeof(TwitchLib.Client.Diagnostics.TwitchClient<>)
                                 .MakeGenericType(twitchClientType);
-                            services.AddTransient(authClientType);
+                            services.AddTransient(twitchClientType);
                         }
                         services.AddTransient(typeof(TwitchLib.Client.Interfaces.IAuthClient),
                             serviceProvider => serviceProvider

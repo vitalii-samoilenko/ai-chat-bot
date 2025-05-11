@@ -1,5 +1,5 @@
 name:
-  ai-chat-host-docker
+  ai-chat-hosts-docker
 
 services:
   loki:
@@ -10,7 +10,7 @@ services:
     command: 
       - -config.file=/etc/loki/config.yaml
     networks:
-      - ai-chat-host-docker
+      - ai-chat-hosts-docker
 
   tempo:
     container_name: tempo
@@ -20,7 +20,7 @@ services:
     command: 
       - -config.file=/etc/tempo/config.yaml
     networks:
-      - ai-chat-host-docker
+      - ai-chat-hosts-docker
 
   prometheus:
     container_name: prometheus
@@ -34,7 +34,7 @@ services:
     ports:
       - 9090:9090
     networks:
-      - ai-chat-host-docker
+      - ai-chat-hosts-docker
 
   alloy:
     container_name: alloy
@@ -53,7 +53,7 @@ services:
       - 3300:3300
       - 4317:4317
     networks:
-      - ai-chat-host-docker
+      - ai-chat-hosts-docker
 
   grafana:
     container_name: grafana
@@ -71,8 +71,8 @@ services:
     ports:
       - 3000:3000
     networks:
-      - ai-chat-host-docker
+      - ai-chat-hosts-docker
 
 networks:
-  ai-chat-host-docker:
+  ai-chat-hosts-docker:
     external: true

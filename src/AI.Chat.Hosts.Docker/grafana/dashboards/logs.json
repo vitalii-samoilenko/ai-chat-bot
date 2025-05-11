@@ -18,13 +18,17 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": null,
+  "id": 2,
   "links": [],
   "panels": [
     {
       "datasource": {
         "type": "loki",
         "uid": "logs"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
       },
       "gridPos": {
         "h": 11,
@@ -47,15 +51,27 @@
       "pluginVersion": "11.6.1",
       "targets": [
         {
-          "direction": "backward",
-          "editorMode": "builder",
-          "expr": "{service_name=\"ai-chat-host-api\"} | json | instrumentation_scope_name = `AI.Chat.Clients.Twitch` | line_format `{{.severity}} {{.body}}`",
-          "queryType": "range",
-          "refId": "A",
           "datasource": {
             "type": "loki",
             "uid": "logs"
-          }
+          },
+          "direction": "backward",
+          "editorMode": "builder",
+          "expr": "{service_name=\"ai-chat-hosts-api\"} | json | instrumentation_scope_name = `AI.Chat.Bots.Diagnostics.Log` | line_format `{{.severity}} {{.body}}`",
+          "queryType": "range",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "logs"
+          },
+          "direction": "backward",
+          "editorMode": "builder",
+          "expr": "{service_name=\"ai-chat-hosts-api\"} | json | instrumentation_scope_name = `AI.Chat.Adapters.Diagnostics.Log` | line_format `{{.severity}} {{.body}}`",
+          "hide": false,
+          "queryType": "range",
+          "refId": "B"
         }
       ],
       "title": "AI.Chat.Clients.Twitch",
@@ -65,6 +81,10 @@
       "datasource": {
         "type": "loki",
         "uid": "logs"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
       },
       "gridPos": {
         "h": 11,
@@ -93,7 +113,7 @@
           },
           "direction": "backward",
           "editorMode": "builder",
-          "expr": "{service_name=\"ai-chat-host-api\"} | json | instrumentation_scope_name = `TwitchLib.Client.TwitchClient` | line_format `{{.severity}} {{.body}}`",
+          "expr": "{service_name=\"ai-chat-hosts-api\"} | json | instrumentation_scope_name = `TwitchLib.Client.TwitchClient` | line_format `{{.severity}} {{.body}}`",
           "queryType": "range",
           "refId": "A"
         }
@@ -102,6 +122,7 @@
       "type": "logs"
     }
   ],
+  "preload": false,
   "refresh": "10s",
   "schemaVersion": 41,
   "tags": [],
@@ -116,6 +137,5 @@
   "timezone": "browser",
   "title": "Logs",
   "uid": "bekvpz292bqbkc",
-  "version": 10,
-  "weekStart": ""
+  "version": 2
 }

@@ -12,9 +12,10 @@ COPY ["src/TwitchLib.Client.AuthClient/TwitchLib.Client.AuthClient.csproj", "/sr
 COPY ["src/TwitchLib.Client.Diagnostics/TwitchLib.Client.Diagnostics.csproj", "/src/TwitchLib.Client.Diagnostics/"]
 COPY ["src/AI.Chat.Clients.Twitch/AI.Chat.Clients.Twitch.csproj", "/src/AI.Chat.Clients.Twitch/"]
 COPY ["src/AI.Chat.Clients.Twitch.Diagnostics/AI.Chat.Clients.Twitch.Diagnostics.csproj", "/src/AI.Chat.Clients.Twitch.Diagnostics/"]
-COPY ["src/AI.Chat.Host.API/AI.Chat.Host.API.csproj", "/src/AI.Chat.Host.API/"]
+COPY ["src/AI.Chat.Host/AI.Chat.Host.csproj", "/src/AI.Chat.Host/"]
+COPY ["src/AI.Chat.Hosts.API/AI.Chat.Hosts.API.csproj", "/src/AI.Chat.Hosts.API/"]
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
-	dotnet restore "/src/AI.Chat.Host.API/AI.Chat.Host.API.csproj"
+	dotnet restore "/src/AI.Chat.Hosts.API/AI.Chat.Hosts.API.csproj"
 
 FROM restore AS build
 ARG BUILD_CONFIGURATION=Release
@@ -26,14 +27,15 @@ COPY ["src/TwitchLib.Client.AuthClient", "/src/TwitchLib.Client.AuthClient"]
 COPY ["src/TwitchLib.Client.Diagnostics", "/src/TwitchLib.Client.Diagnostics"]
 COPY ["src/AI.Chat.Clients.Twitch", "/src/AI.Chat.Clients.Twitch"]
 COPY ["src/AI.Chat.Clients.Twitch.Diagnostics", "/src/AI.Chat.Clients.Twitch.Diagnostics"]
-COPY ["src/AI.Chat.Host.API", "/src/AI.Chat.Host.API"]
+COPY ["src/AI.Chat.Host", "/src/AI.Chat.Host"]
+COPY ["src/AI.Chat.Hosts.API", "/src/AI.Chat.Hosts.API"]
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
-	dotnet build "/src/AI.Chat.Host.API/AI.Chat.Host.API.csproj" -c $BUILD_CONFIGURATION --no-restore
+	dotnet build "/src/AI.Chat.Hosts.API/AI.Chat.Hosts.API.csproj" -c $BUILD_CONFIGURATION --no-restore
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
-	dotnet publish "/src/AI.Chat.Host.API/AI.Chat.Host.API.csproj" -c $BUILD_CONFIGURATION -o /app /p:UseAppHost=false --no-restore
+	dotnet publish "/src/AI.Chat.Hosts.API/AI.Chat.Hosts.API.csproj" -c $BUILD_CONFIGURATION -o /app /p:UseAppHost=false --no-restore
 
 FROM base AS install
 USER root
@@ -42,6 +44,6 @@ USER $APP_UID
 
 FROM install AS host
 COPY --from=publish /app .
-ENTRYPOINT ["dotnet", "AI.Chat.Host.API.dll"]
+ENTRYPOINT ["dotnet", "AI.Chat.Hosts.API.dll"]
 HEALTHCHECK --interval=15s --timeout=3s \
 	CMD curl -f http://localhost:8080/health || exit 1
