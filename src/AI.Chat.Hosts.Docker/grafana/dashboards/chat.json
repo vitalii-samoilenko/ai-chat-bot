@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 3,
+  "id": 1,
   "links": [],
   "panels": [
     {
@@ -45,11 +45,16 @@
             "mode": "thresholds"
           },
           "mappings": [],
+          "max": 200,
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
               }
             ]
           }
@@ -87,9 +92,11 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
+          "exemplar": false,
           "expr": "ai_chat_adapters_reply_length_count{job=\"ai-chat-hosts-api\"}",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
+          "instant": false,
           "legendFormat": "__auto",
           "range": true,
           "refId": "A",
@@ -115,10 +122,6 @@
             "steps": [
               {
                 "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           }
@@ -179,6 +182,79 @@
       "fieldConfig": {
         "defaults": {
           "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 82000,
+          "min": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 8,
+        "y": 1
+      },
+      "id": 21,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "pluginVersion": "11.6.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "metrics"
+          },
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "exemplar": false,
+          "expr": "ai_chat_adapters_tokens{job=\"ai-chat-hosts-api\"}",
+          "fullMetaSearch": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A",
+          "useBackend": false
+        }
+      ],
+      "title": "Tokens",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "metrics"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
             "fixedColor": "green",
             "mode": "fixed"
           },
@@ -210,8 +286,8 @@
       },
       "gridPos": {
         "h": 14,
-        "w": 16,
-        "x": 8,
+        "w": 12,
+        "x": 12,
         "y": 1
       },
       "id": 20,
@@ -292,8 +368,9 @@
             "mode": "thresholds"
           },
           "mappings": [],
+          "max": 100000,
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green"
@@ -338,9 +415,11 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
+          "exemplar": false,
           "expr": "ai_chat_adapters_reply_length_sum{job=\"ai-chat-hosts-api\"}",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
+          "instant": false,
           "legendFormat": "__auto",
           "range": true,
           "refId": "A",
@@ -366,10 +445,6 @@
             "steps": [
               {
                 "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           }
@@ -446,11 +521,16 @@
             "mode": "thresholds"
           },
           "mappings": [],
+          "max": 200,
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
               }
             ]
           }
@@ -488,9 +568,11 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
+          "exemplar": false,
           "expr": "sum(ai_chat_bots_message_length_count{job=\"ai-chat-hosts-api\"})",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
+          "instant": false,
           "legendFormat": "__auto",
           "range": true,
           "refId": "A",
@@ -636,11 +718,13 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
+          "exemplar": false,
           "expr": "ai_chat_bots_message_length_count{job=\"ai-chat-hosts-api\"}",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
+          "instant": true,
           "legendFormat": "{{user_name}}",
-          "range": true,
+          "range": false,
           "refId": "A",
           "useBackend": false
         }
@@ -792,8 +876,9 @@
             "mode": "thresholds"
           },
           "mappings": [],
+          "max": 100000,
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green"
@@ -838,9 +923,11 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
+          "exemplar": false,
           "expr": "sum(ai_chat_bots_message_length_sum{job=\"ai-chat-hosts-api\"})",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
+          "instant": false,
           "legendFormat": "__auto",
           "range": true,
           "refId": "A",
@@ -946,11 +1033,16 @@
             "mode": "thresholds"
           },
           "mappings": [],
+          "max": 997,
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
               }
             ]
           }
@@ -988,9 +1080,11 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
+          "exemplar": false,
           "expr": "sum(twitchlib_client_message_length_count{job=\"ai-chat-hosts-api\"})",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
+          "instant": false,
           "legendFormat": "__auto",
           "range": true,
           "refId": "A",
@@ -1135,11 +1229,13 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
+          "exemplar": false,
           "expr": "twitchlib_client_message_length_count{job=\"ai-chat-hosts-api\"}",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
+          "instant": true,
           "legendFormat": "{{user_name}}",
-          "range": true,
+          "range": false,
           "refId": "A",
           "useBackend": false
         }
@@ -1291,8 +1387,9 @@
             "mode": "thresholds"
           },
           "mappings": [],
+          "max": 500000,
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green"
@@ -1337,9 +1434,11 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
+          "exemplar": false,
           "expr": "sum(twitchlib_client_message_length_sum{job=\"ai-chat-hosts-api\"})",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
+          "instant": false,
           "legendFormat": "__auto",
           "range": true,
           "refId": "A",
@@ -1436,5 +1535,5 @@
   "timezone": "browser",
   "title": "Chat",
   "uid": "ael3t05wf4qv4a",
-  "version": 5
+  "version": 8
 }

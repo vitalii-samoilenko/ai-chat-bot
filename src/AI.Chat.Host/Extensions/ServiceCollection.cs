@@ -1,8 +1,8 @@
 ﻿using AI.Chat.Adapters.Extensions.OpenAI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Data;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -528,7 +528,14 @@ namespace Microsoft.Extensions.DependencyInjection
                                 .MakeGenericType(filter.GetType()),
                             filter);
                     }
-                    return filter;
+                    var logFilter = typeof(AI.Chat.Filters.Diagnostics.Log<>)
+                        .MakeGenericType(filter.GetType());
+                    var logger = serviceProvider
+                        .GetRequiredService(typeof(ILogger<>)
+                            .MakeGenericType(logFilter));
+                    return (AI.Chat.IFilter)System.Activator.CreateInstance(logFilter,
+                        filter,
+                        logger);
                 });
 
             services.AddKeyedSingleton(typeof(AI.Chat.IScope), "bot",

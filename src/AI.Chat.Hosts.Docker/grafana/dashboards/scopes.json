@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 2,
+  "id": 3,
   "links": [],
   "panels": [
     {
@@ -48,14 +48,14 @@
           "mappings": [],
           "max": 1000000,
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green"
               },
               {
                 "color": "red",
-                "value": 700000
+                "value": 80
               }
             ]
           }
@@ -392,7 +392,7 @@
             "lineWidth": 1,
             "stacking": {
               "group": "A",
-              "mode": "normal"
+              "mode": "none"
             }
           },
           "fieldMinMax": false,
@@ -402,10 +402,6 @@
             "steps": [
               {
                 "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 100000
               }
             ]
           }
@@ -443,7 +439,8 @@
           "disableTextWrap": false,
           "editorMode": "builder",
           "exemplar": false,
-          "expr": "traces_spanmetrics_latency{source=\"tempo\", span_name=~\"AI[.]Chat[.]Scopes[.].*ExecuteRead.*\"}",
+          "expr": "sum by(le) (traces_spanmetrics_latency_bucket{source=\"tempo\", span_name=~\"AI[.]Chat[.]Scopes[.].*ExecuteRead.*\"})",
+          "format": "heatmap",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": true,
@@ -483,14 +480,14 @@
           "mappings": [],
           "max": 1000000,
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green"
               },
               {
                 "color": "red",
-                "value": 700000
+                "value": 80
               }
             ]
           }
@@ -827,7 +824,7 @@
             "lineWidth": 1,
             "stacking": {
               "group": "A",
-              "mode": "normal"
+              "mode": "none"
             }
           },
           "fieldMinMax": false,
@@ -837,10 +834,6 @@
             "steps": [
               {
                 "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 100000
               }
             ]
           }
@@ -878,7 +871,8 @@
           "disableTextWrap": false,
           "editorMode": "builder",
           "exemplar": false,
-          "expr": "traces_spanmetrics_latency{source=\"tempo\", span_name=~\"AI[.]Chat[.]Scopes[.].*ExecuteWrite.*\"}",
+          "expr": "sum by(le) (traces_spanmetrics_latency_bucket{source=\"tempo\", span_name=~\"AI[.]Chat[.]Scopes[.].*ExecuteWrite.*\"})",
+          "format": "heatmap",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": true,
@@ -907,5 +901,5 @@
   "timezone": "browser",
   "title": "Scopes",
   "uid": "aekvu9dgfyf40a",
-  "version": 1
+  "version": 3
 }

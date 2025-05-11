@@ -72,6 +72,18 @@
           "hide": false,
           "queryType": "range",
           "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "logs"
+          },
+          "direction": "backward",
+          "editorMode": "builder",
+          "expr": "{service_name=\"ai-chat-hosts-api\"} | json | instrumentation_scope_name = `AI.Chat.Filters.Diagnostics.Log` | line_format `{{.severity}} {{.body}}`",
+          "hide": false,
+          "queryType": "range",
+          "refId": "C"
         }
       ],
       "title": "AI.Chat.Clients.Twitch",
@@ -137,5 +149,5 @@
   "timezone": "browser",
   "title": "Logs",
   "uid": "bekvpz292bqbkc",
-  "version": 2
+  "version": 3
 }

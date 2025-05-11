@@ -1,12 +1,11 @@
 welcome active users
 grafana dashboards
  - logs
- - client metrics
  - thread pool metrics
 *stream ownership*
 exception not logged
 admin
-drop native histogram?
 readwrite commands
 command return type
 google adapter with caching
+adjust histogram?
