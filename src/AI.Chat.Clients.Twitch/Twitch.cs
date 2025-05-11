@@ -171,7 +171,7 @@
                     return;
                 }
 
-                await _client.ChatAsync(args.ChatMessage.Username, args.ChatMessage.Message,
+                await _client.ChatAsync(args.ChatMessage.Username, args.ChatMessage.Message.Replace("@", string.Empty),
                         async (string reply) => await _scope.ExecuteWriteAsync(
                             async () =>
                             {
