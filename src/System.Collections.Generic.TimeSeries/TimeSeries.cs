@@ -83,7 +83,7 @@
 
             var entry = new Entry<T>
             {
-                Key = new DateTime(key.Year, key.Month, key.Day, key.Hour, key.Minute, key.Second, key.Millisecond, DateTimeKind.Utc),
+                Key = key,
                 Value = value
             };
             if (_tail == null)
@@ -177,7 +177,7 @@
 
             var entry = new Entry<T>
             {
-                Key = new DateTime(key.Year, key.Month, key.Day, key.Hour, key.Minute, key.Second, key.Millisecond, DateTimeKind.Utc)
+                Key = key
             };
             var index = secondBucket.BinarySearch(entry, EntryComparer);
             if (index < 0)
@@ -288,7 +288,7 @@
 
             entry = new Entry<T>
             {
-                Key = new DateTime(key.Year, key.Month, key.Day, key.Hour, key.Minute, key.Second, key.Millisecond, DateTimeKind.Utc)
+                Key = key
             };
             var index = secondBucket.BinarySearch(entry, EntryComparer);
             if (index < 0)
@@ -307,8 +307,6 @@
             }
             fromKey = fromKey.ToUniversalTime();
             toKey = toKey.ToUniversalTime();
-            fromKey = new DateTime(fromKey.Year, fromKey.Month, fromKey.Day, fromKey.Hour, fromKey.Minute, fromKey.Second, DateTimeKind.Utc);
-            toKey = new DateTime(toKey.Year, toKey.Month, toKey.Day, toKey.Hour, toKey.Minute, toKey.Second, DateTimeKind.Utc);
             if (toKey < _start)
             {
                 yield break;
@@ -384,7 +382,9 @@
 
                                     entry = new Entry<T>
                                     {
-                                        Key = new DateTime(year + 1, month + 1, day + 1, hour, minute, second, adjusted ? key.Millisecond : 0, DateTimeKind.Utc)
+                                        Key = adjusted
+                                            ? key
+                                            : new DateTime(year + 1, month + 1, day + 1, hour, minute, second, 0, DateTimeKind.Utc)
                                     };
                                     var index = secondBucket.BinarySearch(entry, EntryComparer);
                                     if (index < 0)

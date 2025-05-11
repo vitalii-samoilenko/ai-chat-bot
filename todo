@@ -1,11 +1,17 @@
-welcome active users
+exception not logged (async in sync?)
+welcome as reply + collision
+release + readme
+
+google adapter with caching
+
 grafana dashboards
  - logs
  - thread pool metrics
-*stream ownership*
-exception not logged
-admin
-readwrite commands
+
 command return type
-google adapter with caching
+admin
+
+readwrite commands?
 adjust histogram?
+welcome active users?
+prometheus volume?

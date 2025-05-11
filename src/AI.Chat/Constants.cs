@@ -2,7 +2,7 @@
 {
     public class Constants
     {
-        public const string HistoryKeyFormat = "yyyyMMddHHmmssfff";
+        public const string HistoryKeyFormat = "yyyyMMddHHmmssfffffff";
         public const string TimeSpanFormat = "HH:mm:ss";
         public const string ArgsAll = "all";
         public const string TagType = "type";
