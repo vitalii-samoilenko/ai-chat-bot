@@ -92,17 +92,18 @@
                     _options.Username,
                     _options.Auth.AccessToken),
                 _options.Username);
-            _moderatorClient.OnChatCommandReceived += async (sender, args) =>
+            _moderatorClient.OnChatCommandReceived += (sender, args) =>
             {
                 if (!_moderator.IsModerator(args.Command.ChatMessage.Username))
                 {
                     return;
                 }
 
-                if(!await _commandExecutor.ExecuteAsync(
+                if(!_commandExecutor.ExecuteAsync(
                             args.Command.CommandText,
                             args.Command.ArgumentsAsString)
-                        .ConfigureAwait(false))
+                        .GetAwaiter()
+                        .GetResult())
                 {
                     return;
                 }
@@ -148,22 +149,24 @@
                     _options.Username,
                     _options.Auth.AccessToken),
                 _options.Channel);
-            _userClient.OnUserJoined += async (sender, args) =>
+            _userClient.OnUserJoined += (sender, args) =>
             {
                 if (!_scope.ExecuteRead(() => _options.Welcome.Mode == Options.Twitch.WelcomeMode.OnJoin))
                 {
                     return;
                 }
 
-                await welcomeAsync(args.Username, args.Channel)
-                    .ConfigureAwait(false);
+                welcomeAsync(args.Username, args.Channel)
+                    .GetAwaiter()
+                    .GetResult();
             };
-            _userClient.OnMessageReceived += async (sender, args) =>
+            _userClient.OnMessageReceived += (sender, args) =>
             {
                 if (_scope.ExecuteRead(() => _options.Welcome.Mode == Options.Twitch.WelcomeMode.OnFirstMessage))
                 {
-                    await welcomeAsync(args.ChatMessage.Username, args.ChatMessage.Channel)
-                        .ConfigureAwait(false);
+                    welcomeAsync(args.ChatMessage.Username, args.ChatMessage.Channel)
+                        .GetAwaiter()
+                        .GetResult();
                 }
 
                 if (!args.ChatMessage.Message.Contains($"@{_options.Username}"))
@@ -171,7 +174,7 @@
                     return;
                 }
 
-                await _client.ChatAsync(args.ChatMessage.Username, args.ChatMessage.Message.Replace("@", string.Empty),
+                _client.ChatAsync(args.ChatMessage.Username, args.ChatMessage.Message.Replace("@", string.Empty),
                         async (string reply) => await _scope.ExecuteWriteAsync(
                             async () =>
                             {
@@ -185,7 +188,8 @@
                             })
                             .ConfigureAwait(false),
                         onHoldAsync)
-                    .ConfigureAwait(false);
+                    .GetAwaiter()
+                    .GetResult();
             };
             if (!_userClient.Connect())
             {

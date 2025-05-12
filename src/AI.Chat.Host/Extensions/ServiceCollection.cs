@@ -150,6 +150,9 @@ namespace Microsoft.Extensions.DependencyInjection
                                 .MakeGenericType(twitchClientType);
                             services.AddTransient(twitchClientType);
                         }
+                        twitchClientType = typeof(TwitchLib.Client.Diagnostics.ExceptionHandler<>)
+                            .MakeGenericType(twitchClientType);
+                        services.AddTransient(twitchClientType);
                         services.AddTransient(typeof(TwitchLib.Client.Interfaces.IAuthClient),
                             serviceProvider => serviceProvider
                                 .GetRequiredService(authClientType));
