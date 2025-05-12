@@ -1,10 +1,6 @@
-structured messages?
-release + readme
-
 google adapter with caching
 
 grafana dashboards
- - logs
  - thread pool metrics
 
 command return type
