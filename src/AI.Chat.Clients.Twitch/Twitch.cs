@@ -162,15 +162,14 @@
             };
             _userClient.OnMessageReceived += (sender, args) =>
             {
-                if (_scope.ExecuteRead(() => _options.Welcome.Mode == Options.Twitch.WelcomeMode.OnFirstMessage))
-                {
-                    welcomeAsync(args.ChatMessage.Username, args.ChatMessage.Channel)
-                        .GetAwaiter()
-                        .GetResult();
-                }
-
                 if (!args.ChatMessage.Message.Contains($"@{_options.Username}"))
                 {
+                    if (_scope.ExecuteRead(() => _options.Welcome.Mode == Options.Twitch.WelcomeMode.OnFirstMessage))
+                    {
+                        welcomeAsync(args.ChatMessage.Username, args.ChatMessage.Channel)
+                            .GetAwaiter()
+                            .GetResult();
+                    }
                     return;
                 }
 
