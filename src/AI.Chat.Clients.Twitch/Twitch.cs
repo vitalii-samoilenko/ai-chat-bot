@@ -173,12 +173,11 @@
                     return;
                 }
 
-                _client.ChatAsync(args.ChatMessage.Username, args.ChatMessage.Message.Replace("@", string.Empty),
+                _client.ChatAsync(args.ChatMessage.Username, args.ChatMessage.Message,
                         async (string reply) => await _scope.ExecuteWriteAsync(
                             async () =>
                             {
-                                _userClient.SendReply(
-                                    args.ChatMessage.Channel,
+                                _userClient.SendMessage(
                                     args.ChatMessage.Id,
                                     reply);
                                 await System.Threading.Tasks.Task.Delay(
