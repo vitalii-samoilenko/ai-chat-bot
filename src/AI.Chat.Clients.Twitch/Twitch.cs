@@ -127,7 +127,6 @@
                 return System.Threading.Tasks.Task.CompletedTask;
             };
             System.Func<string, string, System.Threading.Tasks.Task> welcomeAsync = async (username, channel) =>
-            {
                 await _client.WelcomeAsync(username,
                         async (string greeting) => await _scope.ExecuteWriteAsync(
                             async () =>
@@ -142,7 +141,6 @@
                             .ConfigureAwait(false),
                         onHoldAsync)
                     .ConfigureAwait(false);
-            };
 
             _userClient.Initialize(
                 new TwitchLib.Client.Models.ConnectionCredentials(

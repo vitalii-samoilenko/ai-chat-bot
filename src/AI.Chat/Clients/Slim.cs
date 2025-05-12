@@ -83,6 +83,10 @@ namespace AI.Chat.Clients
                 _history.Remove(promptKey, replyKey);
                 return;
             }
+            if (_moderator.IsWelcomed(_options.Username, username))
+            {
+                _moderator.Greet(username);
+            }
             if (_moderator.IsModerated(_options.Username, username))
             {
                 _moderator.Hold(replyKey,
