@@ -178,7 +178,7 @@
                             async () =>
                             {
                                 _userClient.SendMessage(
-                                    args.ChatMessage.Id,
+                                    args.ChatMessage.Channel,
                                     reply);
                                 await System.Threading.Tasks.Task.Delay(
                                         _options.Delay)
