@@ -47,6 +47,7 @@
           "fieldMinMax": false,
           "mappings": [],
           "max": 1000000,
+          "min": 0,
           "thresholds": {
             "mode": "percentage",
             "steps": [
@@ -96,11 +97,13 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
+          "exemplar": false,
           "expr": "sum(traces_spanmetrics_calls_total{source=\"tempo\", span_name=~\"AI[.]Chat[.]Scopes[.].*[.]ExecuteRead.*\"})",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
+          "range": false,
           "refId": "A",
           "useBackend": false
         }
@@ -479,6 +482,7 @@
           "fieldMinMax": false,
           "mappings": [],
           "max": 1000000,
+          "min": 0,
           "thresholds": {
             "mode": "percentage",
             "steps": [
@@ -528,11 +532,13 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
+          "exemplar": false,
           "expr": "sum(traces_spanmetrics_calls_total{source=\"tempo\", span_name=~\"AI[.]Chat[.]Scopes[.].*[.]ExecuteWrite.*\"})",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
+          "range": false,
           "refId": "A",
           "useBackend": false
         }
@@ -901,5 +907,5 @@
   "timezone": "browser",
   "title": "Scopes",
   "uid": "aekvu9dgfyf40a",
-  "version": 3
+  "version": 1
 }

@@ -46,6 +46,7 @@
           },
           "mappings": [],
           "max": 200,
+          "min": 0,
           "thresholds": {
             "mode": "percentage",
             "steps": [
@@ -96,9 +97,9 @@
           "expr": "ai_chat_adapters_reply_length_count{job=\"ai-chat-hosts-api\"}",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
-          "instant": false,
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
+          "range": false,
           "refId": "A",
           "useBackend": false
         }
@@ -237,9 +238,9 @@
           "expr": "ai_chat_adapters_tokens{job=\"ai-chat-hosts-api\"}",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
-          "instant": false,
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
+          "range": false,
           "refId": "A",
           "useBackend": false
         }
@@ -369,6 +370,7 @@
           },
           "mappings": [],
           "max": 100000,
+          "min": 0,
           "thresholds": {
             "mode": "percentage",
             "steps": [
@@ -419,9 +421,9 @@
           "expr": "ai_chat_adapters_reply_length_sum{job=\"ai-chat-hosts-api\"}",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
-          "instant": false,
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
+          "range": false,
           "refId": "A",
           "useBackend": false
         }
@@ -522,6 +524,7 @@
           },
           "mappings": [],
           "max": 200,
+          "min": 0,
           "thresholds": {
             "mode": "percentage",
             "steps": [
@@ -572,9 +575,9 @@
           "expr": "sum(ai_chat_bots_message_length_count{job=\"ai-chat-hosts-api\"})",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
-          "instant": false,
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
+          "range": false,
           "refId": "A",
           "useBackend": false
         }
@@ -877,6 +880,7 @@
           },
           "mappings": [],
           "max": 100000,
+          "min": 0,
           "thresholds": {
             "mode": "percentage",
             "steps": [
@@ -927,9 +931,9 @@
           "expr": "sum(ai_chat_bots_message_length_sum{job=\"ai-chat-hosts-api\"})",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
-          "instant": false,
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
+          "range": false,
           "refId": "A",
           "useBackend": false
         }
@@ -1034,6 +1038,7 @@
           },
           "mappings": [],
           "max": 997,
+          "min": 0,
           "thresholds": {
             "mode": "percentage",
             "steps": [
@@ -1084,9 +1089,9 @@
           "expr": "sum(twitchlib_client_message_length_count{job=\"ai-chat-hosts-api\"})",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
-          "instant": false,
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
+          "range": false,
           "refId": "A",
           "useBackend": false
         }
@@ -1388,6 +1393,7 @@
           },
           "mappings": [],
           "max": 500000,
+          "min": 0,
           "thresholds": {
             "mode": "percentage",
             "steps": [
@@ -1438,9 +1444,9 @@
           "expr": "sum(twitchlib_client_message_length_sum{job=\"ai-chat-hosts-api\"})",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
-          "instant": false,
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
+          "range": false,
           "refId": "A",
           "useBackend": false
         }
@@ -1535,5 +1541,5 @@
   "timezone": "browser",
   "title": "Chat",
   "uid": "ael3t05wf4qv4a",
-  "version": 8
+  "version": 1
 }
