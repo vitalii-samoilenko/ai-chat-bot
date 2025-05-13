@@ -32,12 +32,17 @@ namespace AI.Chat.Commands.Twitch
                 }
                 previous = next + 1;
                 next = args.IndexOf(' ', previous);
-                if (next < 0
-                    || !args.Substring(previous, next - previous).TryParseKey(out toKey))
+                if (next < 0)
+                {
+                    next = args.Length;
+                }
+                if (!args.Substring(previous, next - previous).TryParseKey(out toKey))
                 {
                     return System.Threading.Tasks.Task.CompletedTask;
                 }
-                args = args.Substring(next + 1);
+                args = next < args.Length
+                    ? args.Substring(next + 1)
+                    : string.Empty;
             }
             var maxLength = 501 - Constants.HistoryKeyFormat.Length;
             var messageBuilder = new System.Text.StringBuilder();

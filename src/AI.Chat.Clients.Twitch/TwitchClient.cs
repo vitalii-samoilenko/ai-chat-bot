@@ -115,7 +115,7 @@ namespace TwitchLib.Client
                     var delimiter = message.IndexOf('~', 1);
                     var chatMessage = new ChatMessage(
                         null, null, message.Substring(1, delimiter - 1), null, null,
-                        System.Drawing.Color.Empty, null, message.Substring(delimiter + 1), Enums.UserType.Viewer, null, Guid.NewGuid().ToString(),
+                        System.Drawing.Color.Empty, null, message.Substring(delimiter + 1).Trim(), Enums.UserType.Viewer, null, Guid.NewGuid().ToString(),
                         false, 0, null, false, false, false,
                         false, false, false, false, Enums.Noisy.False, null,
                         null, null, null, 0, 0);
