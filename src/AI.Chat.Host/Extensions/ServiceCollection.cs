@@ -745,6 +745,19 @@ namespace Microsoft.Extensions.DependencyInjection
                     .GetRequiredService(deny));
             commandOverrides.Add(deny, typeof(AI.Chat.Commands.Deny).Name);
 
+            var edit = typeof(AI.Chat.Commands.Edit);
+            services.AddTransient(edit);
+            if (diagnostics)
+            {
+                edit = typeof(AI.Chat.Commands.Diagnostics.Trace<>)
+                    .MakeGenericType(edit);
+                services.AddTransient(edit);
+            }
+            services.AddTransient(typeof(AI.Chat.ICommand),
+                serviceProvider => serviceProvider
+                    .GetRequiredService(edit));
+            commandOverrides.Add(edit, typeof(AI.Chat.Commands.Edit).Name);
+
             var instruct = typeof(AI.Chat.Commands.Instruct);
             services.AddTransient(instruct);
             if (diagnostics)

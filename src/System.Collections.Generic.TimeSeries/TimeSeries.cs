@@ -3,7 +3,7 @@
     public class Entry<T>
     {
         public DateTime Key { get; internal set; }
-        public T Value { get; internal set; }
+        public T Value { get; set; }
         public Entry<T> Previous { get; internal set; }
         public Entry<T> Next { get; internal set; }
     }
@@ -65,6 +65,18 @@
             }
         }
 
+        public Entry<T> this[DateTime key]
+        {
+            get
+            {
+                if (!TryGet(key, out var entry))
+                {
+                    throw new ArgumentException("Entry does not exist", nameof(key));
+                }
+
+                return entry;
+            }
+        }
         public Entry<T> Add(T item)
         {
             return Add(DateTime.UtcNow, item);
@@ -91,9 +103,9 @@
                 _head = entry;
                 _tail = entry;
             }
-            else if (TryFind(entry.Key, out var next))
+            else if (TryFind(key, out var next))
             {
-                if (!(entry.Key < next.Key))
+                if (!(key < next.Key))
                 {
                     throw new ArgumentException("Entry already exists", nameof(key));
                 }

@@ -134,6 +134,24 @@
             }
             return false;
         }
+        public bool TryEdit(System.DateTime key, string message)
+        {
+            if (!_records.TryGet(key, out var entry))
+            {
+                return false;
+            }
+            entry.Value = new Record
+            {
+                Message = message,
+                Tags = entry.Value.Tags,
+            };
+            foreach (var tag in entry.Value.Tags)
+            {
+                var index = _indexes[tag];
+                index[key].Value = entry.Value;
+            }
+            return true;
+        }
 
         private void Indexate(System.Collections.Generic.Entry<Record> entry)
         {

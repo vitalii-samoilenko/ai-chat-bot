@@ -50,5 +50,12 @@
                 return _history.TryGet(key, out record);
             }
         }
+        public bool TryEdit(System.DateTime key, string message)
+        {
+            using (var activity = AI.Chat.Diagnostics.ActivitySources.Histories.StartActivity($"{HistoryName}.{nameof(TryEdit)}"))
+            {
+                return _history.TryEdit(key, message);
+            }
+        }
     }
 }

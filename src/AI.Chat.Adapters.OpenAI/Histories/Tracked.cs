@@ -41,5 +41,14 @@ namespace AI.Chat.Histories.OpenAI
         {
             return _history.TryGet(key, out record);
         }
+        public bool TryEdit(System.DateTime key, string message)
+        {
+            var result = _history.TryEdit(key, message);
+            if (result)
+            {
+                _messages[key].Value.Content[0] = global::OpenAI.Chat.ChatMessageContentPart.CreateTextPart(message);
+            }
+            return result;
+        }
     }
 }

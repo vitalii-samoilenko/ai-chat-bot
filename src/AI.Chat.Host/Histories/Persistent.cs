@@ -34,5 +34,14 @@
         {
             return _history.TryGet(key, out record);
         }
+        public bool TryEdit(System.DateTime key, string message)
+        {
+            var result = _history.TryEdit(key, message);
+            if (result)
+            {
+                AI.Chat.Host.Helpers.EditLog(key, message);
+            }
+            return result;
+        }
     }
 }

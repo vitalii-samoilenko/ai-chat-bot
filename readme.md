@@ -198,6 +198,7 @@ Once started, client will join its' own channel and allow __Moderators__ to exec
 !get key
 !remove key1 key2 ...
 !remove all
+!edit key message
 ```
 
 __Join__/__Leave__ will connect/disconnect bot to/from the destination channel.
@@ -225,7 +226,7 @@ __Delay__ will set time span between subsequent replies
 
 __Instruct__ puts a system message for the model
 
-__Find__, __Get__ and __Remove__ could be used to manipulate conversation history
+__Find__, __Get__, __Remove__ and __Edit__ could be used to manipulate conversation history
 
 ## History
 

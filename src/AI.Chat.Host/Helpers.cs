@@ -62,11 +62,11 @@ namespace AI.Chat.Host
                     System.Text.Json.JsonSerializer.Serialize(
                         new System.Collections.Generic.KeyValuePair<string, AI.Chat.Record>(
                             key.ToKeyString(), record),
-                            new System.Text.Json.JsonSerializerOptions
-                            {
-                                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(
-                                    System.Text.Unicode.UnicodeRanges.All)
-                            })
+                        new System.Text.Json.JsonSerializerOptions
+                        {
+                            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(
+                                System.Text.Unicode.UnicodeRanges.All)
+                        })
                 });
         }
         public static void DeleteLog(params System.DateTime[] keys)
@@ -82,8 +82,25 @@ namespace AI.Chat.Host
         }
         public static void DeleteLog()
         {
-            System.IO.File.CreateText(Constants.LogHistory);
-            System.IO.File.CreateText(Constants.LogDeleted);
+            System.IO.File.WriteAllText(Constants.LogHistory, string.Empty);
+            System.IO.File.WriteAllText(Constants.LogDeleted, string.Empty);
+            System.IO.File.WriteAllText(Constants.LogEdited, string.Empty);
+        }
+        public static void EditLog(System.DateTime key, string message)
+        {
+            System.IO.File.AppendAllLines(
+                Constants.LogEdited,
+                new[]
+                {
+                    System.Text.Json.JsonSerializer.Serialize(
+                        new System.Collections.Generic.KeyValuePair<string, string>(
+                            key.ToKeyString(), message),
+                        new System.Text.Json.JsonSerializerOptions
+                        {
+                            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(
+                                System.Text.Unicode.UnicodeRanges.All)
+                        })
+                });
         }
         public static System.Collections.Generic.TimeSeries<AI.Chat.Record> LoadLog()
         {
@@ -97,6 +114,16 @@ namespace AI.Chat.Host
                         ? System.IO.File.ReadAllLines(Constants.LogDeleted)
                         : new string[] { },
                     System.StringComparer.OrdinalIgnoreCase);
+                var edited = new System.Collections.Generic.Dictionary<string, string>();
+                if (System.IO.File.Exists(Constants.LogEdited))
+                {
+                    var editedLog = System.IO.File.ReadAllLines(Constants.LogEdited);
+                    foreach (var line in editedLog)
+                    {
+                        var pair = System.Text.Json.JsonSerializer.Deserialize<System.Collections.Generic.KeyValuePair<string, string>>(line);
+                        edited[pair.Key] = pair.Value;
+                    }
+                }
                 var currentHistoryLog = System.IO.File.ReadAllLines(Constants.LogHistory);
                 if (0 < currentHistoryLog.Length)
                 {
@@ -114,6 +141,22 @@ namespace AI.Chat.Host
                             {
                                 continue;
                             }
+                            if (edited.ContainsKey(pair.Key))
+                            {
+                                pair = new System.Collections.Generic.KeyValuePair<string, Record>(
+                                    pair.Key, new Record
+                                    {
+                                        Message = edited[pair.Key],
+                                        Tags = pair.Value.Tags
+                                    });
+                                line = System.Text.Json.JsonSerializer.Serialize(
+                                    pair,
+                                    new System.Text.Json.JsonSerializerOptions
+                                    {
+                                        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(
+                                            System.Text.Unicode.UnicodeRanges.All)
+                                    });
+                            }
                             history.Add(pair.Key.ParseKey(), pair.Value);
                             newHistoryLog.Add(line);
                         }
@@ -125,8 +168,9 @@ namespace AI.Chat.Host
                 history = new System.Collections.Generic.TimeSeries<Record>();
                 newHistoryLog.Add(history.Start.ToKeyString());
             }
-            System.IO.File.CreateText(Constants.LogDeleted);
             System.IO.File.WriteAllLines(Constants.LogHistory, newHistoryLog);
+            System.IO.File.WriteAllText(Constants.LogDeleted, string.Empty);
+            System.IO.File.WriteAllText(Constants.LogEdited, string.Empty);
             return history;
         }
     }

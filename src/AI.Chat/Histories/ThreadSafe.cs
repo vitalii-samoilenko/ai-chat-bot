@@ -38,5 +38,9 @@
             record = temp;
             return result;
         }
+        public bool TryEdit(System.DateTime key, string message)
+        {
+            return _scope.ExecuteWrite(() => _history.TryEdit(key, message));
+        }
     }
 }

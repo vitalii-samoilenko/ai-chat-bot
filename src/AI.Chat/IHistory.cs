@@ -12,5 +12,6 @@
         void Clear();
         System.Collections.Generic.IEnumerable<System.DateTime> Find(System.DateTime fromKey, System.DateTime toKey, params string[] tags);
         bool TryGet(System.DateTime key, out Record record);
+        bool TryEdit(System.DateTime key, string message);
     }
 }
