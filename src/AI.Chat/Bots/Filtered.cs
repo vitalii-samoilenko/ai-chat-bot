@@ -34,7 +34,7 @@ namespace AI.Chat.Bots
                 }
                 if (_options.Warnings < ++warnings)
                 {
-                    reply = _options.Apology;
+                    reply = string.Format(_options.Apology, username);
                 }
                 else
                 {
