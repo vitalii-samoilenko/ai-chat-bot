@@ -18,6 +18,10 @@ namespace AI.Chat.Commands
             {
                 yield return key.ToKeyString();
                 yield return record.Message;
+                foreach (var tag in record.Tags)
+                {
+                    yield return tag;
+                }
             }
         }
     }
