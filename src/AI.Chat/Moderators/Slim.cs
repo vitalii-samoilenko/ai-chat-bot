@@ -51,15 +51,11 @@
             var welcomed = false;
             foreach (var username in usernames)
             {
-                if (!_options.Welcomed.Contains(username))
-                {
-                    continue;
-                }
                 if (_greeted.Contains(username))
                 {
                     return false;
                 }
-                welcomed = true;
+                welcomed |= _options.Welcomed.Contains(username);
             }
             return welcomed;
         }
