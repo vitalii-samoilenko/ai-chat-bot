@@ -22,7 +22,7 @@ Sample configuration section:
 ```
     "Bot": {
       "Warnings": 3,
-      "Apology": "Sorry, something went wrong, please try again.",
+      "Apology": "{0} sorry, something went wrong, please try again.",
       "Filters": [
         {
           "Type": "Regex",
@@ -206,10 +206,10 @@ Connected bot will listen for messages tagged with its' __Username__. Once recei
 
 __Ban__/__Unban__, __Mod__/__Unmod__, __Welcome__/__Unwelcome__ and __Promote__/__Demote__ will add/remove usernames to/from __Banned__, __Moderated__, __Welcomed__ and __Promoted__ list correspondingly
 
-Before sending reply to __Moderated__ user it will be sent to bots' own channel, for example:
+Before sending reply to __Moderated__ user it will be sent to bots' own channel, as well as original question, for example:
 
 ```
-202505102244507310000: to be or not to be is a very popular question yet to be answered
+202505102244507310000 to be or not to be is a very popular question yet to be answered
 ```
 
 First part is the message __key__, second one is the actual reply yet to be sent. __Allow__/__Deny__ commands could be used to manage them
