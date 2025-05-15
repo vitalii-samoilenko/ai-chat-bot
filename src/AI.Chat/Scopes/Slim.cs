@@ -178,7 +178,7 @@
             }
             finally
             {
-                System.Threading.Interlocked.Add(ref _completed, ReadStep);
+                System.Threading.Interlocked.Add(ref _completed, WriteStep);
             }
         }
 
