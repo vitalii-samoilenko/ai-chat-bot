@@ -9,13 +9,13 @@
             _options = options;
         }
 
-        public System.Threading.Tasks.Task ExecuteAsync(string args)
+        public System.Collections.Generic.IEnumerable<string> Execute(string args)
         {
             if (System.TimeSpan.TryParseExact(args, Constants.TimeSpanFormat, null, out var delay))
             {
                 _options.Delay = delay;
+                yield return args;
             }
-            return System.Threading.Tasks.Task.CompletedTask;
         }
     }
 }

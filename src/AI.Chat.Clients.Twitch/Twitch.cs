@@ -1,4 +1,6 @@
-﻿namespace AI.Chat.Clients
+﻿using AI.Chat.Extensions;
+
+namespace AI.Chat.Clients
 {
     public interface ITwitch
     {
@@ -7,6 +9,8 @@
 
     public class Twitch : ITwitch
     {
+        private const int MaxMessageLength = 500;
+
         private readonly Options.Twitch.Client _options;
 
         private readonly TwitchLib.Client.Interfaces.IAuthClient _authClient;
@@ -16,6 +20,7 @@
         private readonly AI.Chat.ICommandExecutor _commandExecutor;
         private readonly AI.Chat.IModerator _moderator;
         private readonly AI.Chat.IClient _client;
+        private readonly AI.Chat.IHistory _history;
         private readonly AI.Chat.IScope _scope;
 
         public Twitch(
@@ -28,6 +33,7 @@
                 AI.Chat.ICommandExecutor commandExecutor,
                 AI.Chat.IModerator moderator,
                 AI.Chat.IClient client,
+                AI.Chat.IHistory history,
                 AI.Chat.IScope scope)
         {
             _options = options;
@@ -39,6 +45,7 @@
             _commandExecutor = commandExecutor;
             _moderator = moderator;
             _client = client;
+            _history = history;
             _scope = scope;
         }
 
@@ -51,11 +58,11 @@
                 var scopesBuilder = new System.Text.StringBuilder();
                 foreach (var scope in _options.Auth.Scopes)
                 {
-                    scopesBuilder.Append(scope);
-                    scopesBuilder.Append(' ');
+                    scopesBuilder.Append(' ')
+                        .Append(scope);
                 }
-                var scopes = scopesBuilder.ToString()
-                    .Trim();
+                var scopes = scopesBuilder.Remove(0, 1)
+                    .ToString();
 
                 if (string.IsNullOrWhiteSpace(_options.Auth.RefreshToken))
                 {
@@ -99,19 +106,32 @@
                     return;
                 }
 
-                if(!_commandExecutor.ExecuteAsync(
-                            args.Command.CommandText,
-                            args.Command.ArgumentsAsString)
-                        .GetAwaiter()
-                        .GetResult())
+                var replyBuilder = new System.Text.StringBuilder();
+                foreach (var token in _commandExecutor.Execute(
+                        args.Command.CommandText,
+                        args.Command.ArgumentsAsString))
                 {
-                    return;
+                    replyBuilder.Append(' ')
+                        .Append(token);
+                    if (MaxMessageLength + 1 < replyBuilder.Length)
+                    {
+                        replyBuilder.Remove(MaxMessageLength - 2, replyBuilder.Length - (MaxMessageLength - 2))
+                            .Append("...");
+                        break;
+                    }
                 }
-
-                _moderatorClient.SendReply(
-                    args.Command.ChatMessage.Channel,
-                    args.Command.ChatMessage.Id,
-                    "ack");
+                var reply = 0 < replyBuilder.Length
+                    ? replyBuilder.Remove(0, 1)
+                        .ToString()
+                    : null;
+                
+                if (!string.IsNullOrEmpty(reply))
+                {
+                    _moderatorClient.SendReply(
+                        args.Command.ChatMessage.Channel,
+                        args.Command.ChatMessage.Id,
+                        reply);
+                }
             };
             if (!_moderatorClient.Connect())
             {
@@ -119,25 +139,52 @@
                     "Failed to connect to Twitch moderator channel");
             }
 
-            System.Func<string, System.Threading.Tasks.Task> onHoldAsync = (warning) =>
+            System.Func<System.DateTime, string, System.Threading.Tasks.Task> onAllowAsync = async (replyKey, channel) =>
             {
+                if (!_history.TryGet(replyKey, out var reply))
+                {
+                    return;
+                }
+                await _scope.ExecuteWriteAsync(
+                    async () =>
+                    {
+                        _userClient.SendMessage(
+                            channel,
+                            reply.Message);
+                        await System.Threading.Tasks.Task.Delay(
+                                _options.Delay)
+                            .ConfigureAwait(false);
+                    })
+                    .ConfigureAwait(false);
+            };
+            System.Func<System.DateTime, System.DateTime, System.Threading.Tasks.Task> onHoldAsync = (promptKey, replyKey) =>
+            {
+                if (!_history.TryGet(promptKey, out var prompt)
+                    || !_history.TryGet(replyKey, out var reply))
+                {
+                    return System.Threading.Tasks.Task.CompletedTask;
+                }
+                var promptNotify = $"{promptKey.ToKeyString()} {prompt.Message}";
+                if (MaxMessageLength < promptNotify.Length)
+                {
+                    promptNotify = $"{promptNotify.Substring(0, MaxMessageLength - 3)}...";
+                }
+                var replyNotify = $"{replyKey.ToKeyString()} {reply.Message}";
+                if (MaxMessageLength < replyNotify.Length)
+                {
+                    replyNotify = $"{replyNotify.Substring(0, MaxMessageLength - 3)}...";
+                }
                 _moderatorClient.SendMessage(
                     _moderatorClient.JoinedChannels[0],
-                    warning);
+                    promptNotify);
+                _moderatorClient.SendMessage(
+                    _moderatorClient.JoinedChannels[0],
+                    replyNotify);
                 return System.Threading.Tasks.Task.CompletedTask;
             };
             System.Func<string, string, System.Threading.Tasks.Task> welcomeAsync = async (username, channel) =>
                 await _client.WelcomeAsync(username,
-                        async (string greeting) => await _scope.ExecuteWriteAsync(
-                            async () =>
-                            {
-                                _userClient.SendMessage(
-                                    channel,
-                                    greeting);
-                                await System.Threading.Tasks.Task.Delay(
-                                        _options.Delay)
-                                    .ConfigureAwait(false);
-                            })
+                        async replyKey => await onAllowAsync(replyKey, channel)
                             .ConfigureAwait(false),
                         onHoldAsync)
                     .ConfigureAwait(false);
@@ -172,16 +219,7 @@
                 }
 
                 _client.ChatAsync(args.ChatMessage.Username, args.ChatMessage.Message,
-                        async (string reply) => await _scope.ExecuteWriteAsync(
-                            async () =>
-                            {
-                                _userClient.SendMessage(
-                                    args.ChatMessage.Channel,
-                                    reply);
-                                await System.Threading.Tasks.Task.Delay(
-                                        _options.Delay)
-                                    .ConfigureAwait(false);
-                            })
+                        async replyKey => await onAllowAsync(replyKey, args.ChatMessage.Channel)
                             .ConfigureAwait(false),
                         onHoldAsync)
                     .GetAwaiter()

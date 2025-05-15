@@ -9,13 +9,13 @@
             _options = options;
         }
 
-        public System.Threading.Tasks.Task ExecuteAsync(string args)
+        public System.Collections.Generic.IEnumerable<string> Execute(string args)
         {
             if (System.Enum.TryParse(args, true, out Options.Twitch.WelcomeMode mode))
             {
                 _options.Welcome.Mode = mode;
+                yield return args;
             }
-            return System.Threading.Tasks.Task.CompletedTask;
         }
     }
 }

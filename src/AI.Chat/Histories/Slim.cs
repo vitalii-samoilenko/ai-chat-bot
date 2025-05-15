@@ -14,7 +14,7 @@
         {
             _records = records;
             _indexes = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.TimeSeries<Record>>(System.StringComparer.OrdinalIgnoreCase);
-            foreach (var entry in _records.Entries)
+            foreach (var entry in (System.Collections.Generic.IEnumerable<System.Collections.Generic.Entry<Record>>)_records)
             {
                 Indexate(entry);
             }

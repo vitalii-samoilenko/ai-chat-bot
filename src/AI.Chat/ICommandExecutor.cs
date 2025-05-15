@@ -2,6 +2,6 @@
 {
     public interface ICommandExecutor
     {
-        System.Threading.Tasks.Task<bool> ExecuteAsync(string command, string args);
+        System.Collections.Generic.IEnumerable<string> Execute(string command, string args);
     }
 }

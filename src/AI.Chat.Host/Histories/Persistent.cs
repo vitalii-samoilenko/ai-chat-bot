@@ -28,7 +28,10 @@
         }
         public System.Collections.Generic.IEnumerable<System.DateTime> Find(System.DateTime fromKey, System.DateTime toKey, params string[] tags)
         {
-            return _history.Find(fromKey, toKey, tags);
+            foreach (var key in _history.Find(fromKey, toKey, tags))
+            {
+                yield return key;
+            }
         }
         public bool TryGet(System.DateTime key, out Record record)
         {

@@ -17,7 +17,7 @@ namespace AI.Chat.Clients
             _history = history;
         }
 
-        public async System.Threading.Tasks.Task WelcomeAsync(string username, System.Func<string, System.Threading.Tasks.Task> onAllowAsync, System.Func<string, System.Threading.Tasks.Task> onHoldAsync)
+        public async System.Threading.Tasks.Task WelcomeAsync(string username, System.Func<System.DateTime, System.Threading.Tasks.Task> onAllowAsync, System.Func<System.DateTime, System.DateTime, System.Threading.Tasks.Task> onHoldAsync)
         {
             if (!_moderator.IsAllowed(_options.Username, username)
                 || !_moderator.IsWelcomed(_options.Username, username))
@@ -30,10 +30,6 @@ namespace AI.Chat.Clients
             (var joinedKey, var replyKey) = await _bot.ReplyAsync(username, joined)
                 .ConfigureAwait(false);
 
-            if (!_history.TryGet(replyKey, out var reply))
-            {
-                return;
-            }
             if (!_moderator.IsAllowed(_options.Username, username)
                 || !_moderator.IsWelcomed(_options.Username, username)
                 || (username != _options.Username
@@ -44,25 +40,16 @@ namespace AI.Chat.Clients
             }
             if (_moderator.IsModerated(_options.Username, username))
             {
-                _moderator.Hold(replyKey,
-                (
-                    async () => await onAllowAsync(reply.Message)
-                        .ConfigureAwait(false),
-                    () =>
-                    {
-                        _history.Remove(joinedKey, replyKey);
-                        return System.Threading.Tasks.Task.CompletedTask;
-                    }
-                ));
-                await onHoldAsync($"{replyKey.ToKeyString()}: {reply}")
+                _moderator.Hold(joinedKey, replyKey);
+                await onHoldAsync(joinedKey, replyKey)
                     .ConfigureAwait(false);
                 return;
             }
 
-            await onAllowAsync(reply.Message)
+            await onAllowAsync(replyKey)
                 .ConfigureAwait(false);
         }
-        public async System.Threading.Tasks.Task ChatAsync(string username, string message, System.Func<string, System.Threading.Tasks.Task> onAllowAsync, System.Func<string, System.Threading.Tasks.Task> onHoldAsync)
+        public async System.Threading.Tasks.Task ChatAsync(string username, string message, System.Func<System.DateTime, System.Threading.Tasks.Task> onAllowAsync, System.Func<System.DateTime, System.DateTime, System.Threading.Tasks.Task> onHoldAsync)
         {
             if (!_moderator.IsAllowed(_options.Username, username))
             {
@@ -74,10 +61,6 @@ namespace AI.Chat.Clients
             (var promptKey, var replyKey) = await _bot.ReplyAsync(username, prompt)
                 .ConfigureAwait(false);
 
-            if (!_history.TryGet(replyKey, out var reply))
-            {
-                return;
-            }
             if (!_moderator.IsAllowed(_options.Username, username))
             {
                 _history.Remove(promptKey, replyKey);
@@ -89,22 +72,13 @@ namespace AI.Chat.Clients
             }
             if (_moderator.IsModerated(_options.Username, username))
             {
-                _moderator.Hold(replyKey,
-                (
-                    async () => await onAllowAsync(reply.Message)
-                        .ConfigureAwait(false),
-                    () =>
-                    {
-                        _history.Remove(promptKey, replyKey);
-                        return System.Threading.Tasks.Task.CompletedTask;
-                    }
-                ));
-                await onHoldAsync($"{replyKey.ToKeyString()}: {reply}")
+                _moderator.Hold(promptKey, replyKey);
+                await onHoldAsync(promptKey, replyKey)
                     .ConfigureAwait(false);
                 return;
             }
 
-            await onAllowAsync(reply.Message)
+            await onAllowAsync(replyKey)
                 .ConfigureAwait(false);
         }
     }

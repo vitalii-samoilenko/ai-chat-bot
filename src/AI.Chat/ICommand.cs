@@ -2,6 +2,6 @@
 {
     public interface ICommand
     {
-        System.Threading.Tasks.Task ExecuteAsync(string args);
+        System.Collections.Generic.IEnumerable<string> Execute(string args);
     }
 }

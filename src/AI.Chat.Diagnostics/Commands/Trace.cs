@@ -12,12 +12,14 @@
             _command = command;
         }
 
-        public async System.Threading.Tasks.Task ExecuteAsync(string args)
+        public System.Collections.Generic.IEnumerable<string> Execute(string args)
         {
-            using (var activity = AI.Chat.Diagnostics.ActivitySources.Commands.StartActivity($"{CommandName}.{nameof(ExecuteAsync)}"))
+            using (var activity = AI.Chat.Diagnostics.ActivitySources.Commands.StartActivity($"{CommandName}.{nameof(Execute)}"))
             {
-                await _command.ExecuteAsync(args)
-                    .ConfigureAwait(false);
+                foreach (var token in _command.Execute(args))
+                {
+                    yield return token;
+                }
             }
         }
     }

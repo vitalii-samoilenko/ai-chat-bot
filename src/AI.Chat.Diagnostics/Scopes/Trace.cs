@@ -30,9 +30,9 @@
         {
             using (var activity = AI.Chat.Diagnostics.ActivitySources.Scopes.StartActivity($"{ScopeName}.{nameof(ExecuteRead)}"))
             {
-                foreach (var result in _scope.ExecuteRead(action))
+                foreach (var token in _scope.ExecuteRead(action))
                 {
-                    yield return result;
+                    yield return token;
                 }
             }
         }
@@ -48,6 +48,16 @@
             using (var activity = AI.Chat.Diagnostics.ActivitySources.Scopes.StartActivity($"{ScopeName}.{nameof(ExecuteWrite)}"))
             {
                 return _scope.ExecuteWrite(action);
+            }
+        }
+        public System.Collections.Generic.IEnumerable<T> ExecuteWrite<T>(System.Func<System.Collections.Generic.IEnumerable<T>> action)
+        {
+            using (var activity = AI.Chat.Diagnostics.ActivitySources.Scopes.StartActivity($"{ScopeName}.{nameof(ExecuteWrite)}"))
+            {
+                foreach (var token in _scope.ExecuteWrite(action))
+                {
+                    yield return token;
+                }
             }
         }
 

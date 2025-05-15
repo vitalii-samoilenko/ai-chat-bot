@@ -74,25 +74,31 @@
             AI.Chat.Host.Helpers.Save(_options);
         }
 
-        public void Hold(System.DateTime key, (System.Func<System.Threading.Tasks.Task> onAllowAsync, System.Func<System.Threading.Tasks.Task> onDenyAsync) callbacks)
+        public void Hold(params System.DateTime[] keys)
         {
-            _moderator.Hold(key, callbacks);
+            _moderator.Hold(keys);
         }
-        public System.Func<System.Threading.Tasks.Task> Allow(params System.DateTime[] keys)
+        public void Allow(params System.DateTime[] keys)
         {
-            return _moderator.Allow(keys);
+            _moderator.Allow(keys);
         }
-        public System.Func<System.Threading.Tasks.Task> AllowAll()
+        public System.Collections.Generic.IEnumerable<System.DateTime> AllowAll()
         {
-            return _moderator.AllowAll();
+            foreach (var key in _moderator.AllowAll())
+            {
+                yield return key;
+            }
         }
-        public System.Func<System.Threading.Tasks.Task> Deny(params System.DateTime[] keys)
+        public void Deny(params System.DateTime[] keys)
         {
-            return _moderator.Deny(keys);
+            _moderator.Deny(keys);
         }
-        public System.Func<System.Threading.Tasks.Task> DenyAll()
+        public System.Collections.Generic.IEnumerable<System.DateTime> DenyAll()
         {
-            return _moderator.DenyAll();
+            foreach (var key in _moderator.DenyAll())
+            {
+                yield return key;
+            }
         }
 
         public bool Greet(string username)

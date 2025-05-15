@@ -11,17 +11,17 @@ namespace AI.Chat.Commands
             _moderator = moderator;
         }
 
-        public async System.Threading.Tasks.Task ExecuteAsync(string args)
+        public System.Collections.Generic.IEnumerable<string> Execute(string args)
         {
-            System.Func<System.Threading.Tasks.Task> callback;
+            System.Collections.Generic.IEnumerable<System.DateTime> allowedKeys = null;
             if (args == Constants.ArgsAll)
             {
-                callback = _moderator.AllowAll();
+                allowedKeys = _moderator.AllowAll();
             }
             else
             {
                 var keys = new System.Collections.Generic.List<System.DateTime>();
-                foreach (var arg in args.Split(' '))
+                foreach (var arg in args.Split(new[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries))
                 {
                     if (!arg.TryParseKey(out var key))
                     {
@@ -29,10 +29,16 @@ namespace AI.Chat.Commands
                     }
                     keys.Add(key);
                 }
-                callback = _moderator.Allow(keys.ToArray());
+                if (0 < keys.Count)
+                {
+                    _moderator.Allow(keys.ToArray());
+                }
+                allowedKeys = keys;
+            };
+            foreach (var key in allowedKeys)
+            {
+                yield return key.ToKeyString();
             }
-            await callback()
-                .ConfigureAwait(false);
         }
     }
 }

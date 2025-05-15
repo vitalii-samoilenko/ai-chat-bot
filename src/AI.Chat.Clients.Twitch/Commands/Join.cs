@@ -9,10 +9,13 @@
             _client = client;
         }
 
-        public System.Threading.Tasks.Task ExecuteAsync(string args)
+        public System.Collections.Generic.IEnumerable<string> Execute(string args)
         {
-            _client.JoinChannel(args);
-            return System.Threading.Tasks.Task.CompletedTask;
+            if (!string.IsNullOrWhiteSpace(args))
+            {
+                _client.JoinChannel(args);
+                yield return args;
+            }
         }
     }
 }

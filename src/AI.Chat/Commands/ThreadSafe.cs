@@ -12,12 +12,12 @@
             _scope = scope;
         }
 
-        public async System.Threading.Tasks.Task ExecuteAsync(string args)
+        public System.Collections.Generic.IEnumerable<string> Execute(string args)
         {
-            await _scope.ExecuteWriteAsync(
-                    async () => await _command.ExecuteAsync(args)
-                        .ConfigureAwait(false))
-                .ConfigureAwait(false);
+            foreach (var token in _scope.ExecuteWrite(() => _command.Execute(args)))
+            {
+                yield return token;
+            }
         }
     }
 }

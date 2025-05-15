@@ -39,9 +39,9 @@
             Chat.Diagnostics.Meters.ReadOpen.Add(1);
             try
             {
-                foreach (var result in _scope.ExecuteRead(action))
+                foreach (var token in _scope.ExecuteRead(action))
                 {
-                    yield return result;
+                    yield return token;
                 }
             }
             finally
@@ -67,6 +67,21 @@
             try
             {
                 return _scope.ExecuteWrite(action);
+            }
+            finally
+            {
+                Chat.Diagnostics.Meters.WriteClose.Add(1);
+            }
+        }
+        public System.Collections.Generic.IEnumerable<T> ExecuteWrite<T>(System.Func<System.Collections.Generic.IEnumerable<T>> action)
+        {
+            Chat.Diagnostics.Meters.WriteOpen.Add(1);
+            try
+            {
+                foreach (var token in _scope.ExecuteWrite(action))
+                {
+                    yield return token;
+                }
             }
             finally
             {

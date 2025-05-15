@@ -9,10 +9,11 @@
             _moderator = moderator;
         }
 
-        public System.Threading.Tasks.Task ExecuteAsync(string args)
+        public System.Collections.Generic.IEnumerable<string> Execute(string args)
         {
-            _moderator.Unmoderate(args.Split(' '));
-            return System.Threading.Tasks.Task.CompletedTask;
+            var usernames = args.Split(new[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries);
+            _moderator.Unmoderate(usernames);
+            return usernames;
         }
     }
 }

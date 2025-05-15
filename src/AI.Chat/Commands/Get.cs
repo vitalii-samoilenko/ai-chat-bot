@@ -2,22 +2,22 @@
 
 namespace AI.Chat.Commands
 {
-    public class Instruct : ICommand
+    public class Get : ICommand
     {
         private readonly IHistory _history;
 
-        public Instruct(IHistory history)
+        public Get(IHistory history)
         {
             _history = history;
         }
 
         public System.Collections.Generic.IEnumerable<string> Execute(string args)
         {
-            if (!string.IsNullOrWhiteSpace(args))
+            if (args.TryParseKey(out var key)
+                && _history.TryGet(key, out var record))
             {
-                var key = _history.AddSystemMessage(args);
                 yield return key.ToKeyString();
-                yield return args;
+                yield return record.Message;
             }
         }
     }

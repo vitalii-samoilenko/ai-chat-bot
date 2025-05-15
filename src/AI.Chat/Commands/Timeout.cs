@@ -9,12 +9,12 @@
             _moderator = moderator;
         }
 
-        public System.Threading.Tasks.Task ExecuteAsync(string args)
+        public System.Collections.Generic.IEnumerable<string> Execute(string args)
         {
-            var tokens = args.Split(' ');
+            var tokens = args.Split(new[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries);
             if (tokens.Length == 0 || tokens.Length % 2 == 1)
             {
-                return System.Threading.Tasks.Task.CompletedTask;
+                yield break;
             }
             var tuples = new System.Collections.Generic.List<(string, System.TimeSpan)>();
             for (int i = 0; i < tokens.Length; i += 2)
@@ -27,7 +27,11 @@
                 tuples.Add((username, timeout));
             }
             _moderator.Timeout(tuples.ToArray());
-            return System.Threading.Tasks.Task.CompletedTask;
+            foreach ((var username, var timeout) in tuples)
+            {
+                yield return username;
+                yield return timeout.ToString(Constants.TimeSpanFormat);
+            }
         }
     }
 }

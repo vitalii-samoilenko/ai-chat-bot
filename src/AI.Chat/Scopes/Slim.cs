@@ -92,9 +92,9 @@
             }
             try
             {
-                foreach (var item in action())
+                foreach (var token in action())
                 {
-                    yield return item;
+                    yield return token;
                 }
             }
             finally
@@ -152,6 +152,33 @@
             {
                 System.Threading.Interlocked.Add(ref _completed, WriteStep);
                 _event.Set();
+            }
+        }
+        public System.Collections.Generic.IEnumerable<T> ExecuteWrite<T>(System.Func<System.Collections.Generic.IEnumerable<T>> action)
+        {
+            var spinner = new System.Threading.SpinWait();
+            for (var current = System.Threading.Interlocked.Add(ref _queued, WriteStep);
+                WriteStep < current - System.Threading.Interlocked.Read(ref _completed);)
+            {
+                if (_event.IsSet)
+                {
+                    spinner.SpinOnce();
+                }
+                else
+                {
+                    _event.Wait();
+                }
+            }
+            try
+            {
+                foreach (var token in action())
+                {
+                    yield return token;
+                }
+            }
+            finally
+            {
+                System.Threading.Interlocked.Add(ref _completed, ReadStep);
             }
         }
 

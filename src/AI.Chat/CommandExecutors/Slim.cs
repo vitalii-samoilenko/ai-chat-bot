@@ -22,15 +22,15 @@
             }
         }
 
-        public async System.Threading.Tasks.Task<bool> ExecuteAsync(string command, string args)
+        public System.Collections.Generic.IEnumerable<string> Execute(string command, string args)
         {
-            if (!_commands.TryGetValue(command, out var target))
+            if (_commands.TryGetValue(command, out var target))
             {
-                return false;
+                foreach (var token in target.Execute(args))
+                {
+                    yield return token;
+                }
             }
-            await target.ExecuteAsync(args)
-                .ConfigureAwait(false);
-            return true;
         }
     }
 }

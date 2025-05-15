@@ -16,7 +16,7 @@
         }
     }
 
-    public class TimeSeries<T> : IEnumerable<T>
+    public class TimeSeries<T> : IEnumerable<T>, IEnumerable<Entry<T>>
     {
         private static readonly IComparer<Entry<T>> EntryComparer = new EntryComparer<T>();
 
@@ -45,16 +45,6 @@
             get
             {
                 return _start;
-            }
-        }
-        public IEnumerable<Entry<T>> Entries
-        {
-            get
-            {
-                for (var current = _head; current != null; current = current.Next)
-                {
-                    yield return current;
-                }
             }
         }
         public int Count
@@ -337,9 +327,16 @@
             }
         }
 
+        IEnumerator<Entry<T>> IEnumerable<Entry<T>>.GetEnumerator()
+        {
+            for (var current = _head; current != null; current = current.Next)
+            {
+                yield return current;
+            }
+        }
         public IEnumerator<T> GetEnumerator()
         {
-            foreach (var entry in Entries)
+            foreach (var entry in (IEnumerable<Entry<T>>)this)
             {
                 yield return entry.Value;
             }

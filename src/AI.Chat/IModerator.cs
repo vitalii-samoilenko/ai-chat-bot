@@ -17,11 +17,11 @@
         void Welcome(params string[] usernames);
         void Unwelcome(params string[] usernames);
 
-        void Hold(System.DateTime key, (System.Func<System.Threading.Tasks.Task> onAllowAsync, System.Func<System.Threading.Tasks.Task> onDenyAsync) callbacks);
-        System.Func<System.Threading.Tasks.Task> Allow(params System.DateTime[] keys);
-        System.Func<System.Threading.Tasks.Task> AllowAll();
-        System.Func<System.Threading.Tasks.Task> Deny(params System.DateTime[] keys);
-        System.Func<System.Threading.Tasks.Task> DenyAll();
+        void Hold(params System.DateTime[] keys);
+        void Allow(params System.DateTime[] keys);
+        System.Collections.Generic.IEnumerable<System.DateTime> AllowAll();
+        void Deny(params System.DateTime[] keys);
+        System.Collections.Generic.IEnumerable<System.DateTime> DenyAll();
 
         bool Greet(string username);
     }

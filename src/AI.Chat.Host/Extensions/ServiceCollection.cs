@@ -57,7 +57,7 @@ namespace Microsoft.Extensions.DependencyInjection
                                     .GetRequiredService<System.Collections.Generic.TimeSeries<AI.Chat.Record>>();
                                 var messages = new System.Collections.Generic.TimeSeries<OpenAI.Chat.ChatMessage>(
                                     records.Start);
-                                foreach (var entry in records.Entries)
+                                foreach (var entry in (System.Collections.Generic.IEnumerable<System.Collections.Generic.Entry<AI.Chat.Record>>)records)
                                 {
                                     messages.Add(entry.Key, entry.Value.ToChatMessage());
                                 }
@@ -188,6 +188,8 @@ namespace Microsoft.Extensions.DependencyInjection
                                     .GetRequiredService<AI.Chat.IModerator>();
                                 var user = serviceProvider
                                     .GetRequiredService<AI.Chat.IClient>();
+                                var history = serviceProvider
+                                    .GetRequiredService<AI.Chat.IHistory>();
                                 var scope = serviceProvider
                                     .GetRequiredKeyedService<AI.Chat.IScope>("client");
 
@@ -201,6 +203,7 @@ namespace Microsoft.Extensions.DependencyInjection
                                     commandExecutor,
                                     moderator,
                                     user,
+                                    history,
                                     scope);
                             });
                         if (diagnostics)
@@ -278,54 +281,6 @@ namespace Microsoft.Extensions.DependencyInjection
                                     scope);
                             });
                         commandOverrides.Add(delay, typeof(AI.Chat.Commands.Twitch.Delay).Name);
-
-                        var find = typeof(AI.Chat.Commands.Twitch.Find);
-                        services.AddTransient(find,
-                            serviceProvider =>
-                            {
-                                var history = serviceProvider
-                                    .GetRequiredService<AI.Chat.IHistory>();
-                                var client = serviceProvider
-                                    .GetRequiredKeyedService<TwitchLib.Client.Interfaces.ITwitchClient>("moderator");
-
-                                return new AI.Chat.Commands.Twitch.Find(
-                                    history,
-                                    client);
-                            });
-                        if (diagnostics)
-                        {
-                            find = typeof(AI.Chat.Commands.Diagnostics.Trace<>)
-                                .MakeGenericType(find);
-                            services.AddTransient(find);
-                        }
-                        services.AddTransient(typeof(AI.Chat.ICommand),
-                            serviceProvider => serviceProvider
-                                .GetRequiredService(find));
-                        commandOverrides.Add(find, typeof(AI.Chat.Commands.Twitch.Find).Name);
-
-                        var get = typeof(AI.Chat.Commands.Twitch.Get);
-                        services.AddTransient(get,
-                            serviceProvider =>
-                            {
-                                var history = serviceProvider
-                                    .GetRequiredService<AI.Chat.IHistory>();
-                                var client = serviceProvider
-                                    .GetRequiredKeyedService<TwitchLib.Client.Interfaces.ITwitchClient>("moderator");
-
-                                return new AI.Chat.Commands.Twitch.Get(
-                                    history,
-                                    client);
-                            });
-                        if (diagnostics)
-                        {
-                            get = typeof(AI.Chat.Commands.Diagnostics.Trace<>)
-                                .MakeGenericType(get);
-                            services.AddTransient(get);
-                        }
-                        services.AddTransient(typeof(AI.Chat.ICommand),
-                            serviceProvider => serviceProvider
-                                .GetRequiredService(get));
-                        commandOverrides.Add(get, typeof(AI.Chat.Commands.Twitch.Get).Name);
 
                         var join = typeof(AI.Chat.Commands.Twitch.Join);
                         services.AddTransient(join,
@@ -757,6 +712,32 @@ namespace Microsoft.Extensions.DependencyInjection
                 serviceProvider => serviceProvider
                     .GetRequiredService(edit));
             commandOverrides.Add(edit, typeof(AI.Chat.Commands.Edit).Name);
+
+            var find = typeof(AI.Chat.Commands.Find);
+            services.AddTransient(find);
+            if (diagnostics)
+            {
+                find = typeof(AI.Chat.Commands.Diagnostics.Trace<>)
+                    .MakeGenericType(find);
+                services.AddTransient(find);
+            }
+            services.AddTransient(typeof(AI.Chat.ICommand),
+                serviceProvider => serviceProvider
+                    .GetRequiredService(find));
+            commandOverrides.Add(find, typeof(AI.Chat.Commands.Find).Name);
+
+            var get = typeof(AI.Chat.Commands.Get);
+            services.AddTransient(get);
+            if (diagnostics)
+            {
+                get = typeof(AI.Chat.Commands.Diagnostics.Trace<>)
+                    .MakeGenericType(get);
+                services.AddTransient(get);
+            }
+            services.AddTransient(typeof(AI.Chat.ICommand),
+                serviceProvider => serviceProvider
+                    .GetRequiredService(get));
+            commandOverrides.Add(get, typeof(AI.Chat.Commands.Get).Name);
 
             var instruct = typeof(AI.Chat.Commands.Instruct);
             services.AddTransient(instruct);

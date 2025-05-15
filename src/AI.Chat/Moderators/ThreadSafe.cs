@@ -66,25 +66,31 @@
             _scope.ExecuteWrite(() => _moderator.Unwelcome(usernames));
         }
 
-        public void Hold(System.DateTime key, (System.Func<System.Threading.Tasks.Task> onAllowAsync, System.Func<System.Threading.Tasks.Task> onDenyAsync) callbacks)
+        public void Hold(params System.DateTime[] keys)
         {
-            _scope.ExecuteWrite(() => _moderator.Hold(key, callbacks));
+            _scope.ExecuteWrite(() => _moderator.Hold(keys));
         }
-        public System.Func<System.Threading.Tasks.Task> Allow(params System.DateTime[] keys)
+        public void Allow(params System.DateTime[] keys)
         {
-            return _scope.ExecuteWrite(() => _moderator.Allow(keys));
+            _scope.ExecuteWrite(() => _moderator.Allow(keys));
         }
-        public System.Func<System.Threading.Tasks.Task> AllowAll()
+        public System.Collections.Generic.IEnumerable<System.DateTime> AllowAll()
         {
-            return _scope.ExecuteWrite(() => _moderator.AllowAll());
+            foreach (var key in _scope.ExecuteWrite(() => _moderator.AllowAll()))
+            {
+                yield return key;
+            }
         }
-        public System.Func<System.Threading.Tasks.Task> Deny(params System.DateTime[] keys)
+        public void Deny(params System.DateTime[] keys)
         {
-            return _scope.ExecuteWrite(() => _moderator.Deny(keys));
+            _scope.ExecuteWrite(() => _moderator.Deny(keys));
         }
-        public System.Func<System.Threading.Tasks.Task> DenyAll()
+        public System.Collections.Generic.IEnumerable<System.DateTime> DenyAll()
         {
-            return _scope.ExecuteWrite(() => _moderator.DenyAll());
+            foreach (var key in _scope.ExecuteWrite(() => _moderator.DenyAll()))
+            {
+                yield return key;
+            }
         }
 
         public bool Greet(string username)

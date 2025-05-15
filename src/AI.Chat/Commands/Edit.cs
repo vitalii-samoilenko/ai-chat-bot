@@ -11,19 +11,23 @@ namespace AI.Chat.Commands
             _history = history;
         }
 
-        public System.Threading.Tasks.Task ExecuteAsync(string args)
+        public System.Collections.Generic.IEnumerable<string> Execute(string args)
         {
             var previous = 0;
             var next = args.IndexOf(' ', previous);
             if (next < 0)
             {
-                return System.Threading.Tasks.Task.CompletedTask;
+                yield break;
             }
-            if (args.Substring(previous, next - previous).TryParseKey(out var key))
+            var keyArg = args.Substring(previous, next - previous);
+            var message = args.Substring(next + 1);
+            if (keyArg.TryParseKey(out var key)
+                && !string.IsNullOrWhiteSpace(message)
+                && _history.TryEdit(key, message))
             {
-                _history.TryEdit(key, args.Substring(next + 1));
+                yield return keyArg;
+                yield return message;
             }
-            return System.Threading.Tasks.Task.CompletedTask;
         }
     }
 }
