@@ -13,9 +13,10 @@ namespace AI.Chat.Commands
 
         public System.Collections.Generic.IEnumerable<string> Execute(string args)
         {
-            if (args == Constants.ArgsAll)
+            if (Constants.ArgsAll.Equals(args, System.StringComparison.OrdinalIgnoreCase))
             {
                 _history.Clear();
+                yield return args;
             }
             else
             {
@@ -28,8 +29,7 @@ namespace AI.Chat.Commands
                     }
                     keys.Add(key);
                 }
-                _history.Remove(keys.ToArray());
-                foreach (var key in keys)
+                foreach (var key in _history.Remove(keys.ToArray()))
                 {
                     yield return key.ToKeyString();
                 }

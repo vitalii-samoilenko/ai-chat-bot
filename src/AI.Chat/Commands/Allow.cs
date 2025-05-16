@@ -4,23 +4,24 @@ namespace AI.Chat.Commands
 {
     public class Allow : ICommand
     {
-        private readonly IModerator _moderator;
+        private readonly IHistory _history;
 
-        public Allow(IModerator moderator)
+        public Allow(IHistory history)
         {
-            _moderator = moderator;
+            _history = history;
         }
 
         public System.Collections.Generic.IEnumerable<string> Execute(string args)
         {
-            System.Collections.Generic.IEnumerable<System.DateTime> allowedKeys = null;
-            if (args == Constants.ArgsAll)
+            System.Collections.Generic.List<System.DateTime> keys = null;
+            if (Constants.ArgsAll.Equals(args, System.StringComparison.OrdinalIgnoreCase))
             {
-                allowedKeys = _moderator.AllowAll();
+                keys = new System.Collections.Generic.List<System.DateTime>(
+                    _history.FindModerated(System.DateTime.MinValue, System.DateTime.MaxValue));
             }
             else
             {
-                var keys = new System.Collections.Generic.List<System.DateTime>();
+                keys = new System.Collections.Generic.List<System.DateTime>();
                 foreach (var arg in args.Split(new[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries))
                 {
                     if (!arg.TryParseKey(out var key))
@@ -29,15 +30,13 @@ namespace AI.Chat.Commands
                     }
                     keys.Add(key);
                 }
-                if (0 < keys.Count)
-                {
-                    _moderator.Allow(keys.ToArray());
-                }
-                allowedKeys = keys;
             };
-            foreach (var key in allowedKeys)
+            if (0 < keys.Count)
             {
-                yield return key.ToKeyString();
+                foreach (var key in _history.Unmoderate(keys.ToArray()))
+                {
+                    yield return key.ToKeyString();
+                }
             }
         }
     }

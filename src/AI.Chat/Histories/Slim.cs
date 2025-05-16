@@ -26,28 +26,26 @@
             Indexate(entry);
             return entry.Key;
         }
-        public void Remove(params System.DateTime[] keys)
+        public System.DateTime[] Remove(params System.DateTime[] keys)
         {
+            var removed = new System.Collections.Generic.List<System.DateTime>();
             foreach (var key in keys)
             {
                 if (!_records.TryGet(key, out var entry))
                 {
                     continue;
                 }
-                _records.Remove(key);
-                foreach (var tag in entry.Value.Tags)
+                var record = entry.Value;
+                if (_records.Remove(key))
                 {
-                    var index = _indexes[tag];
-                    if (1 < index.Count)
+                    removed.Add(key);
+                    foreach (var tag in record.Tags)
                     {
-                        index.Remove(key);
+                        Remove(key, tag);
                     }
-                    else
-                    {
-                        _indexes.Remove(tag);
-                    }                    
                 }
             }
+            return removed.ToArray();
         }
         public void Clear()
         {
@@ -83,14 +81,15 @@
                         for (var i = 1; i < enumerators.Length; ++i)
                         {
                             var enumerator = enumerators[i];
-                            while (enumerator.Current.Key < entryKey)
+                            var currentKey = enumerator.Current.Key;
+                            while (currentKey < entryKey)
                             {
                                 if (!enumerator.MoveNext())
                                 {
                                     yield break;
                                 }
                             }
-                            if (entryKey < enumerator.Current.Key)
+                            if (entryKey < currentKey)
                             {
                                 adjusted = false;
                                 break;
@@ -140,29 +139,103 @@
             {
                 return false;
             }
+            var record = entry.Value;
+            if (record.Message == message)
+            {
+                return false;
+            }
             entry.Value = new Record
             {
                 Message = message,
-                Tags = entry.Value.Tags,
+                Tags = record.Tags,
             };
-            foreach (var tag in entry.Value.Tags)
-            {
-                var index = _indexes[tag];
-                index[key].Value = entry.Value;
-            }
+            Indexate(entry);
             return true;
+        }
+        public System.DateTime[] Tag(string tag, params System.DateTime[] keys)
+        {
+            var tagged = new System.Collections.Generic.List<System.DateTime>();
+            foreach (var key in keys)
+            {
+                if (!_records.TryGet(key, out var entry))
+                {
+                    continue;
+                }
+                var record = entry.Value;
+                var tags = new System.Collections.Generic.List<string>(record.Tags);
+                if (tags.Contains(tag))
+                {
+                    continue;
+                }
+                tagged.Add(key);
+                tags.Add(tag);
+                entry.Value = new Record
+                {
+                    Message = record.Message,
+                    Tags = tags.ToArray()
+                };
+                Indexate(entry);
+            }
+            return tagged.ToArray();
+        }
+        public System.DateTime[] Untag(string tag, params System.DateTime[] keys)
+        {
+            var untagged = new System.Collections.Generic.List<System.DateTime>();
+            foreach (var key in keys)
+            {
+                if (!_records.TryGet(key, out var entry))
+                {
+                    continue;
+                }
+                var record = entry.Value;
+                var tags = new System.Collections.Generic.List<string>(record.Tags);
+                if (!tags.Remove(tag))
+                {
+                    continue;
+                }
+                untagged.Add(key);
+                Remove(key, tag);
+                entry.Value = new Record
+                {
+                    Message = record.Message,
+                    Tags = tags.ToArray()
+                };
+                Indexate(entry);
+            }
+            return untagged.ToArray();
         }
 
         private void Indexate(System.Collections.Generic.Entry<Record> entry)
         {
-            foreach (var tag in entry.Value.Tags)
+            var key = entry.Key;
+            var record = entry.Value;
+            foreach (var tag in record.Tags)
             {
                 if (!_indexes.TryGetValue(tag, out var index))
                 {
                     index = new System.Collections.Generic.TimeSeries<Record>(_records.Start);
                     _indexes[tag] = index;
                 }
-                index.Add(entry.Key, entry.Value);
+                if (index.TryGet(key, out var existing))
+                {
+                    existing.Value = record;
+                }
+                else
+                {
+                    index.Add(key, record);
+                }
+            }
+        }
+        private void Remove(System.DateTime key, string tag)
+        {
+            var index = _indexes[tag];
+            if (1 < index.Count)
+            {
+                index.Remove(key);
+            }
+            else
+            {
+                _indexes.Remove(tag);
             }
         }
     }

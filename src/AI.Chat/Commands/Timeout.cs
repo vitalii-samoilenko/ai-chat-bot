@@ -1,4 +1,6 @@
-﻿namespace AI.Chat.Commands
+﻿using AI.Chat.Extensions;
+
+namespace AI.Chat.Commands
 {
     public class Timeout : ICommand
     {
@@ -26,11 +28,10 @@
                 var username = tokens[i];
                 tuples.Add((username, timeout));
             }
-            _moderator.Timeout(tuples.ToArray());
-            foreach ((var username, var timeout) in tuples)
+            foreach ((var username, var until) in _moderator.Timeout(tuples.ToArray()))
             {
                 yield return username;
-                yield return timeout.ToString(Constants.TimeSpanFormat);
+                yield return until.ToKeyString();
             }
         }
     }

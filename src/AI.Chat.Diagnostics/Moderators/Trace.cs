@@ -41,109 +41,67 @@
             }
         }
 
-        public void Ban(params string[] usernames)
+        public string[] Ban(params string[] usernames)
         {
             using (var activity = AI.Chat.Diagnostics.ActivitySources.Moderators.StartActivity($"{ModeratorName}.{nameof(Ban)}"))
             {
-                _moderator.Ban(usernames);
+                return _moderator.Ban(usernames);
             }
         }
-        public void Unban(params string[] usernames)
+        public string[] Unban(params string[] usernames)
         {
             using (var activity = AI.Chat.Diagnostics.ActivitySources.Moderators.StartActivity($"{ModeratorName}.{nameof(Unban)}"))
             {
-                _moderator.Unban(usernames);
+                return _moderator.Unban(usernames);
             }
         }
-        public void Timeout(params (string username, System.TimeSpan timeout)[] args)
+        public (string username, System.DateTime until)[] Timeout(params (string username, System.TimeSpan timeout)[] args)
         {
             using (var activity = AI.Chat.Diagnostics.ActivitySources.Moderators.StartActivity($"{ModeratorName}.{nameof(Timeout)}"))
             {
-                _moderator.Timeout(args);
+                return _moderator.Timeout(args);
             }
         }
-        public void Moderate(params string[] usernames)
+        public string[] Moderate(params string[] usernames)
         {
             using (var activity = AI.Chat.Diagnostics.ActivitySources.Moderators.StartActivity($"{ModeratorName}.{nameof(Moderate)}"))
             {
-                _moderator.Moderate(usernames);
+                return _moderator.Moderate(usernames);
             }
         }
-        public void Unmoderate(params string[] usernames)
+        public string[] Unmoderate(params string[] usernames)
         {
             using (var activity = AI.Chat.Diagnostics.ActivitySources.Moderators.StartActivity($"{ModeratorName}.{nameof(Unmoderate)}"))
             {
-                _moderator.Unmoderate(usernames);
+                return _moderator.Unmoderate(usernames);
             }
         }
-        public void Promote(params string[] usernames)
+        public string[] Promote(params string[] usernames)
         {
             using (var activity = AI.Chat.Diagnostics.ActivitySources.Moderators.StartActivity($"{ModeratorName}.{nameof(Promote)}"))
             {
-                _moderator.Promote(usernames);
+                return _moderator.Promote(usernames);
             }
         }
-        public void Demote(params string[] usernames)
+        public string[] Demote(params string[] usernames)
         {
             using (var activity = AI.Chat.Diagnostics.ActivitySources.Moderators.StartActivity($"{ModeratorName}.{nameof(Demote)}"))
             {
-                _moderator.Demote(usernames);
+                return _moderator.Demote(usernames);
             }
         }
-        public void Welcome(params string[] usernames)
+        public string[] Welcome(params string[] usernames)
         {
             using (var activity = AI.Chat.Diagnostics.ActivitySources.Moderators.StartActivity($"{ModeratorName}.{nameof(Welcome)}"))
             {
-                _moderator.Welcome(usernames);
+                return _moderator.Welcome(usernames);
             }
         }
-        public void Unwelcome(params string[] usernames)
+        public string[] Unwelcome(params string[] usernames)
         {
             using (var activity = AI.Chat.Diagnostics.ActivitySources.Moderators.StartActivity($"{ModeratorName}.{nameof(Unwelcome)}"))
             {
-                _moderator.Unwelcome(usernames);
-            }
-        }
-
-        public void Hold(params System.DateTime[] keys)
-        {
-            using (var activity = AI.Chat.Diagnostics.ActivitySources.Moderators.StartActivity($"{ModeratorName}.{nameof(Hold)}"))
-            {
-                _moderator.Hold(keys);
-            }
-        }
-        public void Allow(params System.DateTime[] keys)
-        {
-            using (var activity = AI.Chat.Diagnostics.ActivitySources.Moderators.StartActivity($"{ModeratorName}.{nameof(Allow)}"))
-            {
-                _moderator.Allow(keys);
-            }
-        }
-        public System.Collections.Generic.IEnumerable<System.DateTime> AllowAll()
-        {
-            using (var activity = AI.Chat.Diagnostics.ActivitySources.Moderators.StartActivity($"{ModeratorName}.{nameof(AllowAll)}"))
-            {
-                foreach (var key in _moderator.AllowAll())
-                {
-                    yield return key;
-                }
-            }
-        }
-        public void Deny(params System.DateTime[] keys)
-        {
-            using (var activity = AI.Chat.Diagnostics.ActivitySources.Moderators.StartActivity($"{ModeratorName}.{nameof(Deny)}"))
-            {
-                _moderator.Deny(keys);
-            }
-        }
-        public System.Collections.Generic.IEnumerable<System.DateTime> DenyAll()
-        {
-            using (var activity = AI.Chat.Diagnostics.ActivitySources.Moderators.StartActivity($"{ModeratorName}.{nameof(DenyAll)}"))
-            {
-                foreach (var key in _moderator.DenyAll())
-                {
-                    yield return key;
-                }
+                return _moderator.Unwelcome(usernames);
             }
         }
 

@@ -187,8 +187,6 @@ Once started, client will join its' own channel and allow __Moderators__ to exec
 !cheerful onfirstmessage
 !allow key1 key2 ...
 !allow all
-!deny key1 key2 ...
-!deny all
 !delay hh:mm:ss
 !instruct Do not use curse words
 !find fromKey toKey
@@ -212,7 +210,7 @@ Before sending reply to __Moderated__ user it will be sent to bots' own channel,
 202505102244507310000 to be or not to be is a very popular question yet to be answered
 ```
 
-First part is the message __key__, second one is the actual reply yet to be sent. __Allow__/__Deny__ commands could be used to manage them
+First part is the message __key__, second one is the actual reply yet to be sent. __Allow__/__Remove__ commands could be used to manage them
 
 You can __Ban__, __Mod__, __Welcome__, __Promote__ and __Timeout__ bot itself:
  - __Ban__ and __Timeout__ will mute bot

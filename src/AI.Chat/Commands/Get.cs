@@ -16,7 +16,7 @@ namespace AI.Chat.Commands
             if (args.TryParseKey(out var key)
                 && _history.TryGet(key, out var record))
             {
-                yield return key.ToKeyString();
+                yield return args;
                 yield return record.Message;
                 foreach (var tag in record.Tags)
                 {

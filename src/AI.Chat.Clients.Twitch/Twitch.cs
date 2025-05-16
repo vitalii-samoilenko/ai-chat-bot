@@ -94,6 +94,47 @@ namespace AI.Chat.Clients
                 }
             }
 
+            System.Func<System.DateTime, string, System.Threading.Tasks.Task> onAllowAsync = async (replyKey, channel) =>
+            {
+                if (!_history.TryGet(replyKey, out var reply))
+                {
+                    return;
+                }
+                await _scope.ExecuteWriteAsync(
+                    async () =>
+                    {
+                        _userClient.SendMessage(
+                            channel,
+                            reply.Message);
+                        await System.Threading.Tasks.Task.Delay(
+                                _options.Delay)
+                            .ConfigureAwait(false);
+                    })
+                    .ConfigureAwait(false);
+            };
+            System.Func<System.DateTime, System.Threading.Tasks.Task> onHoldAsync = replyKey =>
+            {
+                if (!_history.TryGet(replyKey, out var reply))
+                {
+                    return System.Threading.Tasks.Task.CompletedTask;
+                }
+                var replyNotify = $"{replyKey.ToKeyString()} {reply.Message}";
+                if (MaxMessageLength < replyNotify.Length)
+                {
+                    replyNotify = $"{replyNotify.Substring(0, MaxMessageLength - 3)}...";
+                }
+                _moderatorClient.SendMessage(
+                    _moderatorClient.JoinedChannels[0],
+                    replyNotify);
+                return System.Threading.Tasks.Task.CompletedTask;
+            };
+            System.Func<string, string, System.Threading.Tasks.Task> welcomeAsync = async (username, channel) =>
+                await _client.WelcomeAsync(username,
+                        async replyKey => await onAllowAsync(replyKey, channel)
+                            .ConfigureAwait(false),
+                        onHoldAsync)
+                    .ConfigureAwait(false);
+
             _moderatorClient.Initialize(
                 new TwitchLib.Client.Models.ConnectionCredentials(
                     _options.Username,
@@ -113,12 +154,21 @@ namespace AI.Chat.Clients
                 {
                     replyBuilder.Append(' ')
                         .Append(token);
-                    if (MaxMessageLength + 1 < replyBuilder.Length)
+                    if (nameof(AI.Chat.Commands.Allow).Equals(args.Command.CommandText, System.StringComparison.OrdinalIgnoreCase))
                     {
-                        replyBuilder.Remove(MaxMessageLength - 2, replyBuilder.Length - (MaxMessageLength - 2))
-                            .Append("...");
+                        onAllowAsync(token.ParseKey(), _userClient.JoinedChannels[0].Channel)
+                            .GetAwaiter()
+                            .GetResult();
+                    }
+                    else if (MaxMessageLength + 1 < replyBuilder.Length)
+                    {
                         break;
                     }
+                }
+                if (MaxMessageLength + 1 < replyBuilder.Length)
+                {
+                    replyBuilder.Remove(MaxMessageLength - 2, replyBuilder.Length - (MaxMessageLength - 2))
+                        .Append("...");
                 }
                 var reply = 0 < replyBuilder.Length
                     ? replyBuilder.Remove(0, 1)
@@ -138,56 +188,6 @@ namespace AI.Chat.Clients
                 throw new System.Exception(
                     "Failed to connect to Twitch moderator channel");
             }
-
-            System.Func<System.DateTime, string, System.Threading.Tasks.Task> onAllowAsync = async (replyKey, channel) =>
-            {
-                if (!_history.TryGet(replyKey, out var reply))
-                {
-                    return;
-                }
-                await _scope.ExecuteWriteAsync(
-                    async () =>
-                    {
-                        _userClient.SendMessage(
-                            channel,
-                            reply.Message);
-                        await System.Threading.Tasks.Task.Delay(
-                                _options.Delay)
-                            .ConfigureAwait(false);
-                    })
-                    .ConfigureAwait(false);
-            };
-            System.Func<System.DateTime, System.DateTime, System.Threading.Tasks.Task> onHoldAsync = (promptKey, replyKey) =>
-            {
-                if (!_history.TryGet(promptKey, out var prompt)
-                    || !_history.TryGet(replyKey, out var reply))
-                {
-                    return System.Threading.Tasks.Task.CompletedTask;
-                }
-                var promptNotify = $"{promptKey.ToKeyString()} {prompt.Message}";
-                if (MaxMessageLength < promptNotify.Length)
-                {
-                    promptNotify = $"{promptNotify.Substring(0, MaxMessageLength - 3)}...";
-                }
-                var replyNotify = $"{replyKey.ToKeyString()} {reply.Message}";
-                if (MaxMessageLength < replyNotify.Length)
-                {
-                    replyNotify = $"{replyNotify.Substring(0, MaxMessageLength - 3)}...";
-                }
-                _moderatorClient.SendMessage(
-                    _moderatorClient.JoinedChannels[0],
-                    promptNotify);
-                _moderatorClient.SendMessage(
-                    _moderatorClient.JoinedChannels[0],
-                    replyNotify);
-                return System.Threading.Tasks.Task.CompletedTask;
-            };
-            System.Func<string, string, System.Threading.Tasks.Task> welcomeAsync = async (username, channel) =>
-                await _client.WelcomeAsync(username,
-                        async replyKey => await onAllowAsync(replyKey, channel)
-                            .ConfigureAwait(false),
-                        onHoldAsync)
-                    .ConfigureAwait(false);
 
             _userClient.Initialize(
                 new TwitchLib.Client.Models.ConnectionCredentials(

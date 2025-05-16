@@ -29,76 +29,81 @@
             return _moderator.IsWelcomed(usernames);
         }
 
-        public void Ban(params string[] usernames)
+        public string[] Ban(params string[] usernames)
         {
-            _moderator.Ban(usernames);
-            AI.Chat.Host.Helpers.Save(_options);
-        }
-        public void Unban(params string[] usernames)
-        {
-            _moderator.Unban(usernames);
-            AI.Chat.Host.Helpers.Save(_options);
-        }
-        public void Timeout(params (string username, System.TimeSpan timeout)[] args)
-        {
-            _moderator.Timeout(args);
-        }
-        public void Moderate(params string[] usernames)
-        {
-            _moderator.Moderate(usernames);
-            AI.Chat.Host.Helpers.Save(_options);
-        }
-        public void Unmoderate(params string[] usernames)
-        {
-            _moderator.Unmoderate(usernames);
-            AI.Chat.Host.Helpers.Save(_options);
-        }
-        public void Promote(params string[] usernames)
-        {
-            _moderator.Unmoderate(usernames);
-            AI.Chat.Host.Helpers.Save(_options);
-        }
-        public void Demote(params string[] usernames)
-        {
-            _moderator.Demote(usernames);
-            AI.Chat.Host.Helpers.Save(_options);
-        }
-        public void Welcome(params string[] usernames)
-        {
-            _moderator.Welcome(usernames);
-            AI.Chat.Host.Helpers.Save(_options);
-        }
-        public void Unwelcome(params string[] usernames)
-        {
-            _moderator.Unwelcome(usernames);
-            AI.Chat.Host.Helpers.Save(_options);
-        }
-
-        public void Hold(params System.DateTime[] keys)
-        {
-            _moderator.Hold(keys);
-        }
-        public void Allow(params System.DateTime[] keys)
-        {
-            _moderator.Allow(keys);
-        }
-        public System.Collections.Generic.IEnumerable<System.DateTime> AllowAll()
-        {
-            foreach (var key in _moderator.AllowAll())
+            var banned = _moderator.Ban(usernames);
+            if (0 < banned.Length)
             {
-                yield return key;
+                AI.Chat.Host.Helpers.Save(_options);
             }
+            return banned;
         }
-        public void Deny(params System.DateTime[] keys)
+        public string[] Unban(params string[] usernames)
         {
-            _moderator.Deny(keys);
-        }
-        public System.Collections.Generic.IEnumerable<System.DateTime> DenyAll()
-        {
-            foreach (var key in _moderator.DenyAll())
+            var unbanned = _moderator.Unban(usernames);
+            if (0 < unbanned.Length)
             {
-                yield return key;
+                AI.Chat.Host.Helpers.Save(_options);
             }
+            return unbanned;
+        }
+        public (string username, System.DateTime until)[] Timeout(params (string username, System.TimeSpan timeout)[] args)
+        {
+            return _moderator.Timeout(args);
+        }
+        public string[] Moderate(params string[] usernames)
+        {
+            var moderated = _moderator.Moderate(usernames);
+            if (0 < moderated.Length)
+            {
+                AI.Chat.Host.Helpers.Save(_options);
+            }
+            return moderated;
+        }
+        public string[] Unmoderate(params string[] usernames)
+        {
+            var unmoderated = _moderator.Unmoderate(usernames);
+            if (0 < unmoderated.Length)
+            {
+                AI.Chat.Host.Helpers.Save(_options);
+            }
+            return unmoderated;
+        }
+        public string[] Promote(params string[] usernames)
+        {
+            var promoted = _moderator.Promote(usernames);
+            if (0 < promoted.Length)
+            {
+                AI.Chat.Host.Helpers.Save(_options);
+            }
+            return promoted;
+        }
+        public string[] Demote(params string[] usernames)
+        {
+            var demoted = _moderator.Demote(usernames);
+            if (0 < demoted.Length)
+            {
+                AI.Chat.Host.Helpers.Save(_options);
+            }
+            return demoted;
+        }
+        public string[] Welcome(params string[] usernames)
+        {
+            var welcomed = _moderator.Welcome(usernames);
+            if (0 < welcomed.Length)
+            {
+                AI.Chat.Host.Helpers.Save(_options);
+            }
+            return welcomed;
+        }
+        public string[] Unwelcome(params string[] usernames)
+        {
+            var unwelcomed = _moderator.Unwelcome(usernames);
+            if (0 < unwelcomed.Length)
+            {
+                AI.Chat.Host.Helpers.Save(_options);
+            }
+            return unwelcomed;
         }
 
         public bool Greet(string username)

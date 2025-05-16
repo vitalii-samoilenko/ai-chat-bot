@@ -17,7 +17,7 @@ namespace AI.Chat.Clients
             _history = history;
         }
 
-        public async System.Threading.Tasks.Task WelcomeAsync(string username, System.Func<System.DateTime, System.Threading.Tasks.Task> onAllowAsync, System.Func<System.DateTime, System.DateTime, System.Threading.Tasks.Task> onHoldAsync)
+        public async System.Threading.Tasks.Task WelcomeAsync(string username, System.Func<System.DateTime, System.Threading.Tasks.Task> onAllowAsync, System.Func<System.DateTime, System.Threading.Tasks.Task> onHoldAsync)
         {
             if (!_moderator.IsAllowed(_options.Username, username)
                 || !_moderator.IsWelcomed(_options.Username, username))
@@ -40,8 +40,8 @@ namespace AI.Chat.Clients
             }
             if (_moderator.IsModerated(_options.Username, username))
             {
-                _moderator.Hold(joinedKey, replyKey);
-                await onHoldAsync(joinedKey, replyKey)
+                _history.Moderate(replyKey);
+                await onHoldAsync(replyKey)
                     .ConfigureAwait(false);
                 return;
             }
@@ -49,7 +49,7 @@ namespace AI.Chat.Clients
             await onAllowAsync(replyKey)
                 .ConfigureAwait(false);
         }
-        public async System.Threading.Tasks.Task ChatAsync(string username, string message, System.Func<System.DateTime, System.Threading.Tasks.Task> onAllowAsync, System.Func<System.DateTime, System.DateTime, System.Threading.Tasks.Task> onHoldAsync)
+        public async System.Threading.Tasks.Task ChatAsync(string username, string message, System.Func<System.DateTime, System.Threading.Tasks.Task> onAllowAsync, System.Func<System.DateTime, System.Threading.Tasks.Task> onHoldAsync)
         {
             if (!_moderator.IsAllowed(_options.Username, username))
             {
@@ -72,8 +72,8 @@ namespace AI.Chat.Clients
             }
             if (_moderator.IsModerated(_options.Username, username))
             {
-                _moderator.Hold(promptKey, replyKey);
-                await onHoldAsync(promptKey, replyKey)
+                _history.Moderate(replyKey);
+                await onHoldAsync(replyKey)
                     .ConfigureAwait(false);
                 return;
             }

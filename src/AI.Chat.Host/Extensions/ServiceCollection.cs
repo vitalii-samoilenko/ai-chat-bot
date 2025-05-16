@@ -247,7 +247,7 @@ namespace Microsoft.Extensions.DependencyInjection
                                     command,
                                     scope);
                             });
-                        commandOverrides.Add(cheerful, typeof(AI.Chat.Commands.Twitch.Cheerful).Name);
+                        commandOverrides.Add(cheerful, nameof(AI.Chat.Commands.Twitch.Cheerful));
 
                         var delay = typeof(AI.Chat.Commands.Twitch.Delay);
                         services.AddTransient(delay,
@@ -280,7 +280,7 @@ namespace Microsoft.Extensions.DependencyInjection
                                     command,
                                     scope);
                             });
-                        commandOverrides.Add(delay, typeof(AI.Chat.Commands.Twitch.Delay).Name);
+                        commandOverrides.Add(delay, nameof(AI.Chat.Commands.Twitch.Delay));
 
                         var join = typeof(AI.Chat.Commands.Twitch.Join);
                         services.AddTransient(join,
@@ -315,7 +315,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         services.AddTransient(typeof(AI.Chat.ICommand),
                             serviceProvider => serviceProvider
                                 .GetRequiredService(join));
-                        commandOverrides.Add(join, typeof(AI.Chat.Commands.Twitch.Join).Name);
+                        commandOverrides.Add(join, nameof(AI.Chat.Commands.Twitch.Join));
 
                         var leave = typeof(AI.Chat.Commands.Twitch.Leave);
                         services.AddTransient(leave,
@@ -350,7 +350,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         services.AddTransient(typeof(AI.Chat.ICommand),
                             serviceProvider => serviceProvider
                                 .GetRequiredService(leave));
-                        commandOverrides.Add(leave, typeof(AI.Chat.Commands.Twitch.Leave).Name);
+                        commandOverrides.Add(leave, nameof(AI.Chat.Commands.Twitch.Leave));
 
                         services.AddHostedService<AI.Chat.Host.Services.Twitch>(
                             serviceProvider =>
@@ -659,7 +659,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddTransient(typeof(AI.Chat.ICommand),
                 serviceProvider => serviceProvider
                     .GetRequiredService(allow));
-            commandOverrides.Add(allow, typeof(AI.Chat.Commands.Allow).Name);
+            commandOverrides.Add(allow, nameof(AI.Chat.Commands.Allow));
 
             var ban = typeof(AI.Chat.Commands.Ban);
             services.AddTransient(ban);
@@ -672,7 +672,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddTransient(typeof(AI.Chat.ICommand),
                 serviceProvider => serviceProvider
                     .GetRequiredService(ban));
-            commandOverrides.Add(ban, typeof(AI.Chat.Commands.Ban).Name);
+            commandOverrides.Add(ban, nameof(AI.Chat.Commands.Ban));
 
             var demote = typeof(AI.Chat.Commands.Demote);
             services.AddTransient(demote);
@@ -685,20 +685,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddTransient(typeof(AI.Chat.ICommand),
                 serviceProvider => serviceProvider
                     .GetRequiredService(demote));
-            commandOverrides.Add(demote, typeof(AI.Chat.Commands.Demote).Name);
-
-            var deny = typeof(AI.Chat.Commands.Deny);
-            services.AddTransient(deny);
-            if (diagnostics)
-            {
-                deny = typeof(AI.Chat.Commands.Diagnostics.Trace<>)
-                    .MakeGenericType(deny);
-                services.AddTransient(deny);
-            }
-            services.AddTransient(typeof(AI.Chat.ICommand),
-                serviceProvider => serviceProvider
-                    .GetRequiredService(deny));
-            commandOverrides.Add(deny, typeof(AI.Chat.Commands.Deny).Name);
+            commandOverrides.Add(demote, nameof(AI.Chat.Commands.Demote));
 
             var edit = typeof(AI.Chat.Commands.Edit);
             services.AddTransient(edit);
@@ -711,7 +698,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddTransient(typeof(AI.Chat.ICommand),
                 serviceProvider => serviceProvider
                     .GetRequiredService(edit));
-            commandOverrides.Add(edit, typeof(AI.Chat.Commands.Edit).Name);
+            commandOverrides.Add(edit, nameof(AI.Chat.Commands.Edit));
 
             var find = typeof(AI.Chat.Commands.Find);
             services.AddTransient(find);
@@ -724,7 +711,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddTransient(typeof(AI.Chat.ICommand),
                 serviceProvider => serviceProvider
                     .GetRequiredService(find));
-            commandOverrides.Add(find, typeof(AI.Chat.Commands.Find).Name);
+            commandOverrides.Add(find, nameof(AI.Chat.Commands.Find));
 
             var get = typeof(AI.Chat.Commands.Get);
             services.AddTransient(get);
@@ -737,7 +724,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddTransient(typeof(AI.Chat.ICommand),
                 serviceProvider => serviceProvider
                     .GetRequiredService(get));
-            commandOverrides.Add(get, typeof(AI.Chat.Commands.Get).Name);
+            commandOverrides.Add(get, nameof(AI.Chat.Commands.Get));
 
             var instruct = typeof(AI.Chat.Commands.Instruct);
             services.AddTransient(instruct);
@@ -750,7 +737,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddTransient(typeof(AI.Chat.ICommand),
                 serviceProvider => serviceProvider
                     .GetRequiredService(instruct));
-            commandOverrides.Add(instruct, typeof(AI.Chat.Commands.Instruct).Name);
+            commandOverrides.Add(instruct, nameof(AI.Chat.Commands.Instruct));
 
             var mod = typeof(AI.Chat.Commands.Mod);
             services.AddTransient(mod);
@@ -763,7 +750,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddTransient(typeof(AI.Chat.ICommand),
                 serviceProvider => serviceProvider
                     .GetRequiredService(mod));
-            commandOverrides.Add(mod, typeof(AI.Chat.Commands.Mod).Name);
+            commandOverrides.Add(mod, nameof(AI.Chat.Commands.Mod));
 
             var promote = typeof(AI.Chat.Commands.Promote);
             services.AddTransient(promote);
@@ -776,7 +763,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddTransient(typeof(AI.Chat.ICommand),
                 serviceProvider => serviceProvider
                     .GetRequiredService(promote));
-            commandOverrides.Add(promote, typeof(AI.Chat.Commands.Promote).Name);
+            commandOverrides.Add(promote, nameof(AI.Chat.Commands.Promote));
 
             var remove = typeof(AI.Chat.Commands.Remove);
             services.AddTransient(remove);
@@ -789,7 +776,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddTransient(typeof(AI.Chat.ICommand),
                 serviceProvider => serviceProvider
                     .GetRequiredService(remove));
-            commandOverrides.Add(remove, typeof(AI.Chat.Commands.Remove).Name);
+            commandOverrides.Add(remove, nameof(AI.Chat.Commands.Remove));
 
             var timeout = typeof(AI.Chat.Commands.Timeout);
             services.AddTransient(timeout);
@@ -802,7 +789,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddTransient(typeof(AI.Chat.ICommand),
                 serviceProvider => serviceProvider
                     .GetRequiredService(timeout));
-            commandOverrides.Add(timeout, typeof(AI.Chat.Commands.Timeout).Name);
+            commandOverrides.Add(timeout, nameof(AI.Chat.Commands.Timeout));
 
             var unban = typeof(AI.Chat.Commands.Unban);
             services.AddTransient(unban);
@@ -815,7 +802,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddTransient(typeof(AI.Chat.ICommand),
                 serviceProvider => serviceProvider
                     .GetRequiredService(unban));
-            commandOverrides.Add(unban, typeof(AI.Chat.Commands.Unban).Name);
+            commandOverrides.Add(unban, nameof(AI.Chat.Commands.Unban));
 
             var unmod = typeof(AI.Chat.Commands.Unmod);
             services.AddTransient(unmod);
@@ -828,7 +815,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddTransient(typeof(AI.Chat.ICommand),
                 serviceProvider => serviceProvider
                     .GetRequiredService(unmod));
-            commandOverrides.Add(unmod, typeof(AI.Chat.Commands.Unmod).Name);
+            commandOverrides.Add(unmod, nameof(AI.Chat.Commands.Unmod));
 
             var unwelcome = typeof(AI.Chat.Commands.Unwelcome);
             services.AddTransient(unwelcome);
@@ -841,7 +828,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddTransient(typeof(AI.Chat.ICommand),
                 serviceProvider => serviceProvider
                     .GetRequiredService(unwelcome));
-            commandOverrides.Add(unwelcome, typeof(AI.Chat.Commands.Unwelcome).Name);
+            commandOverrides.Add(unwelcome, nameof(AI.Chat.Commands.Unwelcome));
 
             var welcome = typeof(AI.Chat.Commands.Welcome);
             services.AddTransient(welcome);
@@ -854,7 +841,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddTransient(typeof(AI.Chat.ICommand),
                 serviceProvider => serviceProvider
                     .GetRequiredService(welcome));
-            commandOverrides.Add(welcome, typeof(AI.Chat.Commands.Welcome).Name);
+            commandOverrides.Add(welcome, nameof(AI.Chat.Commands.Welcome));
 
             var commandExecutorType = typeof(AI.Chat.CommandExecutors.Slim);
             services.AddTransient(commandExecutorType,

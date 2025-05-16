@@ -16,10 +16,14 @@
             AI.Chat.Host.Helpers.AppendLog(key, record);
             return key;
         }
-        public void Remove(params System.DateTime[] keys)
+        public System.DateTime[] Remove(params System.DateTime[] keys)
         {
-            _history.Remove(keys);
-            AI.Chat.Host.Helpers.DeleteLog(keys);
+            var removed = _history.Remove(keys);
+            if (0 < removed.Length)
+            {
+                AI.Chat.Host.Helpers.DeleteLog(removed);
+            }
+            return removed;
         }
         public void Clear()
         {
@@ -45,6 +49,24 @@
                 AI.Chat.Host.Helpers.EditLog(key, message);
             }
             return result;
+        }
+        public System.DateTime[] Tag(string tag, params System.DateTime[] keys)
+        {
+            var tagged = _history.Tag(tag, keys);
+            if (0 < tagged.Length)
+            {
+                AI.Chat.Host.Helpers.TagLog(tag, tagged);
+            }
+            return tagged;
+        }
+        public System.DateTime[] Untag(string tag, params System.DateTime[] keys)
+        {
+            var tagged = _history.Untag(tag, keys);
+            if (0 < tagged.Length)
+            {
+                AI.Chat.Host.Helpers.UntagLog(tag, tagged);
+            }
+            return tagged;
         }
     }
 }

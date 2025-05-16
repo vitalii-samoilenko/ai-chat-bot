@@ -19,11 +19,11 @@
                 return _history.Add(record);
             }
         }
-        public void Remove(params System.DateTime[] keys)
+        public System.DateTime[] Remove(params System.DateTime[] keys)
         {
             using (var activity = AI.Chat.Diagnostics.ActivitySources.Histories.StartActivity($"{HistoryName}.{nameof(Remove)}"))
             {
-                _history.Remove(keys);
+                return _history.Remove(keys);
             }
         }
         public void Clear()
@@ -55,6 +55,20 @@
             using (var activity = AI.Chat.Diagnostics.ActivitySources.Histories.StartActivity($"{HistoryName}.{nameof(TryEdit)}"))
             {
                 return _history.TryEdit(key, message);
+            }
+        }
+        public System.DateTime[] Tag(string tag, params System.DateTime[] keys)
+        {
+            using (var activity = AI.Chat.Diagnostics.ActivitySources.Histories.StartActivity($"{HistoryName}.{nameof(Tag)}"))
+            {
+                return _history.Tag(tag, keys);
+            }
+        }
+        public System.DateTime[] Untag(string tag, params System.DateTime[] keys)
+        {
+            using (var activity = AI.Chat.Diagnostics.ActivitySources.Histories.StartActivity($"{HistoryName}.{nameof(Untag)}"))
+            {
+                return _history.Untag(tag, keys);
             }
         }
     }

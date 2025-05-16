@@ -85,6 +85,7 @@ namespace AI.Chat.Host
             System.IO.File.WriteAllText(Constants.LogHistory, string.Empty);
             System.IO.File.WriteAllText(Constants.LogDeleted, string.Empty);
             System.IO.File.WriteAllText(Constants.LogEdited, string.Empty);
+            System.IO.File.WriteAllText(Constants.LogTags, string.Empty);
         }
         public static void EditLog(System.DateTime key, string message)
         {
@@ -102,6 +103,30 @@ namespace AI.Chat.Host
                         })
                 });
         }
+        public static void TagLog(string tag, params System.DateTime[] keys)
+        {
+            AppendTagsLog($"+{tag}", keys);
+        }
+        public static void UntagLog(string tag, params System.DateTime[] keys)
+        {
+            AppendTagsLog($"-{tag}", keys);
+        }
+        private static void AppendTagsLog(string tag, System.DateTime[] keys)
+        {
+            var tagged = new string[keys.Length];
+            for (int i = 0; i < keys.Length; ++i)
+            {
+                tagged[i] = keys[i].ToKeyString();
+            }
+            System.IO.File.AppendAllLines(
+                Constants.LogTags,
+                new[]
+                {
+                    System.Text.Json.JsonSerializer.Serialize(
+                        new System.Collections.Generic.KeyValuePair<string, string[]>(
+                            tag, tagged))
+                });
+        }
         public static System.Collections.Generic.TimeSeries<AI.Chat.Record> LoadLog()
         {
             System.Collections.Generic.TimeSeries<AI.Chat.Record> history = null;
@@ -114,7 +139,8 @@ namespace AI.Chat.Host
                         ? System.IO.File.ReadAllLines(Constants.LogDeleted)
                         : new string[] { },
                     System.StringComparer.OrdinalIgnoreCase);
-                var edited = new System.Collections.Generic.Dictionary<string, string>();
+                var edited = new System.Collections.Generic.Dictionary<string, string>(
+                    System.StringComparer.OrdinalIgnoreCase);
                 if (System.IO.File.Exists(Constants.LogEdited))
                 {
                     var editedLog = System.IO.File.ReadAllLines(Constants.LogEdited);
@@ -122,6 +148,30 @@ namespace AI.Chat.Host
                     {
                         var pair = System.Text.Json.JsonSerializer.Deserialize<System.Collections.Generic.KeyValuePair<string, string>>(line);
                         edited[pair.Key] = pair.Value;
+                    }
+                }
+                var tagged = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<string>>(
+                    System.StringComparer.OrdinalIgnoreCase);
+                if (System.IO.File.Exists(Constants.LogTags))
+                {
+                    var tagsLog = System.IO.File.ReadAllLines(Constants.LogTags);
+                    foreach (var line in tagsLog)
+                    {
+                        var pair = System.Text.Json.JsonSerializer.Deserialize<System.Collections.Generic.KeyValuePair<string, string[]>>(line);
+                        foreach (var key in pair.Value)
+                        {
+                            if (tagged.ContainsKey(key))
+                            {
+                                tagged[key].Add(pair.Key);
+                            }
+                            else
+                            {
+                                tagged[key] = new System.Collections.Generic.List<string>
+                                {
+                                    pair.Key
+                                };
+                            }
+                        }
                     }
                 }
                 var currentHistoryLog = System.IO.File.ReadAllLines(Constants.LogHistory);
@@ -137,27 +187,52 @@ namespace AI.Chat.Host
                         {
                             var line = currentHistoryLog[i];
                             var pair = System.Text.Json.JsonSerializer.Deserialize<System.Collections.Generic.KeyValuePair<string, AI.Chat.Record>>(line);
-                            if (deleted.Contains(pair.Key))
+                            var key = pair.Key;
+                            var record = pair.Value;
+                            var modified = false;
+                            if (deleted.Contains(key))
                             {
                                 continue;
                             }
-                            if (edited.ContainsKey(pair.Key))
+                            if (tagged.ContainsKey(key))
                             {
-                                pair = new System.Collections.Generic.KeyValuePair<string, Record>(
-                                    pair.Key, new Record
+                                var tags = new System.Collections.Generic.List<string>(record.Tags);
+                                foreach (var action in tagged[key])
+                                {
+                                    var tag = action.Substring(1);
+                                    if (action[0] == '-')
                                     {
-                                        Message = edited[pair.Key],
-                                        Tags = pair.Value.Tags
-                                    });
+                                        tags.Remove(tag);
+                                    }
+                                    else
+                                    {
+                                        tags.Add(tag);
+                                    }
+                                }
+                                record.Tags = tags.ToArray();
+                                modified = true;
+                            }
+                            if (record.IsModerated())
+                            {
+                                continue;
+                            }
+                            if (edited.ContainsKey(key))
+                            {
+                                record.Message = edited[key];
+                                modified = true;
+                            }
+                            if (modified)
+                            {
                                 line = System.Text.Json.JsonSerializer.Serialize(
-                                    pair,
+                                    new System.Collections.Generic.KeyValuePair<string, Record>(
+                                        key, record),
                                     new System.Text.Json.JsonSerializerOptions
                                     {
                                         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(
                                             System.Text.Unicode.UnicodeRanges.All)
                                     });
                             }
-                            history.Add(pair.Key.ParseKey(), pair.Value);
+                            history.Add(key.ParseKey(), record);
                             newHistoryLog.Add(line);
                         }
                     }
@@ -171,6 +246,7 @@ namespace AI.Chat.Host
             System.IO.File.WriteAllLines(Constants.LogHistory, newHistoryLog);
             System.IO.File.WriteAllText(Constants.LogDeleted, string.Empty);
             System.IO.File.WriteAllText(Constants.LogEdited, string.Empty);
+            System.IO.File.WriteAllText(Constants.LogTags, string.Empty);
             return history;
         }
     }

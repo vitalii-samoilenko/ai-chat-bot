@@ -4,14 +4,12 @@
     {
         private readonly Options.Moderator _options;
         private readonly System.Collections.Generic.Dictionary<string, System.DateTime> _timeouts;
-        private readonly System.Collections.Generic.HashSet<System.DateTime> _onHold;
         private readonly System.Collections.Generic.HashSet<string> _greeted;
 
         public Slim(Options.Moderator options)
         {
             _options = options;
             _timeouts = new System.Collections.Generic.Dictionary<string, System.DateTime>();
-            _onHold = new System.Collections.Generic.HashSet<System.DateTime>();
             _greeted = new System.Collections.Generic.HashSet<string>();
         }
 
@@ -60,107 +58,113 @@
             return welcomed;
         }
 
-        public void Ban(params string[] usernames)
+        public string[] Ban(params string[] usernames)
         {
+            var banned = new System.Collections.Generic.List<string>();
             foreach (var username in usernames)
             {
-                _options.Banned.Add(username);
+                if (_options.Banned.Add(username))
+                {
+                    banned.Add(username);
+                }
             }
+            return banned.ToArray();
         }
-        public void Unban(params string[] usernames)
+        public string[] Unban(params string[] usernames)
         {
+            var unbanned = new System.Collections.Generic.List<string>();
             foreach (var username in usernames)
             {
-                _options.Banned.Remove(username);
+                if (_options.Banned.Remove(username))
+                {
+                    unbanned.Add(username);
+                }
             }
+            return unbanned.ToArray();
         }
-        public void Timeout(params (string username, System.TimeSpan timeout)[] args)
+        public (string username, System.DateTime until)[] Timeout(params (string username, System.TimeSpan timeout)[] args)
         {
             var now = System.DateTime.UtcNow;
+            var timeouted = new System.Collections.Generic.List<(string, System.DateTime)>();
             foreach((var username, var timeout) in args)
             {
-                _timeouts[username] = now + timeout;
+                var until = now + timeout;
+                _timeouts[username] = until;
+                timeouted.Add((username, until));
             }
+            return timeouted.ToArray();
         }
-        public void Moderate(params string[] usernames)
+        public string[] Moderate(params string[] usernames)
         {
+            var moderated = new System.Collections.Generic.List<string>();
             foreach (var username in usernames)
             {
-                _options.Moderated.Add(username);
+                if (_options.Moderated.Add(username))
+                {
+                    moderated.Add(username);
+                }
             }
+            return moderated.ToArray();
         }
-        public void Unmoderate(params string[] usernames)
+        public string[] Unmoderate(params string[] usernames)
         {
+            var unmoderated = new System.Collections.Generic.List<string>();
             foreach (var username in usernames)
             {
-                _options.Moderated.Remove(username);
+                if (_options.Moderated.Remove(username))
+                {
+                    unmoderated.Add(username);
+                }
             }
+            return unmoderated.ToArray();
         }
-        public void Promote(params string[] usernames)
+        public string[] Promote(params string[] usernames)
         {
+            var promoted = new System.Collections.Generic.List<string>();
             foreach (var username in usernames)
             {
-                _options.Promoted.Add(username);
+                if (_options.Promoted.Add(username))
+                {
+                    promoted.Add(username);
+                }
             }
+            return promoted.ToArray();
         }
-        public void Demote(params string[] usernames)
+        public string[] Demote(params string[] usernames)
         {
+            var demoted = new System.Collections.Generic.List<string>();
             foreach (var username in usernames)
             {
-                _options.Promoted.Remove(username);
+                if (_options.Promoted.Remove(username))
+                {
+                    demoted.Add(username);
+                }
             }
+            return demoted.ToArray();
         }
-        public void Welcome(params string[] usernames)
+        public string[] Welcome(params string[] usernames)
         {
+            var welcomed = new System.Collections.Generic.List<string>();
             foreach (var username in usernames)
             {
-                _options.Welcomed.Add(username);
+                if (_options.Welcomed.Add(username))
+                {
+                    welcomed.Add(username);
+                }
             }
+            return welcomed.ToArray();
         }
-        public void Unwelcome(params string[] usernames)
+        public string[] Unwelcome(params string[] usernames)
         {
+            var unwelcomed = new System.Collections.Generic.List<string>();
             foreach (var username in usernames)
             {
-                _options.Welcomed.Remove(username);
+                if (_options.Welcomed.Remove(username))
+                {
+                    unwelcomed.Add(username);
+                }
             }
-        }
-
-        public void Hold(params System.DateTime[] keys)
-        {
-            foreach(var key in keys)
-            {
-                _onHold.Add(key);
-            }
-        }
-        public void Allow(params System.DateTime[] keys)
-        {
-            foreach (var key in keys)
-            {
-                _onHold.Remove(key);
-            }
-        }
-        public System.Collections.Generic.IEnumerable<System.DateTime> AllowAll()
-        {
-            foreach (var key in _onHold)
-            {
-                yield return key;
-            }
-            _onHold.Clear();
-        }
-        public void Deny(params System.DateTime[] keys)
-        {
-            foreach (var key in keys)
-            {
-                _onHold.Remove(key);
-            }
-        }
-        public System.Collections.Generic.IEnumerable<System.DateTime> DenyAll()
-        {
-            foreach (var key in _onHold)
-            {
-                yield return key;
-            }
-            _onHold.Clear();
+            return unwelcomed.ToArray();
         }
 
         public bool Greet(string username)

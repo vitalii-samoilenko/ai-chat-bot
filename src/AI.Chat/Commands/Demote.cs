@@ -11,9 +11,7 @@
 
         public System.Collections.Generic.IEnumerable<string> Execute(string args)
         {
-            var usernames = args.Split(new[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries);
-            _moderator.Demote(usernames);
-            return usernames;
+            return _moderator.Demote(args.Split(new[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries));
         }
     }
 }

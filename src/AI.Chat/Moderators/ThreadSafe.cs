@@ -29,68 +29,41 @@
             return _scope.ExecuteRead(() => _moderator.IsWelcomed(usernames));
         }
 
-        public void Ban(params string[] usernames)
+        public string[] Ban(params string[] usernames)
         {
-            _scope.ExecuteWrite(() => _moderator.Ban(usernames));
+            return _scope.ExecuteWrite(() => _moderator.Ban(usernames));
         }
-        public void Unban(params string[] usernames)
+        public string[] Unban(params string[] usernames)
         {
-            _scope.ExecuteWrite(() => _moderator.Unban(usernames));
+            return _scope.ExecuteWrite(() => _moderator.Unban(usernames));
         }
-        public void Timeout(params (string username, System.TimeSpan timeout)[] args)
+        public (string username, System.DateTime until)[] Timeout(params (string username, System.TimeSpan timeout)[] args)
         {
-            _scope.ExecuteWrite(() => _moderator.Timeout(args));
+            return _scope.ExecuteWrite(() => _moderator.Timeout(args));
         }
-        public void Moderate(params string[] usernames)
+        public string[] Moderate(params string[] usernames)
         {
-            _scope.ExecuteWrite(() => _moderator.Moderate(usernames));
+            return _scope.ExecuteWrite(() => _moderator.Moderate(usernames));
         }
-        public void Unmoderate(params string[] usernames)
+        public string[] Unmoderate(params string[] usernames)
         {
-            _scope.ExecuteWrite(() => _moderator.Unmoderate(usernames));
+            return _scope.ExecuteWrite(() => _moderator.Unmoderate(usernames));
         }
-        public void Promote(params string[] usernames)
+        public string[] Promote(params string[] usernames)
         {
-            _scope.ExecuteWrite(() => _moderator.Unmoderate(usernames));
+            return _scope.ExecuteWrite(() => _moderator.Promote(usernames));
         }
-        public void Demote(params string[] usernames)
+        public string[] Demote(params string[] usernames)
         {
-            _scope.ExecuteWrite(() => _moderator.Demote(usernames));
+            return _scope.ExecuteWrite(() => _moderator.Demote(usernames));
         }
-        public void Welcome(params string[] usernames)
+        public string[] Welcome(params string[] usernames)
         {
-            _scope.ExecuteWrite(() => _moderator.Welcome(usernames));
+            return _scope.ExecuteWrite(() => _moderator.Welcome(usernames));
         }
-        public void Unwelcome(params string[] usernames)
+        public string[] Unwelcome(params string[] usernames)
         {
-            _scope.ExecuteWrite(() => _moderator.Unwelcome(usernames));
-        }
-
-        public void Hold(params System.DateTime[] keys)
-        {
-            _scope.ExecuteWrite(() => _moderator.Hold(keys));
-        }
-        public void Allow(params System.DateTime[] keys)
-        {
-            _scope.ExecuteWrite(() => _moderator.Allow(keys));
-        }
-        public System.Collections.Generic.IEnumerable<System.DateTime> AllowAll()
-        {
-            foreach (var key in _scope.ExecuteWrite(() => _moderator.AllowAll()))
-            {
-                yield return key;
-            }
-        }
-        public void Deny(params System.DateTime[] keys)
-        {
-            _scope.ExecuteWrite(() => _moderator.Deny(keys));
-        }
-        public System.Collections.Generic.IEnumerable<System.DateTime> DenyAll()
-        {
-            foreach (var key in _scope.ExecuteWrite(() => _moderator.DenyAll()))
-            {
-                yield return key;
-            }
+            return _scope.ExecuteWrite(() => _moderator.Unwelcome(usernames));
         }
 
         public bool Greet(string username)

@@ -16,9 +16,9 @@
         {
             return _scope.ExecuteWrite(() => _history.Add(record));
         }
-        public void Remove(params System.DateTime[] keys)
+        public System.DateTime[] Remove(params System.DateTime[] keys)
         {
-            _scope.ExecuteWrite(() => _history.Remove(keys));
+            return _scope.ExecuteWrite(() => _history.Remove(keys));
         }
         public void Clear()
         {
@@ -41,6 +41,14 @@
         public bool TryEdit(System.DateTime key, string message)
         {
             return _scope.ExecuteWrite(() => _history.TryEdit(key, message));
+        }
+        public System.DateTime[] Tag(string tag, params System.DateTime[] keys)
+        {
+            return _scope.ExecuteWrite(() => _history.Tag(tag, keys));
+        }
+        public System.DateTime[] Untag(string tag, params System.DateTime[] keys)
+        {
+            return _scope.ExecuteWrite(() => _history.Untag(tag, keys));
         }
     }
 }

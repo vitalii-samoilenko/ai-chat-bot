@@ -12,7 +12,7 @@
             _client = client;
         }
 
-        public async System.Threading.Tasks.Task WelcomeAsync(string username, System.Func<System.DateTime, System.Threading.Tasks.Task> onAllowAsync, System.Func<System.DateTime, System.DateTime, System.Threading.Tasks.Task> onHoldAsync)
+        public async System.Threading.Tasks.Task WelcomeAsync(string username, System.Func<System.DateTime, System.Threading.Tasks.Task> onAllowAsync, System.Func<System.DateTime, System.Threading.Tasks.Task> onHoldAsync)
         {
             using (var activity = AI.Chat.Diagnostics.ActivitySources.Clients.StartActivity($"{ClientName}.{nameof(WelcomeAsync)}"))
             {
@@ -20,7 +20,7 @@
                     .ConfigureAwait(false);
             }
         }
-        public async System.Threading.Tasks.Task ChatAsync(string username, string message, System.Func<System.DateTime, System.Threading.Tasks.Task> onAllowAsync, System.Func<System.DateTime, System.DateTime, System.Threading.Tasks.Task> onHoldAsync)
+        public async System.Threading.Tasks.Task ChatAsync(string username, string message, System.Func<System.DateTime, System.Threading.Tasks.Task> onAllowAsync, System.Func<System.DateTime, System.Threading.Tasks.Task> onHoldAsync)
         {
             using (var activity = AI.Chat.Diagnostics.ActivitySources.Clients.StartActivity($"{ClientName}.{nameof(ChatAsync)}"))
             {

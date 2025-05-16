@@ -11,9 +11,7 @@
 
         public System.Collections.Generic.IEnumerable<string> Execute(string args)
         {
-            var usernames = args.Split(new[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries);
-            _moderator.Ban(usernames);
-            return usernames;
+            return _moderator.Ban(args.Split(new[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries));
         }
     }
 }
