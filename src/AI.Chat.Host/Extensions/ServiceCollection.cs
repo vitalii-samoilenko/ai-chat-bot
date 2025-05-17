@@ -778,6 +778,19 @@ namespace Microsoft.Extensions.DependencyInjection
                     .GetRequiredService(remove));
             commandOverrides.Add(remove, nameof(AI.Chat.Commands.Remove));
 
+            var tag = typeof(AI.Chat.Commands.Tag);
+            services.AddTransient(tag);
+            if (diagnostics)
+            {
+                tag = typeof(AI.Chat.Commands.Diagnostics.Trace<>)
+                    .MakeGenericType(tag);
+                services.AddTransient(tag);
+            }
+            services.AddTransient(typeof(AI.Chat.ICommand),
+                serviceProvider => serviceProvider
+                    .GetRequiredService(tag));
+            commandOverrides.Add(tag, nameof(AI.Chat.Commands.Tag));
+
             var timeout = typeof(AI.Chat.Commands.Timeout);
             services.AddTransient(timeout);
             if (diagnostics)
@@ -816,6 +829,19 @@ namespace Microsoft.Extensions.DependencyInjection
                 serviceProvider => serviceProvider
                     .GetRequiredService(unmod));
             commandOverrides.Add(unmod, nameof(AI.Chat.Commands.Unmod));
+
+            var untag = typeof(AI.Chat.Commands.Untag);
+            services.AddTransient(untag);
+            if (diagnostics)
+            {
+                untag = typeof(AI.Chat.Commands.Diagnostics.Trace<>)
+                    .MakeGenericType(untag);
+                services.AddTransient(untag);
+            }
+            services.AddTransient(typeof(AI.Chat.ICommand),
+                serviceProvider => serviceProvider
+                    .GetRequiredService(untag));
+            commandOverrides.Add(untag, nameof(AI.Chat.Commands.Untag));
 
             var unwelcome = typeof(AI.Chat.Commands.Unwelcome);
             services.AddTransient(unwelcome);
