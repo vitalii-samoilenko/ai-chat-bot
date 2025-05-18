@@ -15,7 +15,9 @@ builder.Configuration.ConfigureAIChat();
 builder.Services.AddOpenTelemetry()
     .WithMetrics(metrics =>
     {
+        metrics.AddMeter("System.Runtime");
         metrics.AddAspNetCoreInstrumentation();
+        metrics.AddHttpClientInstrumentation();
 
         metrics.AddMeter(AI.Chat.Diagnostics.Meters.Adapters.Name);
         metrics.AddMeter(AI.Chat.Diagnostics.Meters.Bots.Name);

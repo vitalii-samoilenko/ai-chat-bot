@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
     "Kestrel": {
       "commandName": "Project",
@@ -17,6 +18,5 @@
       "httpPort": 5117,
       "publishAllPorts": true
     }
-  },
-  "$schema": "https://json.schemastore.org/launchsettings.json"
+  }
 }
