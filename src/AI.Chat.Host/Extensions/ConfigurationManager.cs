@@ -6,9 +6,9 @@
         {
             configuration.AddJsonFile(AI.Chat.Host.Constants.JsonCommon, true);
             configuration.AddJsonFile(AI.Chat.Host.Constants.JsonModerated, true);
-            switch (configuration.GetValue<AI.Chat.Host.Clients>("Chat:Client:Type"))
+            switch (configuration.GetValue<string>("Chat:Client:Type"))
             {
-                case AI.Chat.Host.Clients.Twitch:
+                case nameof(AI.Chat.Clients.Twitch):
                     {
                         configuration.AddJsonFile(AI.Chat.Host.Constants.JsonOAuth, true);
                     }

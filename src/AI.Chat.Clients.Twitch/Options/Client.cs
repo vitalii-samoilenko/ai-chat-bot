@@ -2,7 +2,7 @@
 {
     public class OAuth
     {
-        public string Uri { get; set; }
+        public System.Uri BaseAddress { get; set; }
         public string ClientId { get; set; }
         public string ClientSecret { get; set; }
         public string[] Scopes { get; set; }

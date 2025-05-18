@@ -1,0 +1,28 @@
+﻿namespace AI.Chat.Adapters.Extensions.GoogleAI
+{
+    public static class Record
+    {
+        public static global::GoogleAI.Models.Content ToContent(this AI.Chat.Record record)
+        {
+            foreach (var tag in record.Tags)
+            {
+                if (!tag.StartsWith(Constants.TagType, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+                return new global::GoogleAI.Models.Content
+                {
+                    Role = tag.Substring(Constants.TagType.Length + 1),
+                    Parts = new[]
+                    {
+                        new global::GoogleAI.Models.Part
+                        {
+                            Text = record.Message
+                        }
+                    }
+                };
+            }
+            throw new System.ArgumentException("Record is invalid", nameof(record));
+        }
+    }
+}

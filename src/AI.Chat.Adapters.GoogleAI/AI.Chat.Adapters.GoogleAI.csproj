@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AI.Chat\AI.Chat.csproj" />
+    <ProjectReference Include="..\GoogleAI\GoogleAI.csproj" />
+  </ItemGroup>
+
+</Project>

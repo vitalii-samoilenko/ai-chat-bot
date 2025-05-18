@@ -1,33 +1,33 @@
-﻿using AI.Chat.Adapters.Extensions.OpenAI;
+﻿using AI.Chat.Adapters.Extensions.GoogleAI;
 using AI.Chat.Extensions;
 
-namespace AI.Chat.Histories.OpenAI
+namespace AI.Chat.Histories.GoogleAI
 {
     public class Tracked<THistory> : IHistory
         where THistory : IHistory
     {
         private readonly IHistory _history;
-        private readonly System.Collections.Generic.TimeSeries<global::OpenAI.Chat.ChatMessage> _messages;
-        private readonly System.Collections.Generic.TimeSeries<global::OpenAI.Chat.ChatMessage> _moderated;
+        private readonly System.Collections.Generic.TimeSeries<global::GoogleAI.Models.Content> _contents;
+        private readonly System.Collections.Generic.TimeSeries<global::GoogleAI.Models.Content> _moderated;
 
-        public Tracked(THistory history, System.Collections.Generic.TimeSeries<global::OpenAI.Chat.ChatMessage> messages)
+        public Tracked(THistory history, System.Collections.Generic.TimeSeries<global::GoogleAI.Models.Content> contents)
         {
             _history = history;
-            _messages = messages;
-            _moderated = new System.Collections.Generic.TimeSeries<global::OpenAI.Chat.ChatMessage>();
+            _contents = contents;
+            _moderated = new System.Collections.Generic.TimeSeries<global::GoogleAI.Models.Content>();
         }
 
         public System.DateTime Add(Record record)
         {
             var key = _history.Add(record);
-            var message = record.ToChatMessage();
+            var content = record.ToContent();
             if (record.IsModerated())
             {
-                _moderated.Add(key, message);
+                _moderated.Add(key, content);
             }
             else
             {
-                _messages.Add(key, message);
+                _contents.Add(key, content);
             }
             return key;
         }
@@ -36,7 +36,7 @@ namespace AI.Chat.Histories.OpenAI
             var removed = _history.Remove(keys);
             foreach (var key in removed)
             {
-                if (!_messages.Remove(key))
+                if (!_contents.Remove(key))
                 {
                     _moderated.Remove(key);
                 }
@@ -46,7 +46,7 @@ namespace AI.Chat.Histories.OpenAI
         public void Clear()
         {
             _history.Clear();
-            _messages.Clear();
+            _contents.Clear();
             _moderated.Clear();
         }
         public System.Collections.Generic.IEnumerable<System.DateTime> Find(System.DateTime fromKey, System.DateTime toKey, params string[] tags)
@@ -65,11 +65,11 @@ namespace AI.Chat.Histories.OpenAI
             var result = _history.TryEdit(key, message);
             if (result)
             {
-                if (!_messages.TryGet(key, out var entry))
+                if (!_contents.TryGet(key, out var entry))
                 {
                     entry = _moderated[key];
                 }
-                entry.Value.Content[0] = global::OpenAI.Chat.ChatMessageContentPart.CreateTextPart(message);
+                entry.Value.Parts[0].Text = message;
             }
             return result;
         }
@@ -80,9 +80,9 @@ namespace AI.Chat.Histories.OpenAI
             {
                 foreach (var key in tagged)
                 {
-                    var message = _messages[key].Value;
-                    _messages.Remove(key);
-                    _moderated.Add(key, message);
+                    var content = _contents[key].Value;
+                    _contents.Remove(key);
+                    _moderated.Add(key, content);
                 }
             }
             return tagged;
@@ -94,9 +94,9 @@ namespace AI.Chat.Histories.OpenAI
             {
                 foreach (var key in untagged)
                 {
-                    var message = _moderated[key].Value;
+                    var content = _moderated[key].Value;
                     _moderated.Remove(key);
-                    _messages.Add(key, message);
+                    _contents.Add(key, content);
                 }
             }
             return untagged;

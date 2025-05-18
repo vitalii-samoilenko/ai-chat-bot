@@ -21,6 +21,7 @@ builder.Services.AddOpenTelemetry()
         metrics.AddMeter(AI.Chat.Diagnostics.Meters.Bots.Name);
         metrics.AddMeter(AI.Chat.Diagnostics.Meters.Scopes.Name);
 
+        metrics.AddMeter("OpenAI.ChatClient");
         metrics.AddMeter(TwitchLib.Client.Diagnostics.Meters.Client.Name);
     })
     .WithTracing(tracing =>
@@ -38,7 +39,9 @@ builder.Services.AddOpenTelemetry()
         tracing.AddSource(AI.Chat.Diagnostics.ActivitySources.Moderators.Name);
         tracing.AddSource(AI.Chat.Diagnostics.ActivitySources.Scopes.Name);
 
+        tracing.AddSource("OpenAI.ChatClient");
         tracing.AddSource(TwitchLib.Client.Diagnostics.ActivitySources.Client.Name);
+        tracing.AddSource(GoogleAI.Diagnostics.ActivitySources.Client.Name);
     })
     .UseOtlpExporter();
 builder.Services.AddAIChat(builder.Configuration, builder.Environment);

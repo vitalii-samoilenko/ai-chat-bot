@@ -1,6 +1,6 @@
 ﻿namespace AI.Chat.Diagnostics
 {
-    public class ActivitySources
+    public static class ActivitySources
     {
         public static System.Diagnostics.ActivitySource Adapters { get; private set; } = new System.Diagnostics.ActivitySource("AI.Chat.Adapters");
         public static System.Diagnostics.ActivitySource Bots { get; private set; } = new System.Diagnostics.ActivitySource("AI.Chat.Bots");

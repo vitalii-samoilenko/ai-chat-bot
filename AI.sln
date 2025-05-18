@@ -41,6 +41,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AI.Chat.Clients.Twitch.Diag
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AI.Chat.Host", "src\AI.Chat.Host\AI.Chat.Host.csproj", "{16AACE01-A71A-4F16-BD3E-D4C249DE953C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoogleAI", "src\GoogleAI\GoogleAI.csproj", "{8E7AC829-533A-4405-8346-7D155FFA406E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoogleAI.Diagnostics", "src\GoogleAI.Diagnostics\GoogleAI.Diagnostics.csproj", "{AF6C7C5F-053A-49DC-860D-DF8BE898CEAF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AI.Chat.Adapters.GoogleAI", "src\AI.Chat.Adapters.GoogleAI\AI.Chat.Adapters.GoogleAI.csproj", "{4FD39487-5C6A-43CD-8FC1-A17E26C33E46}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -95,6 +101,18 @@ Global
 		{16AACE01-A71A-4F16-BD3E-D4C249DE953C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{16AACE01-A71A-4F16-BD3E-D4C249DE953C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{16AACE01-A71A-4F16-BD3E-D4C249DE953C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E7AC829-533A-4405-8346-7D155FFA406E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E7AC829-533A-4405-8346-7D155FFA406E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E7AC829-533A-4405-8346-7D155FFA406E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E7AC829-533A-4405-8346-7D155FFA406E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF6C7C5F-053A-49DC-860D-DF8BE898CEAF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF6C7C5F-053A-49DC-860D-DF8BE898CEAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF6C7C5F-053A-49DC-860D-DF8BE898CEAF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF6C7C5F-053A-49DC-860D-DF8BE898CEAF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4FD39487-5C6A-43CD-8FC1-A17E26C33E46}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4FD39487-5C6A-43CD-8FC1-A17E26C33E46}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4FD39487-5C6A-43CD-8FC1-A17E26C33E46}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4FD39487-5C6A-43CD-8FC1-A17E26C33E46}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -107,6 +125,7 @@ Global
 		{81DDED9D-158B-E303-5F62-77A2896D2A5A} = {FBC6B01D-8C2B-469B-8109-F8E279EBFEC5}
 		{970ECD3F-36FB-49EE-8E7A-DAD4C032DF9D} = {64B25A92-9E6A-4B90-A635-65FE0BBDBFEB}
 		{16AACE01-A71A-4F16-BD3E-D4C249DE953C} = {FBC6B01D-8C2B-469B-8109-F8E279EBFEC5}
+		{4FD39487-5C6A-43CD-8FC1-A17E26C33E46} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {BFB4134A-F767-466F-B5CB-38ED0300A82A}

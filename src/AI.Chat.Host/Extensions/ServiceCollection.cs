@@ -1,4 +1,5 @@
-﻿using AI.Chat.Adapters.Extensions.OpenAI;
+﻿using AI.Chat.Adapters.Extensions.GoogleAI;
+using AI.Chat.Adapters.Extensions.OpenAI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -40,9 +41,9 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton(historyType);
 
             System.Type adapterType = null;
-            switch (configuration.GetValue<AI.Chat.Host.Adapters>("Chat:Adapter:Type"))
+            switch (configuration.GetValue<string>("Chat:Adapter:Type"))
             {
-                case AI.Chat.Host.Adapters.OpenAI:
+                case nameof(AI.Chat.Adapters.OpenAI):
                     {
                         services.Configure<AI.Chat.Options.OpenAI.Adapter>(
                             configuration.GetSection("Chat:Adapter"));
@@ -88,12 +89,78 @@ namespace Microsoft.Extensions.DependencyInjection
                         services.AddTransient(adapterType);
                     }
                     break;
+                case nameof(AI.Chat.Adapters.GoogleAI):
+                    {
+                        services.Configure<AI.Chat.Options.GoogleAI.Adapter>(
+                            configuration.GetSection("Chat:Adapter"));
+                        services.AddSingleton<IOptions<AI.Chat.Options.Adapter>>(
+                            serviceProvider => serviceProvider
+                                .GetRequiredService<IOptions<AI.Chat.Options.GoogleAI.Adapter>>());
+
+                        services.AddSingleton<System.Collections.Generic.TimeSeries<GoogleAI.Models.Content>>(
+                            serviceProvider =>
+                            {
+                                var records = serviceProvider
+                                    .GetRequiredService<System.Collections.Generic.TimeSeries<AI.Chat.Record>>();
+                                var contents = new System.Collections.Generic.TimeSeries<GoogleAI.Models.Content>(
+                                    records.Start);
+                                foreach (var entry in (System.Collections.Generic.IEnumerable<System.Collections.Generic.Entry<AI.Chat.Record>>)records)
+                                {
+                                    contents.Add(entry.Key, entry.Value.ToContent());
+                                }
+
+                                return contents;
+                            });
+
+                        historyType = typeof(AI.Chat.Histories.GoogleAI.Tracked<>)
+                            .MakeGenericType(historyType);
+                        services.AddSingleton(historyType);
+
+                        var googleClient = typeof(GoogleAI.Client);
+                        services.AddHttpClient<GoogleAI.Client>(
+                            (serviceProvider, httpClient) =>
+                            {
+                                var options = serviceProvider
+                                    .GetRequiredService<IOptions<AI.Chat.Options.GoogleAI.Adapter>>()
+                                    .Value;
+
+                                httpClient.BaseAddress = options.Client.BaseAddress;
+                            });
+                        if (diagnostics)
+                        {
+                            googleClient = typeof(GoogleAI.Diagnostics.Trace<>)
+                                .MakeGenericType(googleClient);
+                            services.AddTransient(googleClient);
+                        }
+                        services.AddTransient(typeof(GoogleAI.IClient),
+                            serviceProvider => serviceProvider
+                                .GetRequiredService(googleClient));
+
+                        adapterType = typeof(AI.Chat.Adapters.GoogleAI);
+                        services.AddTransient(adapterType,
+                            serviceProvider =>
+                            {
+                                var options = serviceProvider
+                                    .GetRequiredService<IOptions<AI.Chat.Options.GoogleAI.Adapter>>()
+                                    .Value;
+                                var client = serviceProvider
+                                    .GetRequiredService<GoogleAI.IClient>();
+                                var contents = serviceProvider
+                                    .GetRequiredService<System.Collections.Generic.TimeSeries<GoogleAI.Models.Content>>();
+
+                                return new AI.Chat.Adapters.GoogleAI(
+                                    options,
+                                    client,
+                                    contents);
+                            });
+                    }
+                    break;
                 default:
                     throw new System.Exception("Adapter is not supported");
             }
-            switch (configuration.GetValue<AI.Chat.Host.Clients>("Chat:Client:Type"))
+            switch (configuration.GetValue<string>("Chat:Client:Type"))
             {
-                case AI.Chat.Host.Clients.Twitch:
+                case nameof(AI.Chat.Clients.Twitch):
                     {
                         services.Configure<AI.Chat.Options.Twitch.Client>(
                             configuration.GetSection("Chat:Client"));
@@ -124,8 +191,7 @@ namespace Microsoft.Extensions.DependencyInjection
                                         .GetRequiredService<IOptions<AI.Chat.Options.Twitch.Client>>()
                                         .Value;
 
-                                    httpClient.BaseAddress = new System.Uri(
-                                        options.Auth.Uri);
+                                    httpClient.BaseAddress = options.Auth.BaseAddress;
                                 });
                             services.AddTransient<TwitchLib.Communication.Interfaces.IClient, TwitchLib.Communication.Clients.WebSocketClient>(
                                 serviceProvider =>

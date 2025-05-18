@@ -1,6 +1,6 @@
 ﻿namespace AI.Chat.Diagnostics
 {
-    public class Meters
+    public static class Meters
     {
         public static System.Diagnostics.Metrics.Meter Adapters { get; private set; } = new System.Diagnostics.Metrics.Meter("AI.Chat.Adapters");
         public static System.Diagnostics.Metrics.Histogram<int> ReplyLength { get; private set; } = Adapters.CreateHistogram<int>("ai.chat.adapters.reply_length");
