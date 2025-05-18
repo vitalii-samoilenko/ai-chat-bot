@@ -20,10 +20,24 @@
 
         public async System.Threading.Tasks.Task<(string reply, int tokens)> GetReplyAsync()
         {
+            var until = System.DateTime.UtcNow + _options.Cache.Slide;
+            if (_options.Cache.Until < until)
+            {
+                _options.Cache.Key = System.DateTime.MinValue;
+                if (!string.IsNullOrWhiteSpace(_options.Cache.Name))
+                {
+                    await _client.DeleteCachedContents(_options.Cache.Name, _options.ApiKey)
+                        .ConfigureAwait(false);
+                    _options.Cache.Name = null;
+                }
+            }
             var contents = new System.Collections.Generic.List<global::GoogleAI.Models.Content>();
             var systemInstructionBuilder = new System.Text.StringBuilder();
-            foreach (var content in _contents)
+            var lastKey = System.DateTime.MinValue;
+            foreach (var entry in _contents.Find(_options.Cache.Key, System.DateTime.MaxValue))
             {
+                lastKey = entry.Key;
+                var content = entry.Value;
                 if (AI.Chat.Constants.TypeSystem.Equals(content.Role, System.StringComparison.OrdinalIgnoreCase))
                 {
                     systemInstructionBuilder.Append(' ');
@@ -49,10 +63,26 @@
                         }
                     }
                     : null,
-                CachedContent = _options.CacheKey
+                CachedContent = _options.Cache.Name
             };
             var response = await _client.GenerateContentAsync(_options.Model, _options.ApiKey, request)
                 .ConfigureAwait(false);
+            if (_options.Cache.Until < until
+                && !(response.UsageMetadata.PromptTokenCount < _options.Cache.Tokens))
+            {
+                var cacheRequest = new global::GoogleAI.Models.CachedContentsRequest
+                {
+                    Model = $"models/{_options.Model}",
+                    Contents = request.Contents,
+                    SystemInstruction = request.SystemInstruction,
+                    Ttl = _options.Cache.Ttl
+                };
+                var cacheResponse = await _client.CreateCachedCotents(_options.ApiKey, cacheRequest)
+                    .ConfigureAwait(false);
+                _options.Cache.Key = lastKey + System.TimeSpan.FromTicks(1);
+                _options.Cache.Name = cacheResponse.Name;
+                _options.Cache.Until = cacheResponse.ExpireTime;
+            }
             return (response.Candidates[0].Content.Parts[0].Text, response.UsageMetadata.TotalTokenCount);
         }
     }

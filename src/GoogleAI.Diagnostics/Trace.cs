@@ -20,5 +20,21 @@
                     .ConfigureAwait(false);
             }
         }
+        public async System.Threading.Tasks.Task<Models.CachedContentsResponse> CreateCachedCotents(string apiKey, Models.CachedContentsRequest request)
+        {
+            using (var activity = ActivitySources.Client.StartActivity($"{ClientName}.{nameof(CreateCachedCotents)}"))
+            {
+                return await _client.CreateCachedCotents(apiKey, request)
+                    .ConfigureAwait(false);
+            }
+        }
+        public async System.Threading.Tasks.Task DeleteCachedContents(string name, string apiKey)
+        {
+            using (var activity = ActivitySources.Client.StartActivity($"{ClientName}.{nameof(DeleteCachedContents)}"))
+            {
+                await _client.DeleteCachedContents(name, apiKey)
+                    .ConfigureAwait(false);
+            }
+        }
     }
 }

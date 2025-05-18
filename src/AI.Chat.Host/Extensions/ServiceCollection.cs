@@ -115,6 +115,23 @@ namespace Microsoft.Extensions.DependencyInjection
                         historyType = typeof(AI.Chat.Histories.GoogleAI.Tracked<>)
                             .MakeGenericType(historyType);
                         services.AddSingleton(historyType);
+                        var cachedHistory = typeof(AI.Chat.Histories.GoogleAI.Cached<>)
+                            .MakeGenericType(historyType);
+                        var cachedHistoryType = historyType;
+                        services.AddSingleton(cachedHistory,
+                            serviceProvider =>
+                            {
+                                var options = serviceProvider
+                                    .GetRequiredService<IOptions<AI.Chat.Options.GoogleAI.Adapter>>()
+                                    .Value;
+                                var history = serviceProvider
+                                    .GetRequiredService(cachedHistoryType);
+
+                                return System.Activator.CreateInstance(cachedHistory,
+                                    options,
+                                    history);
+                            });
+                        historyType = cachedHistory;
 
                         var googleClient = typeof(GoogleAI.Client);
                         services.AddHttpClient<GoogleAI.Client>(
