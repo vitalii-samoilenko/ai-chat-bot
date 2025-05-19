@@ -13,7 +13,7 @@
                 return new global::GoogleAI.Models.Content
                 {
                     Role = tag.Substring(Constants.TagType.Length + 1),
-                    Parts = new[]
+                    Parts = new System.Collections.Generic.List<global::GoogleAI.Models.Part>
                     {
                         new global::GoogleAI.Models.Part
                         {

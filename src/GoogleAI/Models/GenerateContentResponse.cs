@@ -2,7 +2,7 @@
 {
     public class GenerateContentResponse
     {
-        public Candidate[] Candidates { get; set; }
+        public System.Collections.Generic.List<Candidate> Candidates { get; set; }
         public UsageMetadata UsageMetadata { get; set; }
     }
 }

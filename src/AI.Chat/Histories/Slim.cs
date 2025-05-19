@@ -26,7 +26,7 @@
             Indexate(entry);
             return entry.Key;
         }
-        public System.DateTime[] Remove(params System.DateTime[] keys)
+        public System.Collections.Generic.List<System.DateTime> Remove(System.Collections.Generic.IEnumerable<System.DateTime> keys)
         {
             var removed = new System.Collections.Generic.List<System.DateTime>();
             foreach (var key in keys)
@@ -45,81 +45,79 @@
                     }
                 }
             }
-            return removed.ToArray();
+            return removed;
         }
         public void Clear()
         {
             _records.Clear();
             _indexes.Clear();
         }
-        public System.Collections.Generic.IEnumerable<System.DateTime> Find(System.DateTime fromKey, System.DateTime toKey, params string[] tags)
+        public System.Collections.Generic.IEnumerable<System.DateTime> Find(System.DateTime fromKey, System.DateTime toKey, System.Collections.Generic.IEnumerable<string> tags)
         {
-            if (0 < tags.Length)
+            var enumerators = new System.Collections.Generic.List<System.Collections.Generic.IEnumerator<System.Collections.Generic.Entry<Record>>>();
+            try
             {
-                var enumerators = new System.Collections.Generic.IEnumerator<System.Collections.Generic.Entry<Record>>[tags.Length];
-                try
+                foreach (var tag in tags)
                 {
-                    for (var i = 0; i < tags.Length; ++i)
+                    if (!_indexes.TryGetValue(tag, out var index))
                     {
-                        var tag = tags[i];
-                        if (!_indexes.TryGetValue(tag, out var index))
-                        {
-                            yield break;
-                        }
-                        var enumerator = index.Find(fromKey, toKey).GetEnumerator();
-                        enumerators[i] = enumerator;
-                        if (!enumerator.MoveNext())
-                        {
-                            yield break;
-                        }
+                        yield break;
                     }
-                    var firstEnumerator = enumerators[0];
-                    do
+                    var enumerator = index.Find(fromKey, toKey).GetEnumerator();
+                    if (!enumerator.MoveNext())
                     {
-                        var entryKey = firstEnumerator.Current.Key;
-                        var adjusted = true;
-                        for (var i = 1; i < enumerators.Length; ++i)
-                        {
-                            var enumerator = enumerators[i];
-                            var currentKey = enumerator.Current.Key;
-                            while (currentKey < entryKey)
-                            {
-                                if (!enumerator.MoveNext())
-                                {
-                                    yield break;
-                                }
-                            }
-                            if (entryKey < currentKey)
-                            {
-                                adjusted = false;
-                                break;
-                            }
-                        }
-                        if (adjusted)
-                        {
-                            yield return entryKey;
-                        }
+                        yield break;
                     }
-                    while (firstEnumerator.MoveNext());
+                    enumerators.Add(enumerator);
                 }
-                finally
+                if (!(0 < enumerators.Count))
                 {
-                    for (var i = 0; i < enumerators.Length; ++i)
+                    var enumerator = _records.Find(fromKey, toKey).GetEnumerator();
+                    if (!enumerator.MoveNext())
+                    {
+                        yield break;
+                    }
+                    enumerators.Add(enumerator);
+                }
+                var firstEnumerator = enumerators[0];
+                do
+                {
+                    var entryKey = firstEnumerator.Current.Key;
+                    var adjusted = true;
+                    for (var i = 1; i < enumerators.Count; ++i)
                     {
                         var enumerator = enumerators[i];
-                        if (enumerator == null)
+                        var currentKey = enumerator.Current.Key;
+                        while (currentKey < entryKey)
                         {
+                            if (!enumerator.MoveNext())
+                            {
+                                yield break;
+                            }
+                        }
+                        if (entryKey < currentKey)
+                        {
+                            adjusted = false;
                             break;
                         }
-                        enumerator.Dispose();
+                    }
+                    if (adjusted)
+                    {
+                        yield return entryKey;
                     }
                 }
+                while (firstEnumerator.MoveNext());
             }
-            else
+            finally
             {
-                foreach (var entry in _records.Find(fromKey, toKey))
+                for (var i = 0; i < enumerators.Count; ++i)
                 {
-                    yield return entry.Key;
+                    var enumerator = enumerators[i];
+                    if (enumerator == null)
+                    {
+                        break;
+                    }
+                    enumerator.Dispose();
                 }
             }
         }
@@ -152,7 +150,7 @@
             Indexate(entry);
             return true;
         }
-        public System.DateTime[] Tag(string tag, params System.DateTime[] keys)
+        public System.Collections.Generic.List<System.DateTime> Tag(string tag, System.Collections.Generic.IEnumerable<System.DateTime> keys)
         {
             var tagged = new System.Collections.Generic.List<System.DateTime>();
             foreach (var key in keys)
@@ -162,23 +160,18 @@
                     continue;
                 }
                 var record = entry.Value;
-                var tags = new System.Collections.Generic.List<string>(record.Tags);
+                var tags = record.Tags;
                 if (tags.Contains(tag))
                 {
                     continue;
                 }
                 tagged.Add(key);
                 tags.Add(tag);
-                entry.Value = new Record
-                {
-                    Message = record.Message,
-                    Tags = tags.ToArray()
-                };
                 Indexate(entry);
             }
-            return tagged.ToArray();
+            return tagged;
         }
-        public System.DateTime[] Untag(string tag, params System.DateTime[] keys)
+        public System.Collections.Generic.List<System.DateTime> Untag(string tag, System.Collections.Generic.IEnumerable<System.DateTime> keys)
         {
             var untagged = new System.Collections.Generic.List<System.DateTime>();
             foreach (var key in keys)
@@ -188,21 +181,15 @@
                     continue;
                 }
                 var record = entry.Value;
-                var tags = new System.Collections.Generic.List<string>(record.Tags);
+                var tags = record.Tags;
                 if (!tags.Remove(tag))
                 {
                     continue;
                 }
                 untagged.Add(key);
                 Remove(key, tag);
-                entry.Value = new Record
-                {
-                    Message = record.Message,
-                    Tags = tags.ToArray()
-                };
-                Indexate(entry);
             }
-            return untagged.ToArray();
+            return untagged;
         }
 
         private void Indexate(System.Collections.Generic.Entry<Record> entry)

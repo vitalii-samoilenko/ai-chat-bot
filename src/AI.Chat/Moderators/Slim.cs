@@ -17,7 +17,7 @@
         {
             return _options.Moderators.Contains(username);
         }
-        public bool IsModerated(params string[] usernames)
+        public bool IsModerated(System.Collections.Generic.IEnumerable<string> usernames)
         {
             foreach (var username in usernames)
             {
@@ -28,7 +28,7 @@
             }
             return false;
         }
-        public bool IsAllowed(params string[] usernames)
+        public bool IsAllowed(System.Collections.Generic.IEnumerable<string> usernames)
         {
             var now = System.DateTime.UtcNow;
             var promoted = false;
@@ -44,7 +44,7 @@
             }
             return promoted;
         }
-        public bool IsWelcomed(params string[] usernames)
+        public bool IsWelcomed(System.Collections.Generic.IEnumerable<string> usernames)
         {
             var welcomed = false;
             foreach (var username in usernames)
@@ -58,7 +58,7 @@
             return welcomed;
         }
 
-        public string[] Ban(params string[] usernames)
+        public System.Collections.Generic.List<string> Ban(System.Collections.Generic.IEnumerable<string> usernames)
         {
             var banned = new System.Collections.Generic.List<string>();
             foreach (var username in usernames)
@@ -68,9 +68,9 @@
                     banned.Add(username);
                 }
             }
-            return banned.ToArray();
+            return banned;
         }
-        public string[] Unban(params string[] usernames)
+        public System.Collections.Generic.List<string> Unban(System.Collections.Generic.IEnumerable<string> usernames)
         {
             var unbanned = new System.Collections.Generic.List<string>();
             foreach (var username in usernames)
@@ -80,9 +80,9 @@
                     unbanned.Add(username);
                 }
             }
-            return unbanned.ToArray();
+            return unbanned;
         }
-        public (string username, System.DateTime until)[] Timeout(params (string username, System.TimeSpan timeout)[] args)
+        public System.Collections.Generic.List<(string username, System.DateTime until)> Timeout(System.Collections.Generic.IEnumerable<(string username, System.TimeSpan timeout)> args)
         {
             var now = System.DateTime.UtcNow;
             var timeouted = new System.Collections.Generic.List<(string, System.DateTime)>();
@@ -92,9 +92,9 @@
                 _timeouts[username] = until;
                 timeouted.Add((username, until));
             }
-            return timeouted.ToArray();
+            return timeouted;
         }
-        public string[] Moderate(params string[] usernames)
+        public System.Collections.Generic.List<string> Moderate(System.Collections.Generic.IEnumerable<string> usernames)
         {
             var moderated = new System.Collections.Generic.List<string>();
             foreach (var username in usernames)
@@ -104,9 +104,9 @@
                     moderated.Add(username);
                 }
             }
-            return moderated.ToArray();
+            return moderated;
         }
-        public string[] Unmoderate(params string[] usernames)
+        public System.Collections.Generic.List<string> Unmoderate(System.Collections.Generic.IEnumerable<string> usernames)
         {
             var unmoderated = new System.Collections.Generic.List<string>();
             foreach (var username in usernames)
@@ -116,9 +116,9 @@
                     unmoderated.Add(username);
                 }
             }
-            return unmoderated.ToArray();
+            return unmoderated;
         }
-        public string[] Promote(params string[] usernames)
+        public System.Collections.Generic.List<string> Promote(System.Collections.Generic.IEnumerable<string> usernames)
         {
             var promoted = new System.Collections.Generic.List<string>();
             foreach (var username in usernames)
@@ -128,9 +128,9 @@
                     promoted.Add(username);
                 }
             }
-            return promoted.ToArray();
+            return promoted;
         }
-        public string[] Demote(params string[] usernames)
+        public System.Collections.Generic.List<string> Demote(System.Collections.Generic.IEnumerable<string> usernames)
         {
             var demoted = new System.Collections.Generic.List<string>();
             foreach (var username in usernames)
@@ -140,9 +140,9 @@
                     demoted.Add(username);
                 }
             }
-            return demoted.ToArray();
+            return demoted;
         }
-        public string[] Welcome(params string[] usernames)
+        public System.Collections.Generic.List<string> Welcome(System.Collections.Generic.IEnumerable<string> usernames)
         {
             var welcomed = new System.Collections.Generic.List<string>();
             foreach (var username in usernames)
@@ -152,9 +152,9 @@
                     welcomed.Add(username);
                 }
             }
-            return welcomed.ToArray();
+            return welcomed;
         }
-        public string[] Unwelcome(params string[] usernames)
+        public System.Collections.Generic.List<string> Unwelcome(System.Collections.Generic.IEnumerable<string> usernames)
         {
             var unwelcomed = new System.Collections.Generic.List<string>();
             foreach (var username in usernames)
@@ -164,7 +164,7 @@
                     unwelcomed.Add(username);
                 }
             }
-            return unwelcomed.ToArray();
+            return unwelcomed;
         }
 
         public bool Greet(string username)

@@ -14,8 +14,8 @@
 
         public async System.Threading.Tasks.Task<(System.DateTime messageKey, System.DateTime replyKey)> ReplyAsync(string username, string message)
         {
-            return await _scope.ExecuteWriteAsync(
-                    async () => await _bot.ReplyAsync(username, message)
+            return await _scope.ExecuteWriteAsync(async () =>
+                    await _bot.ReplyAsync(username, message)
                         .ConfigureAwait(false))
                 .ConfigureAwait(false);
         }

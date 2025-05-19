@@ -7,7 +7,7 @@
             return history.Add(new AI.Chat.Record
             {
                 Message = message,
-                Tags = new[]
+                Tags = new System.Collections.Generic.List<string>
                 {
                     $"{Constants.TagType}={Constants.TypeSystem}"
                 }
@@ -18,7 +18,7 @@
             return history.Add(new AI.Chat.Record
             {
                 Message = message,
-                Tags = new[]
+                Tags = new System.Collections.Generic.List<string>
                 {
                     $"{Constants.TagType}={Constants.TypeUser}",
                     $"{Constants.TagUsername}={username}"
@@ -30,23 +30,35 @@
             return history.Add(new AI.Chat.Record
             {
                 Message = message,
-                Tags = new[]
+                Tags = new System.Collections.Generic.List<string>
                 {
                     $"{Constants.TagType}={Constants.TypeModel}"
                 }
             });
         }
-        public static System.DateTime[] Moderate(this IHistory history, params System.DateTime[] keys)
+        public static System.Collections.Generic.IEnumerable<System.DateTime> Find(this IHistory history, System.DateTime fromKey, System.DateTime toKey, params string[] tags)
         {
-            return history.Tag(Constants.TagModerated, keys);
-        }
-        public static System.DateTime[] Unmoderate(this IHistory history, params System.DateTime[] keys)
-        {
-            return history.Untag(Constants.TagModerated, keys);
+            return history.Find(fromKey, toKey, tags);
         }
         public static System.Collections.Generic.IEnumerable<System.DateTime> FindModerated(this IHistory history, System.DateTime fromKey, System.DateTime toKey)
         {
             return history.Find(fromKey, toKey, Constants.TagModerated);
+        }
+        public static System.Collections.Generic.List<System.DateTime> Remove(this IHistory history, params System.DateTime[] keys)
+        {
+            return history.Remove(keys);
+        }
+        public static System.Collections.Generic.List<System.DateTime> Moderate(this IHistory history, System.Collections.Generic.IEnumerable<System.DateTime> keys)
+        {
+            return history.Tag(Constants.TagModerated, keys);
+        }
+        public static System.Collections.Generic.List<System.DateTime> Moderate(this IHistory history, params System.DateTime[] keys)
+        {
+            return history.Moderate(keys);
+        }
+        public static System.Collections.Generic.List<System.DateTime> Unmoderate(this IHistory history, System.Collections.Generic.IEnumerable<System.DateTime> keys)
+        {
+            return history.Untag(Constants.TagModerated, keys);
         }
     }
 }

@@ -2,7 +2,7 @@
 {
     public class GenerateContentRequest
     {
-        public Content[] Contents { get; set; }
+        public System.Collections.Generic.List<Content> Contents { get; set; }
         public Content SystemInstruction { get; set; }
         public string CachedContent { get; set; }
     }

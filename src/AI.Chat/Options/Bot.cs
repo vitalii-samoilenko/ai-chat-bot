@@ -9,12 +9,12 @@
     {
         public FilterType Type { get; set; }
         public string Reason { get; set; }
-        public string[] Args { get; set; }
+        public System.Collections.Generic.List<string> Args { get; set; }
     }
     public class Bot
     {
         public int Warnings { get; set; }
         public string Apology { get; set; }
-        public Filter[] Filters { get; set; }
+        public System.Collections.Generic.List<Filter> Filters { get; set; }
     }
 }

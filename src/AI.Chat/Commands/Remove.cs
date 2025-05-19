@@ -21,7 +21,7 @@ namespace AI.Chat.Commands
             else
             {
                 var keys = new System.Collections.Generic.List<System.DateTime>();
-                foreach (var arg in args.Split(new[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries))
+                foreach (var arg in args.SplitArgs())
                 {
                     if (!arg.TryParseKey(out var key))
                     {
@@ -29,7 +29,7 @@ namespace AI.Chat.Commands
                     }
                     keys.Add(key);
                 }
-                foreach (var key in _history.Remove(keys.ToArray()))
+                foreach (var key in _history.Remove(keys))
                 {
                     yield return key.ToKeyString();
                 }

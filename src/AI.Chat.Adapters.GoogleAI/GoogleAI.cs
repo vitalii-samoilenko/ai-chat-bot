@@ -50,11 +50,11 @@
             }
             var request = new global::GoogleAI.Models.GenerateContentRequest
             {
-                Contents = contents.ToArray(),
+                Contents = contents,
                 SystemInstruction = 0 < systemInstructionBuilder.Length
                     ? new global::GoogleAI.Models.Content
                     {
-                        Parts = new[]
+                        Parts = new System.Collections.Generic.List<global::GoogleAI.Models.Part>
                         {
                             new global::GoogleAI.Models.Part
                             {

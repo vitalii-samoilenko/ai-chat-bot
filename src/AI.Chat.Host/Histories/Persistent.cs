@@ -16,10 +16,10 @@
             AI.Chat.Host.Helpers.AppendLog(key, record);
             return key;
         }
-        public System.DateTime[] Remove(params System.DateTime[] keys)
+        public System.Collections.Generic.List<System.DateTime> Remove(System.Collections.Generic.IEnumerable<System.DateTime> keys)
         {
             var removed = _history.Remove(keys);
-            if (0 < removed.Length)
+            if (0 < removed.Count)
             {
                 AI.Chat.Host.Helpers.DeleteLog(removed);
             }
@@ -30,7 +30,7 @@
             _history.Clear();
             AI.Chat.Host.Helpers.DeleteLog();
         }
-        public System.Collections.Generic.IEnumerable<System.DateTime> Find(System.DateTime fromKey, System.DateTime toKey, params string[] tags)
+        public System.Collections.Generic.IEnumerable<System.DateTime> Find(System.DateTime fromKey, System.DateTime toKey, System.Collections.Generic.IEnumerable<string> tags)
         {
             foreach (var key in _history.Find(fromKey, toKey, tags))
             {
@@ -50,19 +50,19 @@
             }
             return result;
         }
-        public System.DateTime[] Tag(string tag, params System.DateTime[] keys)
+        public System.Collections.Generic.List<System.DateTime> Tag(string tag, System.Collections.Generic.IEnumerable<System.DateTime> keys)
         {
             var tagged = _history.Tag(tag, keys);
-            if (0 < tagged.Length)
+            if (0 < tagged.Count)
             {
                 AI.Chat.Host.Helpers.TagLog(tag, tagged);
             }
             return tagged;
         }
-        public System.DateTime[] Untag(string tag, params System.DateTime[] keys)
+        public System.Collections.Generic.List<System.DateTime> Untag(string tag, System.Collections.Generic.IEnumerable<System.DateTime> keys)
         {
             var tagged = _history.Untag(tag, keys);
-            if (0 < tagged.Length)
+            if (0 < tagged.Count)
             {
                 AI.Chat.Host.Helpers.UntagLog(tag, tagged);
             }

@@ -42,7 +42,7 @@ namespace AI.Chat.Commands
                     ? args.Substring(next + 1)
                     : string.Empty;
             }
-            foreach (var key in _history.Find(fromKey, toKey, args.Split(new[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries)))
+            foreach (var key in _history.Find(fromKey, toKey, args.SplitArgs()))
             {
                 yield return key.ToKeyString();
             }

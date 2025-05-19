@@ -13,7 +13,7 @@ namespace AI.Chat.Commands
 
         public System.Collections.Generic.IEnumerable<string> Execute(string args)
         {
-            var tokens = args.Split(new[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries);
+            var tokens = args.SplitArgs();
             if (tokens.Length < 2)
             {
                 yield break;
@@ -31,7 +31,7 @@ namespace AI.Chat.Commands
             }
             if (0 < keys.Count)
             {
-                foreach (var key in _history.Untag(tag, keys.ToArray()))
+                foreach (var key in _history.Untag(tag, keys))
                 {
                     yield return key.ToKeyString();
                 }

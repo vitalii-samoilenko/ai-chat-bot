@@ -5,7 +5,7 @@
         public System.Uri BaseAddress { get; set; }
         public string ClientId { get; set; }
         public string ClientSecret { get; set; }
-        public string[] Scopes { get; set; }
+        public System.Collections.Generic.List<string> Scopes { get; set; }
         public string AccessToken { get; set; }
         public string RefreshToken { get; set; }
         public string DeviceCode { get; set; }

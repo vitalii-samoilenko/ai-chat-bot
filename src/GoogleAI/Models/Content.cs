@@ -2,7 +2,7 @@
 {
     public class Content
     {
-        public Part[] Parts { get; set; }
+        public System.Collections.Generic.List<Part> Parts { get; set; }
         public string Role { get; set; }
     }
 }

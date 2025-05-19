@@ -1,4 +1,6 @@
-﻿namespace AI.Chat.Adapters
+﻿using AI.Chat.Extensions;
+
+namespace AI.Chat.Adapters
 {
     public class Limited<TAdapter> : IAdapter
         where TAdapter : IAdapter
@@ -33,7 +35,7 @@
                 }
                 toKey = fromKey + _options.Period;
                 var keys = new System.Collections.Generic.List<System.DateTime>(_history.Find(fromKey, toKey));
-                _history.Remove(keys.ToArray());
+                _history.Remove(keys);
             }
             return (reply, tokens);
         }

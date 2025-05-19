@@ -69,12 +69,12 @@ namespace AI.Chat.Host
                         })
                 });
         }
-        public static void DeleteLog(params System.DateTime[] keys)
+        public static void DeleteLog(System.Collections.Generic.IEnumerable<System.DateTime> keys)
         {
-            var lines = new string[keys.Length];
-            for (var i = 0; i < keys.Length; ++i)
+            var lines = new System.Collections.Generic.List<string>();
+            foreach (var key in keys)
             {
-                lines[i] = keys[i].ToKeyString();
+                lines.Add(key.ToKeyString());
             }
             System.IO.File.AppendAllLines(
                 Constants.LogDeleted,
@@ -103,27 +103,27 @@ namespace AI.Chat.Host
                         })
                 });
         }
-        public static void TagLog(string tag, params System.DateTime[] keys)
+        public static void TagLog(string tag, System.Collections.Generic.IEnumerable<System.DateTime> keys)
         {
             AppendTagsLog($"+{tag}", keys);
         }
-        public static void UntagLog(string tag, params System.DateTime[] keys)
+        public static void UntagLog(string tag, System.Collections.Generic.IEnumerable<System.DateTime> keys)
         {
             AppendTagsLog($"-{tag}", keys);
         }
-        private static void AppendTagsLog(string tag, System.DateTime[] keys)
+        private static void AppendTagsLog(string tag, System.Collections.Generic.IEnumerable<System.DateTime> keys)
         {
-            var tagged = new string[keys.Length];
-            for (int i = 0; i < keys.Length; ++i)
+            var tagged = new System.Collections.Generic.List<string>();
+            foreach (var key in keys)
             {
-                tagged[i] = keys[i].ToKeyString();
+                tagged.Add(key.ToKeyString());
             }
             System.IO.File.AppendAllLines(
                 Constants.LogTags,
                 new[]
                 {
                     System.Text.Json.JsonSerializer.Serialize(
-                        new System.Collections.Generic.KeyValuePair<string, string[]>(
+                        new System.Collections.Generic.KeyValuePair<string, System.Collections.Generic.List<string>>(
                             tag, tagged))
                 });
         }
@@ -157,7 +157,7 @@ namespace AI.Chat.Host
                     var tagsLog = System.IO.File.ReadAllLines(Constants.LogTags);
                     foreach (var line in tagsLog)
                     {
-                        var pair = System.Text.Json.JsonSerializer.Deserialize<System.Collections.Generic.KeyValuePair<string, string[]>>(line);
+                        var pair = System.Text.Json.JsonSerializer.Deserialize<System.Collections.Generic.KeyValuePair<string, System.Collections.Generic.List<string>>>(line);
                         foreach (var key in pair.Value)
                         {
                             if (tagged.ContainsKey(key))
@@ -189,6 +189,7 @@ namespace AI.Chat.Host
                             var pair = System.Text.Json.JsonSerializer.Deserialize<System.Collections.Generic.KeyValuePair<string, AI.Chat.Record>>(line);
                             var key = pair.Key;
                             var record = pair.Value;
+                            var tags = record.Tags;
                             var modified = false;
                             if (deleted.Contains(key))
                             {
@@ -196,7 +197,6 @@ namespace AI.Chat.Host
                             }
                             if (tagged.ContainsKey(key))
                             {
-                                var tags = new System.Collections.Generic.List<string>(record.Tags);
                                 foreach (var action in tagged[key])
                                 {
                                     var tag = action.Substring(1);
@@ -209,7 +209,6 @@ namespace AI.Chat.Host
                                         tags.Add(tag);
                                     }
                                 }
-                                record.Tags = tags.ToArray();
                                 modified = true;
                             }
                             if (record.IsModerated())

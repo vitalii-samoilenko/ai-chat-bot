@@ -46,9 +46,9 @@ namespace AI.Chat.Bots
                     }
                 }
             }
-            foreach (var reasonKey in reasonKeys.Values)
+            if (0 < reasonKeys.Count)
             {
-                _history.Remove(reasonKey);
+                _history.Remove(reasonKeys.Values);
             }
             var replyKey = _history.AddModelMessage(reply);
             return (messageKey, replyKey);

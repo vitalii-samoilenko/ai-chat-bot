@@ -16,7 +16,7 @@
         {
             return _scope.ExecuteWrite(() => _history.Add(record));
         }
-        public System.DateTime[] Remove(params System.DateTime[] keys)
+        public System.Collections.Generic.List<System.DateTime> Remove(System.Collections.Generic.IEnumerable<System.DateTime> keys)
         {
             return _scope.ExecuteWrite(() => _history.Remove(keys));
         }
@@ -24,7 +24,7 @@
         {
             _scope.ExecuteWrite(() => _history.Clear());
         }
-        public System.Collections.Generic.IEnumerable<System.DateTime> Find(System.DateTime fromKey, System.DateTime toKey, params string[] tags)
+        public System.Collections.Generic.IEnumerable<System.DateTime> Find(System.DateTime fromKey, System.DateTime toKey, System.Collections.Generic.IEnumerable<string> tags)
         {
             foreach (var key in _scope.ExecuteRead(() => _history.Find(fromKey, toKey, tags)))
             {
@@ -42,11 +42,11 @@
         {
             return _scope.ExecuteWrite(() => _history.TryEdit(key, message));
         }
-        public System.DateTime[] Tag(string tag, params System.DateTime[] keys)
+        public System.Collections.Generic.List<System.DateTime> Tag(string tag, System.Collections.Generic.IEnumerable<System.DateTime> keys)
         {
             return _scope.ExecuteWrite(() => _history.Tag(tag, keys));
         }
-        public System.DateTime[] Untag(string tag, params System.DateTime[] keys)
+        public System.Collections.Generic.List<System.DateTime> Untag(string tag, System.Collections.Generic.IEnumerable<System.DateTime> keys)
         {
             return _scope.ExecuteWrite(() => _history.Untag(tag, keys));
         }

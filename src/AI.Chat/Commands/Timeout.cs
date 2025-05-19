@@ -13,7 +13,7 @@ namespace AI.Chat.Commands
 
         public System.Collections.Generic.IEnumerable<string> Execute(string args)
         {
-            var tokens = args.Split(new[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries);
+            var tokens = args.SplitArgs();
             if (tokens.Length == 0 || tokens.Length % 2 == 1)
             {
                 yield break;
@@ -28,7 +28,7 @@ namespace AI.Chat.Commands
                 var username = tokens[i];
                 tuples.Add((username, timeout));
             }
-            foreach ((var username, var until) in _moderator.Timeout(tuples.ToArray()))
+            foreach ((var username, var until) in _moderator.Timeout(tuples))
             {
                 yield return username;
                 yield return until.ToKeyString();

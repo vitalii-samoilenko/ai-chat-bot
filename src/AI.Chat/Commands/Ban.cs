@@ -1,4 +1,6 @@
-﻿namespace AI.Chat.Commands
+﻿using AI.Chat.Extensions;
+
+namespace AI.Chat.Commands
 {
     public class Ban : ICommand
     {
@@ -11,7 +13,7 @@
 
         public System.Collections.Generic.IEnumerable<string> Execute(string args)
         {
-            return _moderator.Ban(args.Split(new[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries));
+            return _moderator.Ban(args.SplitArgs());
         }
     }
 }
