@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "ai.chat.hosts.api.moderator.client": {
+    "ai.chat.hosts.api.moderator.proxy": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -23,7 +23,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/ai.chat.hosts.api.moderator.client",
+            "outputPath": "dist/ai.chat.hosts.api.moderator.proxy",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
@@ -69,10 +69,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "ai.chat.hosts.api.moderator.client:build:production"
+              "buildTarget": "ai.chat.hosts.api.moderator.proxy:build:production"
             },
             "development": {
-              "buildTarget": "ai.chat.hosts.api.moderator.client:build:development"
+              "buildTarget": "ai.chat.hosts.api.moderator.proxy:build:development"
             }
           },
           "defaultConfiguration": "development",

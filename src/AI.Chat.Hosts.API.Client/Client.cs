@@ -23,7 +23,7 @@ namespace AI.Chat.Hosts.API
                 {
                     Method = System.Net.Http.HttpMethod.Get,
                     RequestUri = new System.Uri(
-                        $"{command}/execute"
+                        $"commands/{command}/execute"
                         + $"?args={args}",
                         System.UriKind.Relative)
                 })
