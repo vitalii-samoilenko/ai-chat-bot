@@ -13,6 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\AI.Chat.Hosts.API.Client\AI.Chat.Hosts.API.Client.csproj" />
     <ProjectReference Include="..\AI.Chat.Hosts.API.Moderator.Proxy\AI.Chat.Hosts.API.Moderator.Proxy.esproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>

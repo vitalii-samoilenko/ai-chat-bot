@@ -15,7 +15,7 @@ namespace AI.Chat.Host.API.Controllers
 
         [HttpGet]
         [Route("{command}/execute")]
-        public async Task<IEnumerable<string>> ExecuteAsync(string command, string args)
+        public IEnumerable<string> Execute(string command, string args)
         {
             return _commandExecutor.Execute(command, args);
         }

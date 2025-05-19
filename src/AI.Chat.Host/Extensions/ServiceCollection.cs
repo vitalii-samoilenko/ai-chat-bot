@@ -142,7 +142,17 @@ namespace Microsoft.Extensions.DependencyInjection
                                     .Value;
 
                                 httpClient.BaseAddress = options.Client.BaseAddress;
-                            });
+                            })
+                            .AddHttpMessageHandler(
+                                serviceProvider =>
+                                {
+                                    var options = serviceProvider
+                                        .GetRequiredService<IOptions<AI.Chat.Options.GoogleAI.Adapter>>()
+                                        .Value;
+
+                                    return new System.Net.Http.GoogleAI.ApiKeyHandler(
+                                        options.Client.ApiKey);
+                                });
                         if (diagnostics)
                         {
                             googleClient = typeof(GoogleAI.Diagnostics.Trace<>)

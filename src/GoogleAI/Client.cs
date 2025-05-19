@@ -4,9 +4,9 @@ namespace GoogleAI
 {
     public interface IClient
     {
-        System.Threading.Tasks.Task<Models.GenerateContentResponse> GenerateContentAsync(string model, string apiKey, Models.GenerateContentRequest request);
-        System.Threading.Tasks.Task<Models.CachedContentsResponse> CreateCachedCotents(string apiKey, Models.CachedContentsRequest request);
-        System.Threading.Tasks.Task DeleteCachedContents(string name, string apiKey);
+        System.Threading.Tasks.Task<Models.GenerateContentResponse> GenerateContentAsync(string model, Models.GenerateContentRequest request);
+        System.Threading.Tasks.Task<Models.CachedContentsResponse> CreateCachedCotents(Models.CachedContentsRequest request);
+        System.Threading.Tasks.Task DeleteCachedContents(string name);
     }
 
     public class Client : IClient
@@ -18,15 +18,14 @@ namespace GoogleAI
             _httpClient = httpClient;
         }
 
-        public async System.Threading.Tasks.Task<Models.GenerateContentResponse> GenerateContentAsync(string model, string apiKey, Models.GenerateContentRequest request)
+        public async System.Threading.Tasks.Task<Models.GenerateContentResponse> GenerateContentAsync(string model, Models.GenerateContentRequest request)
         {
             var httpResponse = await _httpClient.SendAsync(
                 new System.Net.Http.HttpRequestMessage
                 {
                     Method = System.Net.Http.HttpMethod.Post,
                     RequestUri = new System.Uri(
-                        $"models/{model}:generateContent"
-                        + $"?key={apiKey}",
+                        $"models/{model}:generateContent",
                         System.UriKind.Relative),
                     Content = System.Net.Http.Json.JsonContent.Create(
                         request)
@@ -42,15 +41,14 @@ namespace GoogleAI
                 .ConfigureAwait(false);
             return response;
         }
-        public async System.Threading.Tasks.Task<Models.CachedContentsResponse> CreateCachedCotents(string apiKey, Models.CachedContentsRequest request)
+        public async System.Threading.Tasks.Task<Models.CachedContentsResponse> CreateCachedCotents(Models.CachedContentsRequest request)
         {
             var httpResponse = await _httpClient.SendAsync(
                 new System.Net.Http.HttpRequestMessage
                 {
                     Method = System.Net.Http.HttpMethod.Post,
                     RequestUri = new System.Uri(
-                        "cachedContents"
-                        + $"?key={apiKey}",
+                        "cachedContents",
                         System.UriKind.Relative),
                     Content = System.Net.Http.Json.JsonContent.Create(
                         request)
@@ -66,15 +64,14 @@ namespace GoogleAI
                 .ConfigureAwait(false);
             return response;
         }
-        public async System.Threading.Tasks.Task DeleteCachedContents(string name, string apiKey)
+        public async System.Threading.Tasks.Task DeleteCachedContents(string name)
         {
             var httpResponse = await _httpClient.SendAsync(
                 new System.Net.Http.HttpRequestMessage
                 {
                     Method = System.Net.Http.HttpMethod.Delete,
                     RequestUri = new System.Uri(
-                        name
-                        + $"?key={apiKey}",
+                        name,
                         System.UriKind.Relative)
                 })
                 .ConfigureAwait(false);

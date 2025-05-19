@@ -12,27 +12,27 @@
             _client = client;
         }
 
-        public async System.Threading.Tasks.Task<Models.GenerateContentResponse> GenerateContentAsync(string model, string apiKey, Models.GenerateContentRequest request)
+        public async System.Threading.Tasks.Task<Models.GenerateContentResponse> GenerateContentAsync(string model, Models.GenerateContentRequest request)
         {
             using (var activity = ActivitySources.Client.StartActivity($"{ClientName}.{nameof(GenerateContentAsync)}"))
             {
-                return await _client.GenerateContentAsync(model, apiKey, request)
+                return await _client.GenerateContentAsync(model, request)
                     .ConfigureAwait(false);
             }
         }
-        public async System.Threading.Tasks.Task<Models.CachedContentsResponse> CreateCachedCotents(string apiKey, Models.CachedContentsRequest request)
+        public async System.Threading.Tasks.Task<Models.CachedContentsResponse> CreateCachedCotents(Models.CachedContentsRequest request)
         {
             using (var activity = ActivitySources.Client.StartActivity($"{ClientName}.{nameof(CreateCachedCotents)}"))
             {
-                return await _client.CreateCachedCotents(apiKey, request)
+                return await _client.CreateCachedCotents(request)
                     .ConfigureAwait(false);
             }
         }
-        public async System.Threading.Tasks.Task DeleteCachedContents(string name, string apiKey)
+        public async System.Threading.Tasks.Task DeleteCachedContents(string name)
         {
             using (var activity = ActivitySources.Client.StartActivity($"{ClientName}.{nameof(DeleteCachedContents)}"))
             {
-                await _client.DeleteCachedContents(name, apiKey)
+                await _client.DeleteCachedContents(name)
                     .ConfigureAwait(false);
             }
         }

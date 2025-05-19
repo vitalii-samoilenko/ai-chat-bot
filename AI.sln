@@ -51,6 +51,8 @@ Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "AI.Chat.Hosts.API.Moderator
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AI.Chat.Hosts.API.Moderator", "src\AI.Chat.Hosts.API.Moderator\AI.Chat.Hosts.API.Moderator.csproj", "{F49ED3A6-0821-40CC-90B9-F35D50141737}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AI.Chat.Hosts.API.Client", "src\AI.Chat.Hosts.API.Client\AI.Chat.Hosts.API.Client.csproj", "{B50CAC40-7139-4CE4-9E82-47FEF02971B4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -127,6 +129,10 @@ Global
 		{F49ED3A6-0821-40CC-90B9-F35D50141737}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F49ED3A6-0821-40CC-90B9-F35D50141737}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F49ED3A6-0821-40CC-90B9-F35D50141737}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B50CAC40-7139-4CE4-9E82-47FEF02971B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B50CAC40-7139-4CE4-9E82-47FEF02971B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B50CAC40-7139-4CE4-9E82-47FEF02971B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B50CAC40-7139-4CE4-9E82-47FEF02971B4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -142,6 +148,7 @@ Global
 		{4FD39487-5C6A-43CD-8FC1-A17E26C33E46} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{B91F5CDB-321A-1671-E9A5-8B0042424B7F} = {FBC6B01D-8C2B-469B-8109-F8E279EBFEC5}
 		{F49ED3A6-0821-40CC-90B9-F35D50141737} = {FBC6B01D-8C2B-469B-8109-F8E279EBFEC5}
+		{B50CAC40-7139-4CE4-9E82-47FEF02971B4} = {FBC6B01D-8C2B-469B-8109-F8E279EBFEC5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {BFB4134A-F767-466F-B5CB-38ED0300A82A}

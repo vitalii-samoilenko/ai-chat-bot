@@ -3,6 +3,7 @@
     public class Client
     {
         public System.Uri BaseAddress { get; set; }
+        public string ApiKey { get; set; }
     }
     public class Cache
     {
@@ -15,7 +16,6 @@
     }
     public class Adapter : Options.Adapter
     {
-        public string ApiKey { get; set; }
         public string Model { get; set; }
         public Client Client { get; set; }
         public Cache Cache { get; set; }

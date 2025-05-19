@@ -26,7 +26,7 @@
                 _options.Cache.Key = System.DateTime.MinValue;
                 if (!string.IsNullOrWhiteSpace(_options.Cache.Name))
                 {
-                    await _client.DeleteCachedContents(_options.Cache.Name, _options.ApiKey)
+                    await _client.DeleteCachedContents(_options.Cache.Name)
                         .ConfigureAwait(false);
                     _options.Cache.Name = null;
                 }
@@ -65,7 +65,7 @@
                     : null,
                 CachedContent = _options.Cache.Name
             };
-            var response = await _client.GenerateContentAsync(_options.Model, _options.ApiKey, request)
+            var response = await _client.GenerateContentAsync(_options.Model, request)
                 .ConfigureAwait(false);
             if (_options.Cache.Until < until
                 && !(response.UsageMetadata.PromptTokenCount < _options.Cache.Tokens))
@@ -77,7 +77,7 @@
                     SystemInstruction = request.SystemInstruction,
                     Ttl = _options.Cache.Ttl
                 };
-                var cacheResponse = await _client.CreateCachedCotents(_options.ApiKey, cacheRequest)
+                var cacheResponse = await _client.CreateCachedCotents(cacheRequest)
                     .ConfigureAwait(false);
                 _options.Cache.Key = lastKey + System.TimeSpan.FromTicks(1);
                 _options.Cache.Name = cacheResponse.Name;
