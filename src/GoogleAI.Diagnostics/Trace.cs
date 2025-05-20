@@ -28,11 +28,11 @@
                     .ConfigureAwait(false);
             }
         }
-        public async System.Threading.Tasks.Task DeleteCachedContents(string name)
+        public async System.Threading.Tasks.Task<bool> TryDeleteCachedContents(string name)
         {
-            using (var activity = ActivitySources.Client.StartActivity($"{ClientName}.{nameof(DeleteCachedContents)}"))
+            using (var activity = ActivitySources.Client.StartActivity($"{ClientName}.{nameof(TryDeleteCachedContents)}"))
             {
-                await _client.DeleteCachedContents(name)
+                return await _client.TryDeleteCachedContents(name)
                     .ConfigureAwait(false);
             }
         }

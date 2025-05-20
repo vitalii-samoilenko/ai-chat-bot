@@ -26,7 +26,7 @@
                 _options.Cache.Key = System.DateTime.MinValue;
                 if (!string.IsNullOrWhiteSpace(_options.Cache.Name))
                 {
-                    await _client.DeleteCachedContents(_options.Cache.Name)
+                    await _client.TryDeleteCachedContents(_options.Cache.Name)
                         .ConfigureAwait(false);
                     _options.Cache.Name = null;
                 }

@@ -6,7 +6,7 @@ namespace GoogleAI
     {
         System.Threading.Tasks.Task<Models.GenerateContentResponse> GenerateContentAsync(string model, Models.GenerateContentRequest request);
         System.Threading.Tasks.Task<Models.CachedContentsResponse> CreateCachedCotents(Models.CachedContentsRequest request);
-        System.Threading.Tasks.Task DeleteCachedContents(string name);
+        System.Threading.Tasks.Task<bool> TryDeleteCachedContents(string name);
     }
 
     public class Client : IClient
@@ -64,7 +64,7 @@ namespace GoogleAI
                 .ConfigureAwait(false);
             return response;
         }
-        public async System.Threading.Tasks.Task DeleteCachedContents(string name)
+        public async System.Threading.Tasks.Task<bool> TryDeleteCachedContents(string name)
         {
             var httpResponse = await _httpClient.SendAsync(
                 new System.Net.Http.HttpRequestMessage
@@ -75,11 +75,7 @@ namespace GoogleAI
                         System.UriKind.Relative)
                 })
                 .ConfigureAwait(false);
-            if (!httpResponse.IsSuccessStatusCode)
-            {
-                throw new System.Net.Http.HttpRequestException(
-                    $"Failed to delete cached contents: {httpResponse.StatusCode}");
-            }
+            return httpResponse.IsSuccessStatusCode;
         }
     }
 }
