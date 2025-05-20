@@ -1,11 +1,9 @@
-const target = 'http://localhost:5118';
-
 const PROXY_CONFIG = [
   {
     context: [
       "/commands",
     ],
-    target,
+    target: 'http://localhost:5118',
     secure: false
   }
 ]
