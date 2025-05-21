@@ -1,4 +1,6 @@
-﻿namespace AI.Chat.Histories.GoogleAI
+﻿using AI.Chat.Extensions;
+
+namespace AI.Chat.Histories.GoogleAI
 {
     public class Cached<THistory> : IHistory
         where THistory : IHistory
@@ -14,7 +16,12 @@
 
         public System.DateTime Add(Record record)
         {
-            return _history.Add(record);
+            var key = _history.Add(record);
+            if (record.IsSystemInstruction())
+            {
+                ExpireCache();
+            }
+            return key;
         }
         public System.Collections.Generic.List<System.DateTime> Remove(System.Collections.Generic.IEnumerable<System.DateTime> keys)
         {
