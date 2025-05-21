@@ -14,7 +14,7 @@
         {
             (var reply, var tokens) = await _adapter.GetReplyAsync()
                 .ConfigureAwait(false);
-            return (reply.Replace(System.Environment.NewLine, " ").Trim(), tokens);
+            return (reply.Replace("\n", " ").Replace("\r", string.Empty).Trim(), tokens);
         }
     }
 }

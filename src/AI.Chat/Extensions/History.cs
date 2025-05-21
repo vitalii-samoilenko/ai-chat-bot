@@ -9,7 +9,7 @@
                 Message = message,
                 Tags = new System.Collections.Generic.List<string>
                 {
-                    $"{Constants.TagType}={Constants.TypeSystem}"
+                    Constants.TagType + "=" + Constants.TypeSystem
                 }
             });
         }
@@ -20,7 +20,7 @@
                 Message = message,
                 Tags = new System.Collections.Generic.List<string>
                 {
-                    $"{Constants.TagType}={Constants.TypeUser}",
+                    Constants.TagType + "=" + Constants.TypeUser,
                     $"{Constants.TagUsername}={username}"
                 } 
             });
@@ -32,7 +32,7 @@
                 Message = message,
                 Tags = new System.Collections.Generic.List<string>
                 {
-                    $"{Constants.TagType}={Constants.TypeModel}"
+                    Constants.TagType + "=" + Constants.TypeModel
                 }
             });
         }

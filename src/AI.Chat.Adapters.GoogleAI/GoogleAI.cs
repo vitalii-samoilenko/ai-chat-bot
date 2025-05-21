@@ -21,6 +21,10 @@
         public async System.Threading.Tasks.Task<(string reply, int tokens)> GetReplyAsync()
         {
             var until = System.DateTime.UtcNow + _options.Cache.Slide;
+            var contents = new System.Collections.Generic.List<global::GoogleAI.Models.Content>();
+            var systemInstructionBuilder = new System.Text.StringBuilder();
+            var lastKey = System.DateTime.MinValue;
+        init:
             if (_options.Cache.Until < until)
             {
                 _options.Cache.Key = System.DateTime.MinValue;
@@ -31,9 +35,6 @@
                     _options.Cache.Name = null;
                 }
             }
-            var contents = new System.Collections.Generic.List<global::GoogleAI.Models.Content>();
-            var systemInstructionBuilder = new System.Text.StringBuilder();
-            var lastKey = System.DateTime.MinValue;
             foreach (var entry in _contents.Find(_options.Cache.Key, System.DateTime.MaxValue))
             {
                 lastKey = entry.Key;
@@ -47,6 +48,11 @@
                 {
                     contents.Add(content);
                 }
+            }
+            if (!(0 < contents.Count))
+            {
+                _options.Cache.Until = System.DateTime.MinValue;
+                goto init;
             }
             var request = new global::GoogleAI.Models.GenerateContentRequest
             {

@@ -15,10 +15,9 @@
         }
         public static bool IsSystemInstruction(this AI.Chat.Record record)
         {
-            const string SystemTag = Constants.TagType + "=" + Constants.TypeSystem;
             foreach (var tag in record.Tags)
             {
-                if (SystemTag.Equals(tag, System.StringComparison.OrdinalIgnoreCase))
+                if ((Constants.TagType + "=" + Constants.TypeSystem).Equals(tag, System.StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
