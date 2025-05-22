@@ -14,7 +14,7 @@
             if (!string.IsNullOrWhiteSpace(args))
             {
                 _client.LeaveChannel(args);
-                yield return args;
+                yield return true.ToString();
             }
         }
     }

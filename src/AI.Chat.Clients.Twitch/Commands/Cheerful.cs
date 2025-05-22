@@ -14,7 +14,7 @@
             if (System.Enum.TryParse(args, true, out Options.Twitch.WelcomeMode mode))
             {
                 _options.Welcome.Mode = mode;
-                yield return args;
+                yield return true.ToString();
             }
         }
     }

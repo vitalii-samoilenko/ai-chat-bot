@@ -14,7 +14,7 @@
             if (System.TimeSpan.TryParseExact(args, Constants.TimeSpanFormat, null, out var delay))
             {
                 _options.Delay = delay;
-                yield return args;
+                yield return true.ToString();
             }
         }
     }

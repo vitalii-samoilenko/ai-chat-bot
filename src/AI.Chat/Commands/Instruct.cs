@@ -17,7 +17,6 @@ namespace AI.Chat.Commands
             {
                 var key = _history.AddSystemMessage(args);
                 yield return key.ToKeyString();
-                yield return args;
             }
         }
     }

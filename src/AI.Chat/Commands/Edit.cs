@@ -25,8 +25,7 @@ namespace AI.Chat.Commands
                 && !string.IsNullOrWhiteSpace(message)
                 && _history.TryEdit(key, message))
             {
-                yield return keyArg;
-                yield return message;
+                yield return true.ToString();
             }
         }
     }
