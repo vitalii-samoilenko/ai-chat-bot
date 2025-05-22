@@ -6,6 +6,8 @@ history seek
 moderator
 host somewhere?
 
+retry policy on 503
+
 protect system tags with decorator?
 context as intellectual property?
 readwrite commands?

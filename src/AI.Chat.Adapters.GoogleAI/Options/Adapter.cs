@@ -1,5 +1,10 @@
 ﻿namespace AI.Chat.Options.GoogleAI
 {
+    public class Model
+    {
+        public string Name { get; set; }
+        public double Temperature { get; set; }
+    }
     public class Client
     {
         public System.Uri BaseAddress { get; set; }
@@ -16,8 +21,8 @@
     }
     public class Adapter : Options.Adapter
     {
-        public string Model { get; set; }
         public Client Client { get; set; }
         public Cache Cache { get; set; }
+        public Model Model { get; set; }
     }
 }
