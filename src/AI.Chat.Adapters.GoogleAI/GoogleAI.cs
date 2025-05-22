@@ -82,7 +82,7 @@
             {
                 var cacheRequest = new global::GoogleAI.Models.CachedContentsRequest
                 {
-                    Model = $"models/{_options.Model}",
+                    Model = $"models/{_options.Model.Name}",
                     Contents = request.Contents,
                     SystemInstruction = request.SystemInstruction,
                     Ttl = _options.Cache.Ttl
