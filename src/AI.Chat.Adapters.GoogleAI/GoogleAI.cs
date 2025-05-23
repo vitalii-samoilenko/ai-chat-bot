@@ -70,10 +70,7 @@
                     }
                     : null,
                 CachedContent = _options.Cache.Name,
-                GenerationConfig = new global::GoogleAI.Models.GenerationConfig
-                {
-                    Temperature = _options.Model.Temperature
-                }
+                GenerationConfig = _options.Model.Generation
             };
             var response = await _client.GenerateContentAsync(_options.Model.Name, request)
                 .ConfigureAwait(false);

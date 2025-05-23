@@ -31,11 +31,7 @@ namespace GoogleAI
                         request)
                 })
                 .ConfigureAwait(false);
-            if (!httpResponse.IsSuccessStatusCode)
-            {
-                throw new System.Net.Http.HttpRequestException(
-                    $"Failed to generate content: {httpResponse.StatusCode}");
-            }
+            httpResponse.EnsureSuccessStatusCode();
             var response = await httpResponse.Content
                 .ReadFromJsonAsync<Models.GenerateContentResponse>()
                 .ConfigureAwait(false);
@@ -54,11 +50,7 @@ namespace GoogleAI
                         request)
                 })
                 .ConfigureAwait(false);
-            if (!httpResponse.IsSuccessStatusCode)
-            {
-                throw new System.Net.Http.HttpRequestException(
-                    $"Failed to create cached contents: {httpResponse.StatusCode}");
-            }
+            httpResponse.EnsureSuccessStatusCode();
             var response = await httpResponse.Content
                 .ReadFromJsonAsync<Models.CachedContentsResponse>()
                 .ConfigureAwait(false);

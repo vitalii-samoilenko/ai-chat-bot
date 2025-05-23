@@ -3,12 +3,13 @@
     public class Model
     {
         public string Name { get; set; }
-        public double Temperature { get; set; }
+        public global::GoogleAI.Models.GenerationConfig Generation { get; set; }
     }
     public class Client
     {
         public System.Uri BaseAddress { get; set; }
         public string ApiKey { get; set; }
+        public System.Collections.Generic.List<System.TimeSpan> Retries { get; set; }
     }
     public class Cache
     {

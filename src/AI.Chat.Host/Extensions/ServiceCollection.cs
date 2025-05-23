@@ -2,8 +2,11 @@
 using AI.Chat.Adapters.Extensions.OpenAI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Polly;
+using Polly.Extensions.Http;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -78,15 +81,30 @@ namespace Microsoft.Extensions.DependencyInjection
                                     .Value;
 
                                 return new OpenAI.Chat.ChatClient(
-                                    options.Model,
+                                    options.Model.Name,
                                     new System.ClientModel.ApiKeyCredential(
-                                        options.ApiKey),
+                                        options.Client.ApiKey),
                                     options.Client
                                 );
                             });
 
                         adapterType = typeof(AI.Chat.Adapters.OpenAI);
-                        services.AddTransient(adapterType);
+                        services.AddTransient(adapterType,
+                            serviceProvider =>
+                            {
+                                var options = serviceProvider
+                                    .GetRequiredService<IOptions<AI.Chat.Options.OpenAI.Adapter>>()
+                                    .Value;
+                                var client = serviceProvider
+                                    .GetRequiredService<OpenAI.Chat.ChatClient>();
+                                var messages = serviceProvider
+                                    .GetRequiredService<System.Collections.Generic.TimeSeries<OpenAI.Chat.ChatMessage>>();
+
+                                return new AI.Chat.Adapters.OpenAI(
+                                    options,
+                                    client,
+                                    messages);
+                            });
                     }
                     break;
                 case nameof(AI.Chat.Adapters.GoogleAI):
@@ -152,6 +170,18 @@ namespace Microsoft.Extensions.DependencyInjection
 
                                     return new System.Net.Http.GoogleAI.ApiKeyHandler(
                                         options.Client.ApiKey);
+                                })
+                            .AddHttpMessageHandler(
+                                serviceProvider =>
+                                {
+                                    var options = serviceProvider
+                                        .GetRequiredService<IOptions<AI.Chat.Options.GoogleAI.Adapter>>()
+                                        .Value;
+                                    var asyncPolicy = HttpPolicyExtensions.HandleTransientHttpError()
+                                        .WaitAndRetryAsync(options.Client.Retries);
+
+                                    return new PolicyHttpMessageHandler(
+                                        asyncPolicy);
                                 });
                         if (diagnostics)
                         {
@@ -326,7 +356,7 @@ namespace Microsoft.Extensions.DependencyInjection
                                 .MakeGenericType(cheerful);
                             services.AddTransient(cheerful);
                         }
-                        cheerful = typeof(AI.Chat.Commands.ThreadSafe<>)
+                        cheerful = typeof(AI.Chat.Commands.ThreadSafeWrite<>)
                             .MakeGenericType(cheerful);
                         services.AddTransient(typeof(AI.Chat.ICommand),
                             serviceProvider =>
@@ -359,7 +389,7 @@ namespace Microsoft.Extensions.DependencyInjection
                                 .MakeGenericType(delay);
                             services.AddTransient(delay);
                         }
-                        delay = typeof(AI.Chat.Commands.ThreadSafe<>)
+                        delay = typeof(AI.Chat.Commands.ThreadSafeWrite<>)
                             .MakeGenericType(delay);
                         services.AddTransient(typeof(AI.Chat.ICommand),
                             serviceProvider =>
@@ -391,7 +421,7 @@ namespace Microsoft.Extensions.DependencyInjection
                                 .MakeGenericType(join);
                             services.AddTransient(join);
                         }
-                        join = typeof(AI.Chat.Commands.ThreadSafe<>)
+                        join = typeof(AI.Chat.Commands.ThreadSafeWrite<>)
                             .MakeGenericType(join);
                         services.AddTransient(join,
                             serviceProvider =>
@@ -426,7 +456,7 @@ namespace Microsoft.Extensions.DependencyInjection
                                 .MakeGenericType(leave);
                             services.AddTransient(leave);
                         }
-                        leave = typeof(AI.Chat.Commands.ThreadSafe<>)
+                        leave = typeof(AI.Chat.Commands.ThreadSafeWrite<>)
                             .MakeGenericType(leave);
                         services.AddTransient(leave,
                             serviceProvider =>

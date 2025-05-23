@@ -6,7 +6,7 @@
         {
             foreach (var tag in record.Tags)
             {
-                if (!tag.StartsWith(Constants.TagType, System.StringComparison.OrdinalIgnoreCase))
+                if (!tag.StartsWith(Constants.TagType + "=", System.StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }

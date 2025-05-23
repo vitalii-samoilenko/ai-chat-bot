@@ -79,11 +79,7 @@ namespace TwitchLib.Client
                             })
                     })
                 .ConfigureAwait(false);
-            if (!httpResponse.IsSuccessStatusCode)
-            {
-                throw new System.Net.Http.HttpRequestException(
-                    $"Failed to refresh token: {httpResponse.StatusCode}");
-            }
+            httpResponse.EnsureSuccessStatusCode();
             var tokenResponse = await httpResponse.Content
                 .ReadFromJsonAsync<TokenResponse>()
                 .ConfigureAwait(false);
@@ -97,19 +93,11 @@ namespace TwitchLib.Client
                     {
                         Method = System.Net.Http.HttpMethod.Post,
                         RequestUri = new System.Uri(
-                            "token"
-                            + $"?client_id={clientId}"
-                            + $"&grant_type=urn:ietf:params:oauth:grant-type:device_code"
-                            + $"&device_code={deviceCode}"
-                            + $"&scopes={scopes}",
+                            $"token?client_id={clientId}&grant_type=urn:ietf:params:oauth:grant-type:device_code&device_code={deviceCode}&scopes={scopes}",
                             System.UriKind.Relative)
                     })
                 .ConfigureAwait(false);
-            if (!httpResponse.IsSuccessStatusCode)
-            {
-                throw new System.Net.Http.HttpRequestException(
-                    $"Failed to issue token: {httpResponse.StatusCode}");
-            }
+            httpResponse.EnsureSuccessStatusCode();
             var tokenResponse = await httpResponse.Content
                 .ReadFromJsonAsync<TokenResponse>()
                 .ConfigureAwait(false);
@@ -123,17 +111,11 @@ namespace TwitchLib.Client
                     {
                         Method = System.Net.Http.HttpMethod.Post,
                         RequestUri = new System.Uri(
-                            "device"
-                            + $"?client_id={clientId}"
-                            + $"&scopes={scopes}",
+                            $"device?client_id={clientId}&scopes={scopes}",
                             System.UriKind.Relative)
                     })
                 .ConfigureAwait(false);
-            if (!httpResponse.IsSuccessStatusCode)
-            {
-                throw new System.Net.Http.HttpRequestException(
-                    $"Failed to request access: {httpResponse.StatusCode}");
-            }
+            httpResponse.EnsureSuccessStatusCode();
             var deviceResponse = await httpResponse.Content
                 .ReadFromJsonAsync<DeviceResponse>()
                 .ConfigureAwait(false);

@@ -1,16 +1,14 @@
 grafana dashboards
  - thread pool metrics
 
-history seek
+history seek (page size)
+api key authentication
 
 moderator
+
 host somewhere?
-
-retry policy on 503
-
 protect system tags with decorator?
 context as intellectual property?
-readwrite commands?
 adjust histogram?
 welcome active users?
 prometheus volume?
