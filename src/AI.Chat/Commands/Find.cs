@@ -19,28 +19,10 @@ namespace AI.Chat.Commands
             {
                 args = args.Substring(Constants.ArgsAll.Length);
             }
-            else
+            else if(!args.ExtractToken(out args).TryParseKey(out fromKey)
+                || !args.ExtractToken(out args).TryParseKey(out toKey))
             {
-                var previous = 0;
-                var next = args.IndexOf(' ', previous);
-                if (next < 0
-                    || !args.Substring(previous, next - previous).TryParseKey(out fromKey))
-                {
-                    yield break;
-                }
-                previous = next + 1;
-                next = args.IndexOf(' ', previous);
-                if (next < 0)
-                {
-                    next = args.Length;
-                }
-                if (!args.Substring(previous, next - previous).TryParseKey(out toKey))
-                {
-                    yield break;
-                }
-                args = next < args.Length
-                    ? args.Substring(next + 1)
-                    : string.Empty;
+                yield break;
             }
             foreach (var key in _history.Find(fromKey, toKey, args.SplitArgs()))
             {

@@ -14,24 +14,23 @@ namespace AI.Chat.Commands
         public System.Collections.Generic.IEnumerable<string> Execute(string args)
         {
             var tokens = args.SplitArgs();
-            if (tokens.Length == 0 || tokens.Length % 2 == 1)
-            {
-                yield break;
-            }
             var tuples = new System.Collections.Generic.List<(string, System.TimeSpan)>();
-            for (int i = 0; i < tokens.Length; i += 2)
+            for (int i = 1; i < tokens.Length; i += 2)
             {
-                if (!System.TimeSpan.TryParseExact(tokens[i + 1], Constants.TimeSpanFormat, null, out var timeout))
+                if (!System.TimeSpan.TryParseExact(tokens[i], Constants.TimeSpanFormat, null, out var timeout))
                 {
                     continue;
                 }
-                var username = tokens[i];
+                var username = tokens[i - 1];
                 tuples.Add((username, timeout));
             }
-            foreach ((var username, var until) in _moderator.Timeout(tuples))
+            if (0 < tuples.Count)
             {
-                yield return username;
-                yield return until.ToKeyString();
+                foreach ((var username, var until) in _moderator.Timeout(tuples))
+                {
+                    yield return username;
+                    yield return until.ToKeyString();
+                }
             }
         }
     }

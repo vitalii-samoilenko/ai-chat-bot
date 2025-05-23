@@ -726,21 +726,6 @@ namespace Microsoft.Extensions.DependencyInjection
                         scope);
                 });
 
-            historyType = typeof(AI.Chat.Histories.ThreadSafe<>)
-                .MakeGenericType(historyType);
-            services.AddSingleton(typeof(AI.Chat.IHistory),
-                serviceProvider =>
-                {
-                    var history = serviceProvider
-                        .GetRequiredService(historyType.GenericTypeArguments[0]);
-                    var scope = serviceProvider
-                        .GetRequiredKeyedService<AI.Chat.IScope>("bot");
-
-                    return System.Activator.CreateInstance(historyType,
-                        history,
-                        scope);
-                });
-
             var clientType = typeof(AI.Chat.Clients.Slim);
             services.AddSingleton(clientType,
                 serviceProvider =>
@@ -901,6 +886,42 @@ namespace Microsoft.Extensions.DependencyInjection
                     .GetRequiredService(remove));
             commandOverrides.Add(remove, nameof(AI.Chat.Commands.Remove));
 
+            var seek = typeof(AI.Chat.Commands.Seek);
+            var seekHistory = historyType;
+            services.AddTransient(seek,
+                serviceProvider =>
+                {
+                    var history = (AI.Chat.IHistory)serviceProvider
+                        .GetRequiredService(seekHistory);
+
+                    return new AI.Chat.Commands.Seek(
+                        history);
+                });
+            if (diagnostics)
+            {
+                seek = typeof(AI.Chat.Commands.Diagnostics.Trace<>)
+                    .MakeGenericType(seek);
+                services.AddTransient(seek);
+            }
+            seek = typeof(AI.Chat.Commands.ThreadSafeRead<>)
+                .MakeGenericType(seek);
+            services.AddTransient(seek,
+                serviceProvider =>
+                {
+                    var command = serviceProvider
+                        .GetRequiredService(seek.GenericTypeArguments[0]);
+                    var scope = serviceProvider
+                        .GetRequiredKeyedService<AI.Chat.IScope>("bot");
+
+                    return System.Activator.CreateInstance(seek,
+                        command,
+                        scope);
+                });
+            services.AddTransient(typeof(AI.Chat.ICommand),
+                serviceProvider => serviceProvider
+                    .GetRequiredService(seek));
+            commandOverrides.Add(seek, nameof(AI.Chat.Commands.Seek));
+
             var tag = typeof(AI.Chat.Commands.Tag);
             services.AddTransient(tag);
             if (diagnostics)
@@ -1012,6 +1033,21 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddTransient(typeof(AI.Chat.ICommandExecutor),
                 serviceProvider => serviceProvider
                     .GetRequiredService(commandExecutorType));
+
+            historyType = typeof(AI.Chat.Histories.ThreadSafe<>)
+                .MakeGenericType(historyType);
+            services.AddSingleton(typeof(AI.Chat.IHistory),
+                serviceProvider =>
+                {
+                    var history = serviceProvider
+                        .GetRequiredService(historyType.GenericTypeArguments[0]);
+                    var scope = serviceProvider
+                        .GetRequiredKeyedService<AI.Chat.IScope>("bot");
+
+                    return System.Activator.CreateInstance(historyType,
+                        history,
+                        scope);
+                });
 
             return services;
         }

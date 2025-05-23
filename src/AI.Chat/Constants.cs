@@ -11,5 +11,6 @@
         public const string TypeSystem = "system";
         public const string TypeUser = "user";
         public const string TypeModel = "model";
+        public const string Etc = "...";
     }
 }

@@ -13,17 +13,9 @@ namespace AI.Chat.Commands
 
         public System.Collections.Generic.IEnumerable<string> Execute(string args)
         {
-            var previous = 0;
-            var next = args.IndexOf(' ', previous);
-            if (next < 0)
-            {
-                yield break;
-            }
-            var keyArg = args.Substring(previous, next - previous);
-            var message = args.Substring(next + 1);
-            if (keyArg.TryParseKey(out var key)
-                && !string.IsNullOrWhiteSpace(message)
-                && _history.TryEdit(key, message))
+            if (args.ExtractToken(out args).TryParseKey(out var key)
+                && !string.IsNullOrWhiteSpace(args)
+                && _history.TryEdit(key, args))
             {
                 yield return true.ToString();
             }

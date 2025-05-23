@@ -121,7 +121,7 @@ namespace AI.Chat.Clients
                 var replyNotify = $"{replyKey.ToKeyString()} {reply.Message}";
                 if (MaxMessageLength < replyNotify.Length)
                 {
-                    replyNotify = $"{replyNotify.Substring(0, MaxMessageLength - 3)}...";
+                    replyNotify = $"{replyNotify.Substring(0, MaxMessageLength - 3)}{AI.Chat.Constants.Etc}";
                 }
                 _moderatorClient.SendMessage(
                     _moderatorClient.JoinedChannels[0],
@@ -142,7 +142,8 @@ namespace AI.Chat.Clients
                 _options.Username);
             _moderatorClient.OnChatCommandReceived += (sender, args) =>
             {
-                if (!_moderator.IsModerator(args.Command.ChatMessage.Username))
+                if (!_moderator.IsModerator(args.Command.ChatMessage.Username)
+                    || nameof(AI.Chat.Commands.Seek).Equals(args.Command.CommandText, System.StringComparison.OrdinalIgnoreCase))
                 {
                     return;
                 }
@@ -168,7 +169,7 @@ namespace AI.Chat.Clients
                 if (MaxMessageLength + 1 < replyBuilder.Length)
                 {
                     replyBuilder.Remove(MaxMessageLength - 2, replyBuilder.Length - (MaxMessageLength - 2))
-                        .Append("...");
+                        .Append(AI.Chat.Constants.Etc);
                 }
                 var reply = 0 < replyBuilder.Length
                     ? replyBuilder.Remove(0, 1)

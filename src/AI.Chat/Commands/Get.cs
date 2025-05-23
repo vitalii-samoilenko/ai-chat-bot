@@ -21,17 +21,11 @@ namespace AI.Chat.Commands
 
         public System.Collections.Generic.IEnumerable<string> Execute(string args)
         {
-            var previous = 0;
-            var next = args.IndexOf(' ', previous);
-            if (next < 0)
-            {
-                next = args.Length;
-            }
             var format = Format.Message;
-            if (args.Substring(previous, next - previous).TryParseKey(out var key)
+            if (args.ExtractToken(out args).TryParseKey(out var key)
                 && _history.TryGet(key, out var record)
-                && (!(next < args.Length)
-                    || System.Enum.TryParse(args.Substring(next + 1), true, out format)))
+                && (string.IsNullOrWhiteSpace(args)
+                    || System.Enum.TryParse(args, true, out format)))
             {
                 if (0 < (format & Format.Message))
                 {
