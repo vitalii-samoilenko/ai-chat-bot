@@ -12,7 +12,7 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class ServiceCollection
     {
-        public static IServiceCollection AddAIChat(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
+        public static IServiceCollection AddAIChat(this IServiceCollection services, IConfiguration configuration)
         {
             var commandOverrides = new System.Collections.Generic.Dictionary<System.Type, string>();
             var diagnostics = configuration.GetValue<bool>("Chat:Diagnostics");

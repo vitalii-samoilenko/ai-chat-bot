@@ -46,7 +46,7 @@ builder.Services.AddOpenTelemetry()
         tracing.AddSource(GoogleAI.Diagnostics.ActivitySources.Client.Name);
     })
     .UseOtlpExporter();
-builder.Services.AddAIChat(builder.Configuration, builder.Environment);
+builder.Services.AddAIChat(builder.Configuration);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddHealthChecks();

@@ -9,7 +9,7 @@ var builder = Host.CreateApplicationBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddNLog();
 builder.Configuration.ConfigureAIChat();
-builder.Services.AddAIChat(builder.Configuration, builder.Environment);
+builder.Services.AddAIChat(builder.Configuration);
 
 using var host = builder.Build();
 
