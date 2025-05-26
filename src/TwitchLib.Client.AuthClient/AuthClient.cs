@@ -122,19 +122,4 @@ namespace TwitchLib.Client
             return (deviceResponse.device_code, deviceResponse.verification_uri);
         }
     }
-
-    public class DummyAuthClient : Interfaces.IAuthClient
-    {
-        public System.Threading.Tasks.Task<(string accessToken, string refreshToken)> IssueTokenAsync(string clientId, string deviceCode, string scopes)
-            => System.Threading.Tasks.Task.FromResult(("accessToken", "refreshToken"));
-
-        public System.Threading.Tasks.Task<string> RefreshTokenAsync(string clientId, string clientSecret, string refreshToken)
-            => System.Threading.Tasks.Task.FromResult("accessToken");
-
-        public System.Threading.Tasks.Task<(string deviceCode, string uri)> RequestAccessAsync(string clientId, string scopes)
-            => System.Threading.Tasks.Task.FromResult(("deviceCode", "uri"));
-
-        public System.Threading.Tasks.Task<bool> ValidateTokenAsync(string accessToken)
-            => System.Threading.Tasks.Task.FromResult(true);
-    }
 }

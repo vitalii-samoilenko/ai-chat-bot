@@ -44,6 +44,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton(historyType);
 
             System.Type adapterType = null;
+            System.Type serviceType = null;
             switch (configuration.GetValue<string>("Chat:Adapter:Type"))
             {
                 case nameof(AI.Chat.Adapters.OpenAI):
@@ -229,40 +230,28 @@ namespace Microsoft.Extensions.DependencyInjection
                             .MakeGenericType(adapterType);
                         services.AddTransient(adapterType);
 
-                        System.Type authClientType = null;
-                        System.Type twitchClientType = null;
-                        if (environment.IsDevelopment())
-                        {
-                            authClientType = typeof(TwitchLib.Client.DummyAuthClient);
-                            services.AddTransient(authClientType);
-                            twitchClientType = typeof(TwitchLib.Client.DummyTwitchClient);
-                            services.AddSingleton(twitchClientType);
-                        }
-                        else
-                        {
-                            authClientType = typeof(TwitchLib.Client.AuthClient);
-                            services.AddHttpClient<TwitchLib.Client.AuthClient>(
-                                (serviceProvider, httpClient) =>
-                                {
-                                    var options = serviceProvider
-                                        .GetRequiredService<IOptions<AI.Chat.Options.Twitch.Client>>()
-                                        .Value;
+                        var authClientType = typeof(TwitchLib.Client.AuthClient);
+                        services.AddHttpClient<TwitchLib.Client.AuthClient>(
+                            (serviceProvider, httpClient) =>
+                            {
+                                var options = serviceProvider
+                                    .GetRequiredService<IOptions<AI.Chat.Options.Twitch.Client>>()
+                                    .Value;
 
-                                    httpClient.BaseAddress = options.Auth.BaseAddress;
-                                });
-                            services.AddTransient<TwitchLib.Communication.Interfaces.IClient, TwitchLib.Communication.Clients.WebSocketClient>(
-                                serviceProvider =>
-                                {
-                                    var options = serviceProvider
-                                        .GetRequiredService<IOptions<AI.Chat.Options.Twitch.Client>>()
-                                        .Value;
+                                httpClient.BaseAddress = options.Auth.BaseAddress;
+                            });
+                        services.AddTransient<TwitchLib.Communication.Interfaces.IClient, TwitchLib.Communication.Clients.WebSocketClient>(
+                            serviceProvider =>
+                            {
+                                var options = serviceProvider
+                                    .GetRequiredService<IOptions<AI.Chat.Options.Twitch.Client>>()
+                                    .Value;
 
-                                    return new TwitchLib.Communication.Clients.WebSocketClient(
-                                        options.Communication);
-                                });
-                            twitchClientType = typeof(TwitchLib.Client.TwitchClient);
-                            services.AddTransient(twitchClientType);
-                        }
+                                return new TwitchLib.Communication.Clients.WebSocketClient(
+                                    options.Communication);
+                            });
+                        var twitchClientType = typeof(TwitchLib.Client.TwitchClient);
+                        services.AddTransient(twitchClientType);
                         if (diagnostics)
                         {
                             authClientType = typeof(TwitchLib.Client.Diagnostics.AuthClient<>)
@@ -290,8 +279,7 @@ namespace Microsoft.Extensions.DependencyInjection
                             (serviceProvider, _) => serviceProvider
                                 .GetRequiredService(scopeType));
 
-                        var twitchClient = typeof(AI.Chat.Clients.Twitch);
-                        services.AddTransient(twitchClient,
+                        services.AddSingleton<AI.Chat.Clients.Twitch>(
                             serviceProvider =>
                             {
                                 var options = serviceProvider
@@ -329,15 +317,6 @@ namespace Microsoft.Extensions.DependencyInjection
                                     history,
                                     scope);
                             });
-                        if (diagnostics)
-                        {
-                            twitchClient = typeof(AI.Chat.Clients.Diagnostics.Twitch<>)
-                                .MakeGenericType(twitchClient);
-                            services.AddTransient(twitchClient);
-                        }
-                        services.AddTransient(typeof(AI.Chat.Clients.ITwitch),
-                            serviceProvider => serviceProvider
-                                .GetRequiredService(twitchClient));
 
                         var cheerful = typeof(AI.Chat.Commands.Twitch.Cheerful);
                         services.AddTransient(cheerful,
@@ -475,14 +454,15 @@ namespace Microsoft.Extensions.DependencyInjection
                                 .GetRequiredService(leave));
                         commandOverrides.Add(leave, nameof(AI.Chat.Commands.Twitch.Leave));
 
-                        services.AddHostedService<AI.Chat.Host.Services.Twitch>(
+                        serviceType = typeof(AI.Chat.Host.Services.Twitch);
+                        services.AddSingleton(serviceType,
                             serviceProvider =>
                             {
                                 var options = serviceProvider
                                     .GetRequiredService<IOptions<AI.Chat.Options.Twitch.Client>>()
                                     .Value;
                                 var client = serviceProvider
-                                    .GetRequiredService<AI.Chat.Clients.ITwitch>();
+                                    .GetRequiredService<AI.Chat.Clients.Twitch>();
 
                                 return new AI.Chat.Host.Services.Twitch(
                                     options,
@@ -490,9 +470,56 @@ namespace Microsoft.Extensions.DependencyInjection
                             });
                     }
                     break;
+                case nameof(AI.Chat.Clients.Console):
+                    {
+                        services.Configure<AI.Chat.Options.Client>(
+                            configuration.GetSection("Chat:Client"));
+
+                        services.AddSingleton<AI.Chat.Clients.Console>();
+
+                        var chat = typeof(AI.Chat.Commands.Console.Chat);
+                        services.AddTransient(chat);
+                        if (diagnostics)
+                        {
+                            chat = typeof(AI.Chat.Commands.Diagnostics.Trace<>)
+                                .MakeGenericType(chat);
+                            services.AddTransient(chat);
+                        }
+                        services.AddTransient(typeof(AI.Chat.ICommand),
+                            serviceProvider => serviceProvider
+                                .GetRequiredService(chat));
+                        commandOverrides.Add(chat, nameof(AI.Chat.Commands.Console.Chat));
+
+                        var join = typeof(AI.Chat.Commands.Console.Join);
+                        services.AddTransient(join);
+                        if (diagnostics)
+                        {
+                            join = typeof(AI.Chat.Commands.Diagnostics.Trace<>)
+                                .MakeGenericType(join);
+                            services.AddTransient(join);
+                        }
+                        services.AddTransient(typeof(AI.Chat.ICommand),
+                            serviceProvider => serviceProvider
+                                .GetRequiredService(join));
+                        commandOverrides.Add(join, nameof(AI.Chat.Commands.Console.Join));
+
+                        serviceType = typeof(AI.Chat.Host.Services.Console);
+                        services.AddSingleton(serviceType);
+                    }
+                    break;
                 default:
                     throw new System.Exception("Client is not supported");
             }
+
+            if (diagnostics)
+            {
+                serviceType = typeof(AI.Chat.Host.Services.Diagnostics.Trace<>)
+                    .MakeGenericType(serviceType);
+                services.AddSingleton(serviceType);
+            }
+            services.AddSingleton<IHostedService>(
+                serviceProvider => (IHostedService)serviceProvider
+                    .GetRequiredService(serviceType));
 
             if (diagnostics)
             {

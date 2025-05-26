@@ -1,13 +1,21 @@
-grafana dashboards
- - thread pool metrics
+[
+	grafana dashboards
+	 - thread pool metrics
+	telemetry retention
+]
 
-api key authentication
+[
+	api key authentication
+	moderator
+	azure free tier host
+]
 
-moderator
+[
+	!help
+	readme + release
+]
 
-host somewhere?
 protect system tags with decorator?
 context as intellectual property?
 adjust histogram?
-welcome active users?
 prometheus volume?

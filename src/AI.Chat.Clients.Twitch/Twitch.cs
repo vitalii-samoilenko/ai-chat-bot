@@ -2,12 +2,7 @@
 
 namespace AI.Chat.Clients
 {
-    public interface ITwitch
-    {
-        System.Threading.Tasks.Task StartAsync();
-    }
-
-    public class Twitch : ITwitch
+    public class Twitch
     {
         private const int MaxMessageLength = 500;
 
@@ -158,6 +153,7 @@ namespace AI.Chat.Clients
                     if (nameof(AI.Chat.Commands.Allow).Equals(args.Command.CommandText, System.StringComparison.OrdinalIgnoreCase))
                     {
                         onAllowAsync(token.ParseKey(), _userClient.JoinedChannels[0].Channel)
+                            .ConfigureAwait(false)
                             .GetAwaiter()
                             .GetResult();
                     }
@@ -203,6 +199,7 @@ namespace AI.Chat.Clients
                 }
 
                 welcomeAsync(args.Username, args.Channel)
+                    .ConfigureAwait(false)
                     .GetAwaiter()
                     .GetResult();
             };
@@ -213,6 +210,7 @@ namespace AI.Chat.Clients
                     if (_scope.ExecuteRead(() => _options.Welcome.Mode == Options.Twitch.WelcomeMode.OnFirstMessage))
                     {
                         welcomeAsync(args.ChatMessage.Username, args.ChatMessage.Channel)
+                            .ConfigureAwait(false)
                             .GetAwaiter()
                             .GetResult();
                     }
@@ -223,6 +221,7 @@ namespace AI.Chat.Clients
                         async replyKey => await onAllowAsync(replyKey, args.ChatMessage.Channel)
                             .ConfigureAwait(false),
                         onHoldAsync)
+                    .ConfigureAwait(false)
                     .GetAwaiter()
                     .GetResult();
             };

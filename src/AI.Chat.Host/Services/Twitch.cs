@@ -5,9 +5,9 @@ namespace AI.Chat.Host.Services
     internal class Twitch : IHostedService
     {
         private AI.Chat.Options.Twitch.Client _options;
-        private AI.Chat.Clients.ITwitch _client;
+        private AI.Chat.Clients.Twitch _client;
 
-        public Twitch(Options.Twitch.Client options, AI.Chat.Clients.ITwitch client)
+        public Twitch(Options.Twitch.Client options, AI.Chat.Clients.Twitch client)
         {
             _options = options;
             _client = client;

@@ -2,6 +2,6 @@
 {
     public class GenerationConfig
     {
-        public double Temperature { get; set; }
+        public double? Temperature { get; set; }
     }
 }
