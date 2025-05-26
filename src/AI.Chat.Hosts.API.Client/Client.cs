@@ -28,11 +28,7 @@ namespace AI.Chat.Hosts.API
                         System.UriKind.Relative)
                 })
                 .ConfigureAwait(false);
-            if (!httpResponse.IsSuccessStatusCode)
-            {
-                throw new System.Net.Http.HttpRequestException(
-                    $"Failed to execute command: {httpResponse.StatusCode}");
-            }
+            httpResponse.EnsureSuccessStatusCode();
             var response = await httpResponse.Content
                 .ReadFromJsonAsync<System.Collections.Generic.List<string>>()
                 .ConfigureAwait(false);
