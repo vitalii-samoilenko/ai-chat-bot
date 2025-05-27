@@ -1,6 +1,6 @@
 ﻿namespace AI.Chat.Host
 {
-    public static class Constants
+    public static class Defaults
     {
         public const string JsonCommon = "external/common.json";
         public const string JsonModerated = "external/moderated.json";

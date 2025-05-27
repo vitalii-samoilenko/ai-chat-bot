@@ -53,6 +53,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AI.Chat.Hosts.API.Client", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AI.Chat.Clients.Console", "src\AI.Chat.Clients.Console\AI.Chat.Clients.Console.csproj", "{4BAAFC4C-8DED-4B77-8B8A-EE7890713267}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.AspNetCore.Authentication.ApiKey", "src\Microsoft.AspNetCore.Authentication.ApiKey\Microsoft.AspNetCore.Authentication.ApiKey.csproj", "{F9952FC8-BE7E-4443-941E-375DAC7318C7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -133,6 +135,10 @@ Global
 		{4BAAFC4C-8DED-4B77-8B8A-EE7890713267}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4BAAFC4C-8DED-4B77-8B8A-EE7890713267}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4BAAFC4C-8DED-4B77-8B8A-EE7890713267}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F9952FC8-BE7E-4443-941E-375DAC7318C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F9952FC8-BE7E-4443-941E-375DAC7318C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F9952FC8-BE7E-4443-941E-375DAC7318C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F9952FC8-BE7E-4443-941E-375DAC7318C7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

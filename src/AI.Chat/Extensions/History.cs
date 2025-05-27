@@ -9,7 +9,7 @@
                 Message = message,
                 Tags = new System.Collections.Generic.List<string>
                 {
-                    Constants.TagType + "=" + Constants.TypeSystem
+                    Defaults.TagType + "=" + Defaults.TypeSystem
                 }
             });
         }
@@ -20,8 +20,8 @@
                 Message = message,
                 Tags = new System.Collections.Generic.List<string>
                 {
-                    Constants.TagType + "=" + Constants.TypeUser,
-                    $"{Constants.TagUsername}={username}"
+                    Defaults.TagType + "=" + Defaults.TypeUser,
+                    $"{Defaults.TagUsername}={username}"
                 } 
             });
         }
@@ -32,7 +32,7 @@
                 Message = message,
                 Tags = new System.Collections.Generic.List<string>
                 {
-                    Constants.TagType + "=" + Constants.TypeModel
+                    Defaults.TagType + "=" + Defaults.TypeModel
                 }
             });
         }
@@ -42,7 +42,7 @@
         }
         public static System.Collections.Generic.IEnumerable<System.DateTime> FindModerated(this IHistory history, System.DateTime fromKey, System.DateTime toKey)
         {
-            return history.Find(fromKey, toKey, Constants.TagModerated);
+            return history.Find(fromKey, toKey, Defaults.TagModerated);
         }
         public static System.Collections.Generic.List<System.DateTime> Remove(this IHistory history, params System.DateTime[] keys)
         {
@@ -50,7 +50,7 @@
         }
         public static System.Collections.Generic.List<System.DateTime> Moderate(this IHistory history, System.Collections.Generic.IEnumerable<System.DateTime> keys)
         {
-            return history.Tag(Constants.TagModerated, keys);
+            return history.Tag(Defaults.TagModerated, keys);
         }
         public static System.Collections.Generic.List<System.DateTime> Moderate(this IHistory history, params System.DateTime[] keys)
         {
@@ -58,7 +58,7 @@
         }
         public static System.Collections.Generic.List<System.DateTime> Unmoderate(this IHistory history, System.Collections.Generic.IEnumerable<System.DateTime> keys)
         {
-            return history.Untag(Constants.TagModerated, keys);
+            return history.Untag(Defaults.TagModerated, keys);
         }
     }
 }

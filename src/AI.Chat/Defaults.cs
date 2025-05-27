@@ -1,6 +1,6 @@
 ﻿namespace AI.Chat
 {
-    public class Constants
+    public class Defaults
     {
         public const string HistoryKeyFormat = "yyyyMMddHHmmssfffffff";
         public const string TimeSpanFormat = "hh\\:mm\\:ss";

@@ -4,7 +4,7 @@
     {
         public static string ToKeyString(this System.DateTime key)
         {
-            return key.ToString(Constants.HistoryKeyFormat);
+            return key.ToString(Defaults.HistoryKeyFormat);
         }
     }
 }

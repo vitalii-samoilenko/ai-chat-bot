@@ -6,13 +6,13 @@
         {
             foreach (var tag in record.Tags)
             {
-                if (!tag.StartsWith(Constants.TagType + "=", System.StringComparison.OrdinalIgnoreCase))
+                if (!tag.StartsWith(Defaults.TagType + "=", System.StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
                 return new global::GoogleAI.Models.Content
                 {
-                    Role = tag.Substring(Constants.TagType.Length + 1),
+                    Role = tag.Substring(Defaults.TagType.Length + 1),
                     Parts = new System.Collections.Generic.List<global::GoogleAI.Models.Part>
                     {
                         new global::GoogleAI.Models.Part

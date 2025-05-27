@@ -17,7 +17,7 @@ namespace AI.Chat.Commands
             var tuples = new System.Collections.Generic.List<(string, System.TimeSpan)>();
             for (int i = 1; i < tokens.Length; i += 2)
             {
-                if (!System.TimeSpan.TryParseExact(tokens[i], Constants.TimeSpanFormat, null, out var timeout))
+                if (!System.TimeSpan.TryParseExact(tokens[i], Defaults.TimeSpanFormat, null, out var timeout))
                 {
                     continue;
                 }

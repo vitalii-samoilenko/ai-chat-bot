@@ -4,12 +4,12 @@
     {
         public static System.DateTime ParseKey(this string value)
         {
-            return System.DateTime.ParseExact(value, Constants.HistoryKeyFormat, null,
+            return System.DateTime.ParseExact(value, Defaults.HistoryKeyFormat, null,
                 System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal);
         }
         public static bool TryParseKey(this string value, out System.DateTime result)
         {
-            return System.DateTime.TryParseExact(value, Constants.HistoryKeyFormat, null,
+            return System.DateTime.TryParseExact(value, Defaults.HistoryKeyFormat, null,
                 System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal,
                 out result);
         }

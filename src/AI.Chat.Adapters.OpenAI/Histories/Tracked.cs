@@ -76,7 +76,7 @@ namespace AI.Chat.Histories.OpenAI
         public System.Collections.Generic.List<System.DateTime> Tag(string tag, System.Collections.Generic.IEnumerable<System.DateTime> keys)
         {
             var tagged = _history.Tag(tag, keys);
-            if (Constants.TagModerated.Equals(tag, System.StringComparison.OrdinalIgnoreCase))
+            if (Defaults.TagModerated.Equals(tag, System.StringComparison.OrdinalIgnoreCase))
             {
                 foreach (var key in tagged)
                 {
@@ -90,7 +90,7 @@ namespace AI.Chat.Histories.OpenAI
         public System.Collections.Generic.List<System.DateTime> Untag(string tag, System.Collections.Generic.IEnumerable<System.DateTime> keys)
         {
             var untagged = _history.Untag(tag, keys);
-            if (Constants.TagModerated.Equals(tag, System.StringComparison.OrdinalIgnoreCase))
+            if (Defaults.TagModerated.Equals(tag, System.StringComparison.OrdinalIgnoreCase))
             {
                 foreach (var key in untagged)
                 {

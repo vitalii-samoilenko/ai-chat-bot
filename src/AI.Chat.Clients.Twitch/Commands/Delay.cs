@@ -11,7 +11,7 @@
 
         public System.Collections.Generic.IEnumerable<string> Execute(string args)
         {
-            if (System.TimeSpan.TryParseExact(args, Constants.TimeSpanFormat, null, out var delay))
+            if (System.TimeSpan.TryParseExact(args, Defaults.TimeSpanFormat, null, out var delay))
             {
                 _options.Delay = delay;
                 yield return true.ToString();

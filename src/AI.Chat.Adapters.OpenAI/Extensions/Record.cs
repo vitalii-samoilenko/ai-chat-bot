@@ -6,17 +6,17 @@
         {
             foreach (var tag in record.Tags)
             {
-                if (!tag.StartsWith(Constants.TagType + "=", System.StringComparison.OrdinalIgnoreCase))
+                if (!tag.StartsWith(Defaults.TagType + "=", System.StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
-                switch (tag.Substring(Constants.TagType.Length + 1))
+                switch (tag.Substring(Defaults.TagType.Length + 1))
                 {
-                    case Constants.TypeUser:
+                    case Defaults.TypeUser:
                         {
                             return global::OpenAI.Chat.ChatMessage.CreateUserMessage(record.Message);
                         }
-                    case Constants.TypeModel:
+                    case Defaults.TypeModel:
                         {
                             return global::OpenAI.Chat.ChatMessage.CreateAssistantMessage(record.Message);
                         }

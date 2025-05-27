@@ -14,7 +14,7 @@ namespace AI.Chat.Commands
         public System.Collections.Generic.IEnumerable<string> Execute(string args)
         {
             System.Collections.Generic.List<System.DateTime> keys = null;
-            if (Constants.ArgsAll.Equals(args, System.StringComparison.OrdinalIgnoreCase))
+            if (Defaults.ArgsAll.Equals(args, System.StringComparison.OrdinalIgnoreCase))
             {
                 keys = new System.Collections.Generic.List<System.DateTime>(
                     _history.FindModerated(System.DateTime.MinValue, System.DateTime.MaxValue));

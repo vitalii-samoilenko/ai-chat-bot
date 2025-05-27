@@ -11,7 +11,6 @@ builder.Logging.AddOpenTelemetry(logging =>
     logging.IncludeFormattedMessage = true;
     logging.IncludeScopes = true;
 });
-builder.Configuration.ConfigureAIChat();
 builder.Services.AddOpenTelemetry()
     .WithMetrics(metrics =>
     {
@@ -52,6 +51,8 @@ builder.Services.AddAIChat(builder.Configuration);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddHealthChecks();
+builder.Services.AddAuthentication()
+    .AddApiKey(options => builder.Configuration.Bind("Authentication", options));
 
 var app = builder.Build();
 
@@ -59,7 +60,9 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
-app.MapControllers();
 app.MapHealthChecks("/health");
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
 
 await app.RunAsync();

@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AI.Chat.Host\AI.Chat.Host.csproj" />
+    <ProjectReference Include="..\Microsoft.AspNetCore.Authentication.ApiKey\Microsoft.AspNetCore.Authentication.ApiKey.csproj" />
   </ItemGroup>
 
 </Project>

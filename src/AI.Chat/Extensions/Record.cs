@@ -6,7 +6,7 @@
         {
             foreach (var tag in record.Tags)
             {
-                if (Constants.TagModerated.Equals(tag, System.StringComparison.OrdinalIgnoreCase))
+                if (Defaults.TagModerated.Equals(tag, System.StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
@@ -17,7 +17,7 @@
         {
             foreach (var tag in record.Tags)
             {
-                if ((Constants.TagType + "=" + Constants.TypeSystem).Equals(tag, System.StringComparison.OrdinalIgnoreCase))
+                if ((Defaults.TagType + "=" + Defaults.TypeSystem).Equals(tag, System.StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }

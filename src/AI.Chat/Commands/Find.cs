@@ -15,9 +15,9 @@ namespace AI.Chat.Commands
         {
             var fromKey = System.DateTime.MinValue;
             var toKey = System.DateTime.MaxValue;
-            if (args.StartsWith(Constants.ArgsAll, System.StringComparison.OrdinalIgnoreCase))
+            if (args.StartsWith(Defaults.ArgsAll, System.StringComparison.OrdinalIgnoreCase))
             {
-                args = args.Substring(Constants.ArgsAll.Length);
+                args = args.Substring(Defaults.ArgsAll.Length);
             }
             else if(!args.ExtractToken(out args).TryParseKey(out fromKey)
                 || !args.ExtractToken(out args).TryParseKey(out toKey))

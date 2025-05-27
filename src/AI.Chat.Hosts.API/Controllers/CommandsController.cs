@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AI.Chat.Host.API.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [Authorize(Roles = "commands")]
     public class CommandsController : ControllerBase
     {
         private readonly AI.Chat.ICommandExecutor _commandExecutor;

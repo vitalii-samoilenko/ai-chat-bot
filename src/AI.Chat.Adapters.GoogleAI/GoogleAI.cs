@@ -43,7 +43,7 @@
             {
                 lastKey = entry.Key;
                 var content = entry.Value;
-                if (AI.Chat.Constants.TypeSystem.Equals(content.Role, System.StringComparison.OrdinalIgnoreCase))
+                if (AI.Chat.Defaults.TypeSystem.Equals(content.Role, System.StringComparison.OrdinalIgnoreCase))
                 {
                     systemInstructionBuilder.Append(' ');
                     systemInstructionBuilder.Append(content.Parts[0].Text);

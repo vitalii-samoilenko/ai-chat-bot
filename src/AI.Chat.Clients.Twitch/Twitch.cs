@@ -113,7 +113,7 @@ namespace AI.Chat.Clients
                 var replyNotify = $"{replyKey.ToKeyString()} {reply.Message}";
                 if (MaxMessageLength < replyNotify.Length)
                 {
-                    replyNotify = $"{replyNotify.Substring(0, MaxMessageLength - 3)}{AI.Chat.Constants.Etc}";
+                    replyNotify = $"{replyNotify.Substring(0, MaxMessageLength - 3)}{AI.Chat.Defaults.Etc}";
                 }
                 _moderatorClient.SendMessage(
                     _moderatorClient.JoinedChannels[0],
@@ -159,7 +159,7 @@ namespace AI.Chat.Clients
                 if (MaxMessageLength + 1 < replyBuilder.Length)
                 {
                     replyBuilder.Remove(MaxMessageLength - 2, replyBuilder.Length - (MaxMessageLength - 2))
-                        .Append(AI.Chat.Constants.Etc);
+                        .Append(AI.Chat.Defaults.Etc);
                 }
                 
                 if (0 < replyBuilder.Length)

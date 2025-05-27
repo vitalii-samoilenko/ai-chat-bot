@@ -7,7 +7,7 @@ namespace AI.Chat.Host
         public static void Save(AI.Chat.Options.Moderator options)
         {
             System.IO.File.WriteAllText(
-                Constants.JsonModerated,
+                Defaults.JsonModerated,
                 System.Text.Json.JsonSerializer.Serialize(
                     new
                     {
@@ -30,7 +30,7 @@ namespace AI.Chat.Host
         public static void Save(AI.Chat.Options.Twitch.Client options)
         {
             System.IO.File.WriteAllText(
-                Constants.JsonOAuth,
+                Defaults.JsonOAuth,
                 System.Text.Json.JsonSerializer.Serialize(
                     new
                     {
@@ -56,7 +56,7 @@ namespace AI.Chat.Host
         public static void AppendLog(System.DateTime key, AI.Chat.Record record)
         {
             System.IO.File.AppendAllLines(
-                Constants.LogHistory,
+                Defaults.LogHistory,
                 new[]
                 {
                     System.Text.Json.JsonSerializer.Serialize(
@@ -77,20 +77,20 @@ namespace AI.Chat.Host
                 lines.Add(key.ToKeyString());
             }
             System.IO.File.AppendAllLines(
-                Constants.LogDeleted,
+                Defaults.LogDeleted,
                 lines);
         }
         public static void DeleteLog()
         {
-            System.IO.File.WriteAllText(Constants.LogHistory, string.Empty);
-            System.IO.File.WriteAllText(Constants.LogDeleted, string.Empty);
-            System.IO.File.WriteAllText(Constants.LogEdited, string.Empty);
-            System.IO.File.WriteAllText(Constants.LogTags, string.Empty);
+            System.IO.File.WriteAllText(Defaults.LogHistory, string.Empty);
+            System.IO.File.WriteAllText(Defaults.LogDeleted, string.Empty);
+            System.IO.File.WriteAllText(Defaults.LogEdited, string.Empty);
+            System.IO.File.WriteAllText(Defaults.LogTags, string.Empty);
         }
         public static void EditLog(System.DateTime key, string message)
         {
             System.IO.File.AppendAllLines(
-                Constants.LogEdited,
+                Defaults.LogEdited,
                 new[]
                 {
                     System.Text.Json.JsonSerializer.Serialize(
@@ -119,7 +119,7 @@ namespace AI.Chat.Host
                 tagged.Add(key.ToKeyString());
             }
             System.IO.File.AppendAllLines(
-                Constants.LogTags,
+                Defaults.LogTags,
                 new[]
                 {
                     System.Text.Json.JsonSerializer.Serialize(
@@ -132,18 +132,18 @@ namespace AI.Chat.Host
             System.Collections.Generic.TimeSeries<AI.Chat.Record> history = null;
             var newHistoryLog = new System.Collections.Generic.List<string>();
             var fresh = true;
-            if (System.IO.File.Exists(Constants.LogHistory))
+            if (System.IO.File.Exists(Defaults.LogHistory))
             {
                 var deleted = new System.Collections.Generic.HashSet<string>(
-                    System.IO.File.Exists(Constants.LogDeleted)
-                        ? System.IO.File.ReadAllLines(Constants.LogDeleted)
+                    System.IO.File.Exists(Defaults.LogDeleted)
+                        ? System.IO.File.ReadAllLines(Defaults.LogDeleted)
                         : new string[] { },
                     System.StringComparer.OrdinalIgnoreCase);
                 var edited = new System.Collections.Generic.Dictionary<string, string>(
                     System.StringComparer.OrdinalIgnoreCase);
-                if (System.IO.File.Exists(Constants.LogEdited))
+                if (System.IO.File.Exists(Defaults.LogEdited))
                 {
-                    var editedLog = System.IO.File.ReadAllLines(Constants.LogEdited);
+                    var editedLog = System.IO.File.ReadAllLines(Defaults.LogEdited);
                     foreach (var line in editedLog)
                     {
                         var pair = System.Text.Json.JsonSerializer.Deserialize<System.Collections.Generic.KeyValuePair<string, string>>(line);
@@ -152,9 +152,9 @@ namespace AI.Chat.Host
                 }
                 var tagged = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<string>>(
                     System.StringComparer.OrdinalIgnoreCase);
-                if (System.IO.File.Exists(Constants.LogTags))
+                if (System.IO.File.Exists(Defaults.LogTags))
                 {
-                    var tagsLog = System.IO.File.ReadAllLines(Constants.LogTags);
+                    var tagsLog = System.IO.File.ReadAllLines(Defaults.LogTags);
                     foreach (var line in tagsLog)
                     {
                         var pair = System.Text.Json.JsonSerializer.Deserialize<System.Collections.Generic.KeyValuePair<string, System.Collections.Generic.List<string>>>(line);
@@ -174,7 +174,7 @@ namespace AI.Chat.Host
                         }
                     }
                 }
-                var currentHistoryLog = System.IO.File.ReadAllLines(Constants.LogHistory);
+                var currentHistoryLog = System.IO.File.ReadAllLines(Defaults.LogHistory);
                 if (0 < currentHistoryLog.Length)
                 {
                     var startLine = currentHistoryLog[0];
@@ -242,10 +242,10 @@ namespace AI.Chat.Host
                 history = new System.Collections.Generic.TimeSeries<Record>();
                 newHistoryLog.Add(history.Start.ToKeyString());
             }
-            System.IO.File.WriteAllLines(Constants.LogHistory, newHistoryLog);
-            System.IO.File.WriteAllText(Constants.LogDeleted, string.Empty);
-            System.IO.File.WriteAllText(Constants.LogEdited, string.Empty);
-            System.IO.File.WriteAllText(Constants.LogTags, string.Empty);
+            System.IO.File.WriteAllLines(Defaults.LogHistory, newHistoryLog);
+            System.IO.File.WriteAllText(Defaults.LogDeleted, string.Empty);
+            System.IO.File.WriteAllText(Defaults.LogEdited, string.Empty);
+            System.IO.File.WriteAllText(Defaults.LogTags, string.Empty);
             return history;
         }
     }

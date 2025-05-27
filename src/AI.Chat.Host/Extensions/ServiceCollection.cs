@@ -12,8 +12,11 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class ServiceCollection
     {
-        public static IServiceCollection AddAIChat(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddAIChat(this IServiceCollection services, IConfigurationManager configuration)
         {
+            configuration.AddJsonFile(AI.Chat.Host.Defaults.JsonCommon, true);
+            configuration.AddJsonFile(AI.Chat.Host.Defaults.JsonModerated, true);
+
             var commandOverrides = new System.Collections.Generic.Dictionary<System.Type, string>();
             var diagnostics = configuration.GetValue<bool>("Chat:Diagnostics");
 
@@ -220,6 +223,8 @@ namespace Microsoft.Extensions.DependencyInjection
             {
                 case nameof(AI.Chat.Clients.Twitch):
                     {
+                        configuration.AddJsonFile(AI.Chat.Host.Defaults.JsonOAuth, true);
+
                         services.Configure<AI.Chat.Options.Twitch.Client>(
                             configuration.GetSection("Chat:Client"));
                         services.AddSingleton<IOptions<AI.Chat.Options.Client>>(
