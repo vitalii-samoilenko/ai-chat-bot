@@ -28,11 +28,25 @@
         }
         public System.Collections.Generic.IEnumerable<T> ExecuteRead<T>(System.Func<System.Collections.Generic.IEnumerable<T>> action)
         {
-            using (var activity = AI.Chat.Diagnostics.ActivitySources.Scopes.StartActivity($"{ScopeName}.{nameof(ExecuteRead)}"))
+            var activity = AI.Chat.Diagnostics.ActivitySources.Scopes.StartActivity($"{ScopeName}.{nameof(ExecuteRead)}");
+            System.Collections.Generic.IEnumerator<T> enumerator = null;
+            try
             {
-                foreach (var token in _scope.ExecuteRead(action))
+                enumerator = _scope.ExecuteRead(action).GetEnumerator();
+                while (enumerator.MoveNext())
                 {
-                    yield return token;
+                    yield return enumerator.Current;
+                }
+            }
+            finally
+            {
+                if (activity != null)
+                {
+                    activity.Dispose();
+                }
+                if (enumerator != null)
+                {
+                    enumerator.Dispose();
                 }
             }
         }
@@ -52,11 +66,25 @@
         }
         public System.Collections.Generic.IEnumerable<T> ExecuteWrite<T>(System.Func<System.Collections.Generic.IEnumerable<T>> action)
         {
-            using (var activity = AI.Chat.Diagnostics.ActivitySources.Scopes.StartActivity($"{ScopeName}.{nameof(ExecuteWrite)}"))
+            var activity = AI.Chat.Diagnostics.ActivitySources.Scopes.StartActivity($"{ScopeName}.{nameof(ExecuteWrite)}");
+            System.Collections.Generic.IEnumerator<T> enumerator = null;
+            try
             {
-                foreach (var token in _scope.ExecuteWrite(action))
+                enumerator = _scope.ExecuteWrite(action).GetEnumerator();
+                while (enumerator.MoveNext())
                 {
-                    yield return token;
+                    yield return enumerator.Current;
+                }
+            }
+            finally
+            {
+                if (activity != null)
+                {
+                    activity.Dispose();
+                }
+                if (enumerator != null)
+                {
+                    enumerator.Dispose();
                 }
             }
         }

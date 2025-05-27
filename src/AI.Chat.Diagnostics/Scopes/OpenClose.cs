@@ -37,15 +37,21 @@
         public System.Collections.Generic.IEnumerable<T> ExecuteRead<T>(System.Func<System.Collections.Generic.IEnumerable<T>> action)
         {
             Chat.Diagnostics.Meters.ReadOpen.Add(1);
+            System.Collections.Generic.IEnumerator<T> enumerator = null;
             try
             {
-                foreach (var token in _scope.ExecuteRead(action))
+                enumerator = _scope.ExecuteRead(action).GetEnumerator();
+                while (enumerator.MoveNext())
                 {
-                    yield return token;
+                    yield return enumerator.Current;
                 }
             }
             finally
             {
+                if (enumerator != null)
+                {
+                    enumerator.Dispose();
+                }
                 Chat.Diagnostics.Meters.ReadClose.Add(1);
             }
         }
@@ -76,15 +82,21 @@
         public System.Collections.Generic.IEnumerable<T> ExecuteWrite<T>(System.Func<System.Collections.Generic.IEnumerable<T>> action)
         {
             Chat.Diagnostics.Meters.WriteOpen.Add(1);
+            System.Collections.Generic.IEnumerator<T> enumerator = null;
             try
             {
-                foreach (var token in _scope.ExecuteWrite(action))
+                enumerator = _scope.ExecuteWrite(action).GetEnumerator();
+                while (enumerator.MoveNext())
                 {
-                    yield return token;
+                    yield return enumerator.Current;
                 }
             }
             finally
             {
+                if (enumerator != null)
+                {
+                    enumerator.Dispose();
+                }
                 Chat.Diagnostics.Meters.WriteClose.Add(1);
             }
         }

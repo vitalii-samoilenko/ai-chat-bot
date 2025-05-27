@@ -55,11 +55,12 @@
         public System.Collections.Generic.IEnumerable<System.DateTime> Find(System.DateTime fromKey, System.DateTime toKey, System.Collections.Generic.IEnumerable<string> tags)
         {
             var enumerators = new System.Collections.Generic.List<System.Collections.Generic.IEnumerator<System.Collections.Generic.Entry<Record>>>();
+            var tagEnumerator = tags.GetEnumerator();
             try
             {
-                foreach (var tag in tags)
+                while (tagEnumerator.MoveNext())
                 {
-                    if (!_indexes.TryGetValue(tag, out var index))
+                    if (!_indexes.TryGetValue(tagEnumerator.Current, out var index))
                     {
                         yield break;
                     }
@@ -110,6 +111,7 @@
             }
             finally
             {
+                tagEnumerator.Dispose();
                 for (var i = 0; i < enumerators.Count; ++i)
                 {
                     var enumerator = enumerators[i];

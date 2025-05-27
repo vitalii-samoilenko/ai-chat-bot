@@ -14,11 +14,25 @@
 
         public System.Collections.Generic.IEnumerable<string> Execute(string args)
         {
-            using (var activity = AI.Chat.Diagnostics.ActivitySources.Commands.StartActivity($"{CommandName}.{nameof(Execute)}"))
+            var activity = AI.Chat.Diagnostics.ActivitySources.Commands.StartActivity($"{CommandName}.{nameof(Execute)}");
+            System.Collections.Generic.IEnumerator<string> enumerator = null;
+            try
             {
-                foreach (var token in _command.Execute(args))
+                enumerator = _command.Execute(args).GetEnumerator();
+                while (enumerator.MoveNext())
                 {
-                    yield return token;
+                    yield return enumerator.Current;
+                }
+            }
+            finally
+            {
+                if (activity != null)
+                {
+                    activity.Dispose();
+                }
+                if (enumerator != null)
+                {
+                    enumerator.Dispose();
                 }
             }
         }

@@ -90,15 +90,21 @@
                     _event.Wait();
                 }
             }
+            System.Collections.Generic.IEnumerator<T> enumerator = null;
             try
             {
-                foreach (var token in action())
+                enumerator = action().GetEnumerator();
+                while (enumerator.MoveNext())
                 {
-                    yield return token;
+                    yield return enumerator.Current;
                 }
             }
             finally
             {
+                if (enumerator != null)
+                {
+                    enumerator.Dispose();
+                }
                 System.Threading.Interlocked.Add(ref _completed, ReadStep);
             }
         }
@@ -169,15 +175,21 @@
                     _event.Wait();
                 }
             }
+            System.Collections.Generic.IEnumerator<T> enumerator = null;
             try
             {
-                foreach (var token in action())
+                enumerator = action().GetEnumerator();
+                while (enumerator.MoveNext())
                 {
-                    yield return token;
+                    yield return enumerator.Current;
                 }
             }
             finally
             {
+                if (enumerator != null)
+                {
+                    enumerator.Dispose();
+                }
                 System.Threading.Interlocked.Add(ref _completed, WriteStep);
             }
         }

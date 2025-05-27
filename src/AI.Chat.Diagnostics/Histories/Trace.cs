@@ -35,11 +35,25 @@
         }
         public System.Collections.Generic.IEnumerable<System.DateTime> Find(System.DateTime fromKey, System.DateTime toKey, System.Collections.Generic.IEnumerable<string> tags)
         {
-            using (var activity = AI.Chat.Diagnostics.ActivitySources.Histories.StartActivity($"{HistoryName}.{nameof(Find)}"))
+            var activity = AI.Chat.Diagnostics.ActivitySources.Histories.StartActivity($"{HistoryName}.{nameof(Find)}");
+            System.Collections.Generic.IEnumerator<System.DateTime> enumerator = null;
+            try
             {
-                foreach (var key in _history.Find(fromKey, toKey, tags))
+                enumerator = _history.Find(fromKey, toKey, tags).GetEnumerator();
+                while (enumerator.MoveNext())
                 {
-                    yield return key;
+                    yield return enumerator.Current;
+                }
+            }
+            finally
+            {
+                if (activity != null)
+                {
+                    activity.Dispose();
+                }
+                if (enumerator != null)
+                {
+                    enumerator.Dispose();
                 }
             }
         }

@@ -1059,9 +1059,21 @@ namespace Microsoft.Extensions.DependencyInjection
                     .MakeGenericType(commandExecutorType);
                 services.AddTransient(commandExecutorType);
             }
+            commandExecutorType = typeof(AI.Chat.CommandExecutors.Diagnostics.Log<>)
+                .MakeGenericType(commandExecutorType);
             services.AddTransient(typeof(AI.Chat.ICommandExecutor),
-                serviceProvider => serviceProvider
-                    .GetRequiredService(commandExecutorType));
+                serviceProvider =>
+                {
+                    var commandExecutor = serviceProvider
+                        .GetRequiredService(commandExecutorType.GenericTypeArguments[0]);
+                    var logger = serviceProvider
+                        .GetRequiredService(typeof(ILogger<>)
+                            .MakeGenericType(commandExecutorType));
+
+                    return System.Activator.CreateInstance(commandExecutorType,
+                        commandExecutor,
+                        logger);
+                });
 
             historyType = typeof(AI.Chat.Histories.ThreadSafe<>)
                 .MakeGenericType(historyType);
