@@ -17,7 +17,7 @@ namespace AI.Chat.Hosts.API.Moderator.Server.Controllers
         [Route("{command}/execute")]
         public async Task<IEnumerable<string>> ExecuteAsync(string command, string args)
         {
-            var tokens = await _client.ExecuteAsync(command, args);
+            var tokens = await _client.ExecuteAsync(string.Empty, command, args);
             return tokens;
         }
     }

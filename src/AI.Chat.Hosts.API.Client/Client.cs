@@ -4,7 +4,7 @@ namespace AI.Chat.Hosts.API
 {
     public interface IClient
     {
-        System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<string>> ExecuteAsync(string command, string args);
+        System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<string>> ExecuteAsync(string username, string command, string args);
     }
 
     public class Client : IClient
@@ -16,14 +16,14 @@ namespace AI.Chat.Hosts.API
             _httpClient = httpClient;
         }
 
-        public async System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<string>> ExecuteAsync(string command, string args)
+        public async System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<string>> ExecuteAsync(string username, string command, string args)
         {
             var httpResponse = await _httpClient.SendAsync(
                 new System.Net.Http.HttpRequestMessage
                 {
                     Method = System.Net.Http.HttpMethod.Get,
                     RequestUri = new System.Uri(
-                        $"commands/{command}/execute?args={args}",
+                        $"commands/{command}/execute?username={username}&args={args}",
                         System.UriKind.Relative)
                 })
                 .ConfigureAwait(false);

@@ -295,8 +295,6 @@ namespace Microsoft.Extensions.DependencyInjection
 
                                 var commandExecutor = serviceProvider
                                     .GetRequiredService<AI.Chat.ICommandExecutor>();
-                                var moderator = serviceProvider
-                                    .GetRequiredService<AI.Chat.IModerator>();
                                 var client = serviceProvider
                                     .GetRequiredService<AI.Chat.IClient>();
                                 var history = serviceProvider
@@ -312,7 +310,6 @@ namespace Microsoft.Extensions.DependencyInjection
                                     moderatorClient,
 
                                     commandExecutor,
-                                    moderator,
                                     client,
                                     history,
                                     scope);
@@ -487,8 +484,6 @@ namespace Microsoft.Extensions.DependencyInjection
 
                                 var commandExecutor = serviceProvider
                                     .GetRequiredService<AI.Chat.ICommandExecutor>();
-                                var moderator = serviceProvider
-                                    .GetRequiredService<AI.Chat.IModerator>();
                                 var client = serviceProvider
                                     .GetRequiredService<AI.Chat.IClient>();
                                 var history = serviceProvider
@@ -498,7 +493,6 @@ namespace Microsoft.Extensions.DependencyInjection
                                     options,
 
                                     commandExecutor,
-                                    moderator,
                                     client,
                                     history);
                             });
@@ -1046,10 +1040,13 @@ namespace Microsoft.Extensions.DependencyInjection
                 {
                     var commands = serviceProvider
                         .GetRequiredService<System.Collections.Generic.IEnumerable<AI.Chat.ICommand>>();
+                    var moderator = serviceProvider
+                        .GetRequiredService<AI.Chat.IModerator>();
 
                     return new AI.Chat.CommandExecutors.Slim(
                         commands,
-                        commandOverrides);
+                        commandOverrides,
+                        moderator);
                 });
             if (diagnostics)
             {

@@ -2,6 +2,6 @@
 {
     public interface ICommandExecutor
     {
-        System.Collections.Generic.IEnumerable<string> Execute(string command, string args);
+        System.Collections.Generic.IEnumerable<string> Execute(string username, string command, string args);
     }
 }

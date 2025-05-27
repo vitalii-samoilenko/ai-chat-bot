@@ -7,7 +7,6 @@ namespace AI.Chat.Clients
         private readonly Options.Console.Client _options;
 
         private readonly AI.Chat.ICommandExecutor _commandExecutor;
-        private readonly AI.Chat.IModerator _moderator;
         private readonly AI.Chat.IClient _client;
         private readonly AI.Chat.IHistory _history;
 
@@ -17,14 +16,12 @@ namespace AI.Chat.Clients
             Options.Console.Client options,
 
             AI.Chat.ICommandExecutor commandExecutor,
-            AI.Chat.IModerator moderator,
             AI.Chat.IClient client,
             AI.Chat.IHistory history)
         {
             _options = options;
 
             _commandExecutor = commandExecutor;
-            _moderator = moderator;
             _client = client;
             _history = history;
         }
@@ -57,12 +54,8 @@ namespace AI.Chat.Clients
                     }
                     if (line.StartsWith("!", System.StringComparison.OrdinalIgnoreCase))
                     {
-                        if (!_moderator.IsModerator(_options.Username))
-                        {
-                            continue;
-                        }
                         var command = line.ExtractToken(out line).Substring(1);
-                        foreach (var token in _commandExecutor.Execute(command, line))
+                        foreach (var token in _commandExecutor.Execute(_options.Username, command, line))
                         {
                             if (nameof(AI.Chat.Commands.Allow).Equals(command, System.StringComparison.OrdinalIgnoreCase))
                             {

@@ -15,9 +15,12 @@ namespace AI.Chat.Host.API.Controllers
 
         [HttpGet]
         [Route("{command}/execute")]
-        public IEnumerable<string> Execute(string command, string args)
+        public IEnumerable<string> Execute(string username, string command, string args)
         {
-            return _commandExecutor.Execute(command, args);
+            foreach (var token in _commandExecutor.Execute(username, command, args))
+            {
+                yield return token;
+            }
         }
     }
 }

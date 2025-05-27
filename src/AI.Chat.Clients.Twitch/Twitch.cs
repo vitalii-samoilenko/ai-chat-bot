@@ -13,7 +13,6 @@ namespace AI.Chat.Clients
         private readonly TwitchLib.Client.Interfaces.ITwitchClient _moderatorClient;
 
         private readonly AI.Chat.ICommandExecutor _commandExecutor;
-        private readonly AI.Chat.IModerator _moderator;
         private readonly AI.Chat.IClient _client;
         private readonly AI.Chat.IHistory _history;
         private readonly AI.Chat.IScope _scope;
@@ -26,7 +25,6 @@ namespace AI.Chat.Clients
             TwitchLib.Client.Interfaces.ITwitchClient moderatorClient,
 
             AI.Chat.ICommandExecutor commandExecutor,
-            AI.Chat.IModerator moderator,
             AI.Chat.IClient client,
             AI.Chat.IHistory history,
             AI.Chat.IScope scope)
@@ -38,7 +36,6 @@ namespace AI.Chat.Clients
             _moderatorClient = moderatorClient;
 
             _commandExecutor = commandExecutor;
-            _moderator = moderator;
             _client = client;
             _history = history;
             _scope = scope;
@@ -137,14 +134,13 @@ namespace AI.Chat.Clients
                 _options.Botname);
             _moderatorClient.OnChatCommandReceived += (sender, args) =>
             {
-                if (!_moderator.IsModerator(args.Command.ChatMessage.Username)
-                    || nameof(AI.Chat.Commands.Seek).Equals(args.Command.CommandText, System.StringComparison.OrdinalIgnoreCase))
+                if (nameof(AI.Chat.Commands.Seek).Equals(args.Command.CommandText, System.StringComparison.OrdinalIgnoreCase))
                 {
                     return;
                 }
 
                 var replyBuilder = new System.Text.StringBuilder();
-                foreach (var token in _commandExecutor.Execute(args.Command.CommandText, args.Command.ArgumentsAsString))
+                foreach (var token in _commandExecutor.Execute(args.Command.ChatMessage.Username, args.Command.CommandText, args.Command.ArgumentsAsString))
                 {
                     replyBuilder.Append(' ')
                         .Append(token);
@@ -165,13 +161,11 @@ namespace AI.Chat.Clients
                     replyBuilder.Remove(MaxMessageLength - 2, replyBuilder.Length - (MaxMessageLength - 2))
                         .Append(AI.Chat.Constants.Etc);
                 }
-                var reply = 0 < replyBuilder.Length
-                    ? replyBuilder.Remove(0, 1)
-                        .ToString()
-                    : null;
                 
-                if (!string.IsNullOrEmpty(reply))
+                if (0 < replyBuilder.Length)
                 {
+                    var reply = replyBuilder.Remove(0, 1)
+                        .ToString();
                     _moderatorClient.SendReply(
                         args.Command.ChatMessage.Channel,
                         args.Command.ChatMessage.Id,

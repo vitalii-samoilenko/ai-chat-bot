@@ -12,11 +12,11 @@
             _commandExecutor = commandExecutor;
         }
 
-        public System.Collections.Generic.IEnumerable<string> Execute(string command, string args)
+        public System.Collections.Generic.IEnumerable<string> Execute(string username, string command, string args)
         {
             using (var activity = AI.Chat.Diagnostics.ActivitySources.CommandExecutors.StartActivity($"{CommandExecutorName}.{nameof(Execute)}"))
             {
-                foreach (var token in _commandExecutor.Execute(command, args))
+                foreach (var token in _commandExecutor.Execute(username, command, args))
                 {
                     yield return token;
                 }
