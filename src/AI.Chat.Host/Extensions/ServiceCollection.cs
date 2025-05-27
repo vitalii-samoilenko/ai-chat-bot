@@ -297,7 +297,7 @@ namespace Microsoft.Extensions.DependencyInjection
                                     .GetRequiredService<AI.Chat.ICommandExecutor>();
                                 var moderator = serviceProvider
                                     .GetRequiredService<AI.Chat.IModerator>();
-                                var user = serviceProvider
+                                var client = serviceProvider
                                     .GetRequiredService<AI.Chat.IClient>();
                                 var history = serviceProvider
                                     .GetRequiredService<AI.Chat.IHistory>();
@@ -313,7 +313,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
                                     commandExecutor,
                                     moderator,
-                                    user,
+                                    client,
                                     history,
                                     scope);
                             });
@@ -472,36 +472,36 @@ namespace Microsoft.Extensions.DependencyInjection
                     break;
                 case nameof(AI.Chat.Clients.Console):
                     {
-                        services.Configure<AI.Chat.Options.Client>(
+                        services.Configure<AI.Chat.Options.Console.Client>(
                             configuration.GetSection("Chat:Client"));
-
-                        services.AddSingleton<AI.Chat.Clients.Console>();
-
-                        var chat = typeof(AI.Chat.Commands.Console.Chat);
-                        services.AddTransient(chat);
-                        if (diagnostics)
-                        {
-                            chat = typeof(AI.Chat.Commands.Diagnostics.Trace<>)
-                                .MakeGenericType(chat);
-                            services.AddTransient(chat);
-                        }
-                        services.AddTransient(typeof(AI.Chat.ICommand),
+                        services.AddSingleton<IOptions<AI.Chat.Options.Client>>(
                             serviceProvider => serviceProvider
-                                .GetRequiredService(chat));
-                        commandOverrides.Add(chat, nameof(AI.Chat.Commands.Console.Chat));
+                                .GetRequiredService<IOptions<AI.Chat.Options.Console.Client>>());
 
-                        var join = typeof(AI.Chat.Commands.Console.Join);
-                        services.AddTransient(join);
-                        if (diagnostics)
-                        {
-                            join = typeof(AI.Chat.Commands.Diagnostics.Trace<>)
-                                .MakeGenericType(join);
-                            services.AddTransient(join);
-                        }
-                        services.AddTransient(typeof(AI.Chat.ICommand),
-                            serviceProvider => serviceProvider
-                                .GetRequiredService(join));
-                        commandOverrides.Add(join, nameof(AI.Chat.Commands.Console.Join));
+                        services.AddSingleton<AI.Chat.Clients.Console>(
+                            serviceProvider =>
+                            {
+                                var options = serviceProvider
+                                    .GetRequiredService<IOptions<AI.Chat.Options.Console.Client>>()
+                                    .Value;
+
+                                var commandExecutor = serviceProvider
+                                    .GetRequiredService<AI.Chat.ICommandExecutor>();
+                                var moderator = serviceProvider
+                                    .GetRequiredService<AI.Chat.IModerator>();
+                                var client = serviceProvider
+                                    .GetRequiredService<AI.Chat.IClient>();
+                                var history = serviceProvider
+                                    .GetRequiredService<AI.Chat.IHistory>();
+
+                                return new AI.Chat.Clients.Console(
+                                    options,
+
+                                    commandExecutor,
+                                    moderator,
+                                    client,
+                                    history);
+                            });
 
                         serviceType = typeof(AI.Chat.Host.Services.Console);
                         services.AddSingleton(serviceType);

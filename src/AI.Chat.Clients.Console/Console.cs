@@ -4,36 +4,81 @@ namespace AI.Chat.Clients
 {
     public class Console
     {
-        private readonly ICommandExecutor _commandExecutor;
+        private readonly Options.Console.Client _options;
+
+        private readonly AI.Chat.ICommandExecutor _commandExecutor;
+        private readonly AI.Chat.IModerator _moderator;
+        private readonly AI.Chat.IClient _client;
+        private readonly AI.Chat.IHistory _history;
+
         private System.Threading.Tasks.Task _worker;
 
-        public Console(ICommandExecutor commandExecutor)
+        public Console(
+            Options.Console.Client options,
+
+            AI.Chat.ICommandExecutor commandExecutor,
+            AI.Chat.IModerator moderator,
+            AI.Chat.IClient client,
+            AI.Chat.IHistory history)
         {
+            _options = options;
+
             _commandExecutor = commandExecutor;
+            _moderator = moderator;
+            _client = client;
+            _history = history;
         }
 
         public void Start()
         {
-            _worker = System.Threading.Tasks.Task.Run(() =>
+            _worker = System.Threading.Tasks.Task.Run(async () =>
             {
+                System.Func<System.DateTime, System.Threading.Tasks.Task> onAllowAsync = replyKey =>
+                {
+                    if (_history.TryGet(replyKey, out var reply))
+                    {
+                        System.Console.WriteLine(reply.Message);
+                    }
+                    return System.Threading.Tasks.Task.CompletedTask;
+                };
+                System.Func<System.DateTime, System.Threading.Tasks.Task> onHoldAsync = replyKey =>
+                {
+                    System.Console.WriteLine(replyKey.ToKeyString());
+                    return System.Threading.Tasks.Task.CompletedTask;
+                };
+                await _client.WelcomeAsync(_options.Username, onAllowAsync, onHoldAsync)
+                    .ConfigureAwait(false);
                 for (;;)
                 {
                     var line = System.Console.ReadLine();
-                    if (string.IsNullOrWhiteSpace(line)
-                        || !line.StartsWith("!", System.StringComparison.OrdinalIgnoreCase))
+                    if (string.IsNullOrWhiteSpace(line))
                     {
                         continue;
                     }
-                    try
+                    if (line.StartsWith("!", System.StringComparison.OrdinalIgnoreCase))
                     {
-                        foreach (var token in _commandExecutor.Execute(line.ExtractToken(out line).Substring(1), line))
+                        if (!_moderator.IsModerator(_options.Username))
                         {
-                            System.Console.WriteLine(token);
+                            continue;
+                        }
+                        var command = line.ExtractToken(out line).Substring(1);
+                        foreach (var token in _commandExecutor.Execute(command, line))
+                        {
+                            if (nameof(AI.Chat.Commands.Allow).Equals(command, System.StringComparison.OrdinalIgnoreCase))
+                            {
+                                await onAllowAsync(token.ParseKey())
+                                    .ConfigureAwait(false);
+                            }
+                            else
+                            {
+                                System.Console.WriteLine(token);
+                            }
                         }
                     }
-                    catch (System.Exception ex)
+                    else
                     {
-                        System.Console.WriteLine(ex);
+                        await _client.ChatAsync(_options.Username, line, onAllowAsync, onHoldAsync)
+                            .ConfigureAwait(false);
                     }
                 }
             });

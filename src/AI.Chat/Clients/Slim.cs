@@ -19,8 +19,8 @@ namespace AI.Chat.Clients
 
         public async System.Threading.Tasks.Task WelcomeAsync(string username, System.Func<System.DateTime, System.Threading.Tasks.Task> onAllowAsync, System.Func<System.DateTime, System.Threading.Tasks.Task> onHoldAsync)
         {
-            if (!_moderator.IsAllowed(_options.Username, username)
-                || !_moderator.IsWelcomed(_options.Username, username))
+            if (!_moderator.IsAllowed(_options.Botname, username)
+                || !_moderator.IsWelcomed(_options.Botname, username))
             {
                 return;
             }
@@ -30,15 +30,15 @@ namespace AI.Chat.Clients
             (var joinedKey, var replyKey) = await _bot.ReplyAsync(username, joined)
                 .ConfigureAwait(false);
 
-            if (!_moderator.IsAllowed(_options.Username, username)
-                || !_moderator.IsWelcomed(_options.Username, username)
-                || (username != _options.Username
+            if (!_moderator.IsAllowed(_options.Botname, username)
+                || !_moderator.IsWelcomed(_options.Botname, username)
+                || (!_options.Botname.Equals(username, System.StringComparison.OrdinalIgnoreCase)
                     && !_moderator.Greet(username)))
             {
                 _history.Remove(joinedKey, replyKey);
                 return;
             }
-            if (_moderator.IsModerated(_options.Username, username))
+            if (_moderator.IsModerated(_options.Botname, username))
             {
                 _history.Moderate(replyKey);
                 await onHoldAsync(replyKey)
@@ -51,7 +51,7 @@ namespace AI.Chat.Clients
         }
         public async System.Threading.Tasks.Task ChatAsync(string username, string message, System.Func<System.DateTime, System.Threading.Tasks.Task> onAllowAsync, System.Func<System.DateTime, System.Threading.Tasks.Task> onHoldAsync)
         {
-            if (!_moderator.IsAllowed(_options.Username, username))
+            if (!_moderator.IsAllowed(_options.Botname, username))
             {
                 return;
             }
@@ -61,16 +61,16 @@ namespace AI.Chat.Clients
             (var promptKey, var replyKey) = await _bot.ReplyAsync(username, prompt)
                 .ConfigureAwait(false);
 
-            if (!_moderator.IsAllowed(_options.Username, username))
+            if (!_moderator.IsAllowed(_options.Botname, username))
             {
                 _history.Remove(promptKey, replyKey);
                 return;
             }
-            if (_moderator.IsWelcomed(_options.Username, username))
+            if (_moderator.IsWelcomed(_options.Botname, username))
             {
                 _moderator.Greet(username);
             }
-            if (_moderator.IsModerated(_options.Username, username))
+            if (_moderator.IsModerated(_options.Botname, username))
             {
                 _history.Moderate(replyKey);
                 await onHoldAsync(replyKey)

@@ -1,10 +1,12 @@
 ﻿namespace AI.Chat.Adapters
 {
-    public class GoogleAI : IAdapter
+    public class GoogleAI : IAdapter, System.IDisposable
     {
         private readonly Options.GoogleAI.Adapter _options;
         private readonly global::GoogleAI.IClient _client;
         private readonly System.Collections.Generic.TimeSeries<global::GoogleAI.Models.Content> _contents;
+
+        private bool _disposed;
 
         public GoogleAI(Options.GoogleAI.Adapter options, global::GoogleAI.IClient client)
             : this(options, client, new System.Collections.Generic.TimeSeries<global::GoogleAI.Models.Content>())
@@ -16,6 +18,8 @@
             _options = options;
             _client = client;
             _contents = contents;
+
+            _disposed = false;
         }
 
         public async System.Threading.Tasks.Task<(string reply, int tokens)> GetReplyAsync()
@@ -91,6 +95,32 @@
                 _options.Cache.Until = cacheResponse.ExpireTime;
             }
             return (response.Candidates[0].Content.Parts[0].Text, response.UsageMetadata.TotalTokenCount);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            System.GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (!string.IsNullOrWhiteSpace(_options.Cache.Name))
+                {
+                    _client.TryDeleteCachedContents(_options.Cache.Name)
+                        .ConfigureAwait(false)
+                        .GetAwaiter()
+                        .GetResult();
+                }
+                _disposed = true;
+            }
+        }
+
+        ~GoogleAI()
+        {
+            Dispose(false);
         }
     }
 }

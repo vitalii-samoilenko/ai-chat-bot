@@ -9,8 +9,8 @@
         public Slim(Options.Moderator options)
         {
             _options = options;
-            _timeouts = new System.Collections.Generic.Dictionary<string, System.DateTime>();
-            _greeted = new System.Collections.Generic.HashSet<string>();
+            _timeouts = new System.Collections.Generic.Dictionary<string, System.DateTime>(System.StringComparer.OrdinalIgnoreCase);
+            _greeted = new System.Collections.Generic.HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
         }
 
         public bool IsModerator(string username)

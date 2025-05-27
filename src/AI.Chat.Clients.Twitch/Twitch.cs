@@ -19,17 +19,17 @@ namespace AI.Chat.Clients
         private readonly AI.Chat.IScope _scope;
 
         public Twitch(
-                Options.Twitch.Client options,
+            Options.Twitch.Client options,
 
-                TwitchLib.Client.Interfaces.IAuthClient authClient,
-                TwitchLib.Client.Interfaces.ITwitchClient userClient,
-                TwitchLib.Client.Interfaces.ITwitchClient moderatorClient,
+            TwitchLib.Client.Interfaces.IAuthClient authClient,
+            TwitchLib.Client.Interfaces.ITwitchClient userClient,
+            TwitchLib.Client.Interfaces.ITwitchClient moderatorClient,
 
-                AI.Chat.ICommandExecutor commandExecutor,
-                AI.Chat.IModerator moderator,
-                AI.Chat.IClient client,
-                AI.Chat.IHistory history,
-                AI.Chat.IScope scope)
+            AI.Chat.ICommandExecutor commandExecutor,
+            AI.Chat.IModerator moderator,
+            AI.Chat.IClient client,
+            AI.Chat.IHistory history,
+            AI.Chat.IScope scope)
         {
             _options = options;
 
@@ -132,9 +132,9 @@ namespace AI.Chat.Clients
 
             _moderatorClient.Initialize(
                 new TwitchLib.Client.Models.ConnectionCredentials(
-                    _options.Username,
+                    _options.Botname,
                     _options.Auth.AccessToken),
-                _options.Username);
+                _options.Botname);
             _moderatorClient.OnChatCommandReceived += (sender, args) =>
             {
                 if (!_moderator.IsModerator(args.Command.ChatMessage.Username)
@@ -144,9 +144,7 @@ namespace AI.Chat.Clients
                 }
 
                 var replyBuilder = new System.Text.StringBuilder();
-                foreach (var token in _commandExecutor.Execute(
-                        args.Command.CommandText,
-                        args.Command.ArgumentsAsString))
+                foreach (var token in _commandExecutor.Execute(args.Command.CommandText, args.Command.ArgumentsAsString))
                 {
                     replyBuilder.Append(' ')
                         .Append(token);
@@ -188,7 +186,7 @@ namespace AI.Chat.Clients
 
             _userClient.Initialize(
                 new TwitchLib.Client.Models.ConnectionCredentials(
-                    _options.Username,
+                    _options.Botname,
                     _options.Auth.AccessToken),
                 _options.Channel);
             _userClient.OnUserJoined += (sender, args) =>
@@ -205,7 +203,7 @@ namespace AI.Chat.Clients
             };
             _userClient.OnMessageReceived += (sender, args) =>
             {
-                if (!args.ChatMessage.Message.Contains($"@{_options.Username}"))
+                if (!args.ChatMessage.Message.Contains($"@{_options.Botname}"))
                 {
                     if (_scope.ExecuteRead(() => _options.Welcome.Mode == Options.Twitch.WelcomeMode.OnFirstMessage))
                     {
