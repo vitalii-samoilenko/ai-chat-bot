@@ -31,6 +31,8 @@ builder.Services.AddOpenTelemetry()
         tracing.AddAspNetCoreInstrumentation();
         tracing.AddHttpClientInstrumentation();
 
+        tracing.AddSource(AI.Chat.Host.Diagnostics.ActivitySources.Services.Name);
+
         tracing.AddSource(AI.Chat.Diagnostics.ActivitySources.Adapters.Name);
         tracing.AddSource(AI.Chat.Diagnostics.ActivitySources.Bots.Name);
         tracing.AddSource(AI.Chat.Diagnostics.ActivitySources.Clients.Name);
