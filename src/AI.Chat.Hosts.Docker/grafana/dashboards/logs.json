@@ -132,6 +132,50 @@
       ],
       "title": "TwitchLib.Client.TwitchClient",
       "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "logs"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 22
+      },
+      "id": 3,
+      "options": {
+        "dedupStrategy": "none",
+        "enableInfiniteScrolling": false,
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "pluginVersion": "11.6.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "logs"
+          },
+          "direction": "backward",
+          "editorMode": "builder",
+          "expr": "{service_name=\"ai-chat-hosts-api\"} | json | instrumentation_scope_name = `AI.Chat.CommandExecutors.Diagnostics.Log` | line_format `{{.severity}} {{.body}}`",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "AI.Chat.CommandExecutors",
+      "type": "logs"
     }
   ],
   "preload": false,
@@ -149,5 +193,5 @@
   "timezone": "browser",
   "title": "Logs",
   "uid": "bekvpz292bqbkc",
-  "version": 3
+  "version": 1
 }
