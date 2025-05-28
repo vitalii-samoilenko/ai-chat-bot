@@ -1,24 +1,67 @@
-﻿<h1 id="tableLabel">Weather forecast</h1>
+<div [formGroup]="range">
+    <mat-form-field>
+        <mat-label>From date</mat-label>
+        <input matInput
+               [matDatepicker]="fromDatepicker"
+               formControlName="fromDate">
+        <mat-datepicker #fromDatepicker />
+        <mat-datepicker-toggle [for]="fromDatepicker" matSuffix />
+    </mat-form-field>
 
-<p>This component demonstrates fetching data from the server.</p>
+    <mat-form-field>
+        <mat-label>From time</mat-label>
+        <input matInput
+               [matTimepicker]="fromTimepicker"
+               formControlName="fromTime">
+        <mat-timepicker #fromTimepicker />
+        <mat-timepicker-toggle [for]="fromTimepicker" matSuffix />
+    </mat-form-field>
 
-<p *ngIf="!forecasts"><em>Loading... Please refresh once the ASP.NET backend has started. See <a href="https://aka.ms/jspsintegrationangular">https://aka.ms/jspsintegrationangular</a> for more details.</em></p>
+    <mat-form-field>
+        <mat-label>To date</mat-label>
+        <input matInput
+               [matDatepicker]="toDatepicker"
+               formControlName="toDate">
+        <mat-datepicker #toDatepicker />
+        <mat-datepicker-toggle [for]="toDatepicker" matSuffix />
+    </mat-form-field>
 
-<table *ngIf="forecasts">
-    <thead>
-        <tr>
-            <th>Date</th>
-            <th>Temp. (C)</th>
-            <th>Temp. (F)</th>
-            <th>Summary</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr *ngFor="let forecast of forecasts">
-            <td>{{ forecast.date }}</td>
-            <td>{{ forecast.temperatureC }}</td>
-            <td>{{ forecast.temperatureF }}</td>
-            <td>{{ forecast.summary }}</td>
-        </tr>
-    </tbody>
-</table>
+    <mat-form-field>
+        <mat-label>To time</mat-label>
+        <input matInput
+               [matTimepicker]="toTimepicker"
+               formControlName="toTime">
+        <mat-timepicker #toTimepicker />
+        <mat-timepicker-toggle [for]="toTimepicker" matSuffix />
+    </mat-form-field>
+</div>
+
+<mat-form-field>
+    <mat-label>Tags</mat-label>
+    <mat-chip-grid #chipGrid aria-label="Enter tags">
+        @for (tag of tags(); track tag) {
+        <mat-chip-row (removed)="remove(tag)"
+                      [editable]="true"
+                      (edited)="edit(tag, $event)"
+                      [aria-description]="'press enter to edit ' + tag">
+            {{tag}}
+            <button matChipRemove [attr.aria-label]="'remove ' + tag">
+                <mat-icon>cancel</mat-icon>
+            </button>
+        </mat-chip-row>
+        }
+        <input placeholder="New tag..."
+               [matChipInputFor]="chipGrid"
+               [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+               [matChipInputAddOnBlur]="addOnBlur"
+               (matChipInputTokenEnd)="add($event)" />
+    </mat-chip-grid>
+</mat-form-field>
+
+<button mat-button (click)="find()">Find</button>
+
+@for (token of tokens(); track token) {
+<div>{{token}}</div>
+} @empty {
+<div>no tokens</div>
+}
