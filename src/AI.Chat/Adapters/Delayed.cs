@@ -22,6 +22,14 @@
 
         public async System.Threading.Tasks.Task<(string reply, int tokens)> GetReplyAsync()
         {
+            var left = _next - System.DateTime.UtcNow;
+            if (System.TimeSpan.Zero < left)
+            {
+                await System.Threading.Tasks.Task.Delay(left)
+                    .ConfigureAwait(false);
+            }
+            (var reply, var tokens) = await _adapter.GetReplyAsync()
+                .ConfigureAwait(false);
             var now = System.DateTime.UtcNow;
             if (!(now - _bucket < Minute))
             {
@@ -31,15 +39,7 @@
                     System.DateTimeKind.Utc);
                 _next = _bucket;
             }
-            var left = _next - now;
             _next += _options.Delay;
-            if (System.TimeSpan.Zero < left)
-            {
-                await System.Threading.Tasks.Task.Delay(left)
-                    .ConfigureAwait(false);
-            }
-            (var reply, var tokens) = await _adapter.GetReplyAsync()
-                .ConfigureAwait(false);
             return (reply, tokens);
         }
     }
