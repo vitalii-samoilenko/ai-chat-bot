@@ -17,6 +17,8 @@ namespace AI.Chat.Clients
         private readonly AI.Chat.IHistory _history;
         private readonly AI.Chat.IScope _scope;
 
+        private System.DateTime _next;
+
         public Twitch(
             Options.Twitch.Client options,
 
@@ -39,6 +41,8 @@ namespace AI.Chat.Clients
             _client = client;
             _history = history;
             _scope = scope;
+
+            _next = System.DateTime.UtcNow;
         }
 
         public async System.Threading.Tasks.Task StartAsync()
@@ -95,12 +99,16 @@ namespace AI.Chat.Clients
                 await _scope.ExecuteWriteAsync(
                     async () =>
                     {
+                        var left = _next - System.DateTime.UtcNow;
+                        if (System.TimeSpan.Zero < left)
+                        {
+                            await System.Threading.Tasks.Task.Delay(left)
+                                .ConfigureAwait(false);
+                        }
                         _userClient.SendMessage(
                             channel,
                             reply.Message);
-                        await System.Threading.Tasks.Task.Delay(
-                                _options.Delay)
-                            .ConfigureAwait(false);
+                        _next = System.DateTime.UtcNow + _options.Delay;
                     })
                     .ConfigureAwait(false);
             };
