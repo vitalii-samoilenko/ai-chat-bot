@@ -1542,14 +1542,14 @@
           "type": "prometheus",
           "uid": "metrics"
         },
-        "definition": "label_values(ai_chat_adapters_reply_length_count,job)",
+        "definition": "label_values(twitchlib_client_message_length_count,job)",
         "includeAll": true,
         "label": "Job",
         "multi": true,
         "name": "job",
         "options": [],
         "query": {
-          "query": "label_values(ai_chat_adapters_reply_length_count,job)",
+          "query": "label_values(twitchlib_client_message_length_count,job)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
