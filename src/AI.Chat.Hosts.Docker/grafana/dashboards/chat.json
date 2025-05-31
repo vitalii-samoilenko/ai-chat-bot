@@ -669,6 +669,7 @@
           },
           "displayName": "${__field.name}",
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1183,6 +1184,7 @@
           },
           "displayName": "${__field.name}",
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1541,7 +1543,6 @@
           "uid": "metrics"
         },
         "definition": "label_values(ai_chat_adapters_reply_length_count,job)",
-        "hide": 0,
         "includeAll": true,
         "label": "Job",
         "multi": true,
@@ -1553,7 +1554,6 @@
         },
         "refresh": 2,
         "regex": "",
-        "skipUrlSync": false,
         "sort": 1,
         "type": "query"
       }
