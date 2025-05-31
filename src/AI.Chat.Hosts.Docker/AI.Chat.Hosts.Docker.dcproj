@@ -14,7 +14,10 @@
     <None Include="alloy\config.alloy" />
     <None Include="docker-compose.infrastructure.yml" />
     <None Include="docker-compose.yml" />
+    <None Include="grafana\dashboards\server.json" />
+    <None Include="grafana\dashboards\server_endpoint.json" />
     <None Include="grafana\dashboards\chat.json" />
+    <None Include="grafana\dashboards\runtime.json" />
     <None Include="grafana\dashboards\logs.json" />
     <None Include="grafana\dashboards\scopes.json" />
     <None Include="grafana\provisioning\dashboards\automatic.yaml" />
