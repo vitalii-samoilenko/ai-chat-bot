@@ -1,19 +1,6 @@
-[
-	grafana dashboards
-	 - thread pool metrics
-	telemetry retention
-]
-
-[
-	moderator
-	azure free tier host
-]
+moderator
+azure free tier host
 
 [
 	readme + release
 ]
-
-protect system tags with decorator?
-context as intellectual property?
-adjust histogram?
-prometheus volume?
