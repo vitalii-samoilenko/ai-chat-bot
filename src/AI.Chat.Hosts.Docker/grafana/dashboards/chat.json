@@ -186,7 +186,7 @@
             "mode": "thresholds"
           },
           "mappings": [],
-          "max": 250000,
+          "max": 1000000,
           "min": 0,
           "thresholds": {
             "mode": "percentage",
