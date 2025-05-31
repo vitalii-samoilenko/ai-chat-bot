@@ -206,12 +206,12 @@
           "disableTextWrap": false,
           "editorMode": "code",
           "exemplar": false,
-          "expr": "idelta(dotnet_process_cpu_time_seconds_total{job=~\"$job\"}[$__range]) / ${__interval}",
+          "expr": "increase(dotnet_process_cpu_time_seconds_total{job=~\"$job\"}[$__range]) / ${__range_s}",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
-          "instant": false,
+          "instant": true,
           "legendFormat": "{{cpu_mode}}",
-          "range": true,
+          "range": false,
           "refId": "A",
           "useBackend": false
         }
