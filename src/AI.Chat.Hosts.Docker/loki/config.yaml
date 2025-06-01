@@ -26,7 +26,14 @@ query_range:
         max_size_mb: 100
 
 limits_config:
+  retention_period: 72h
   metric_aggregation_enabled: true
+
+compactor:
+  working_directory: /tmp/loki/compactor
+  retention_enabled: true
+  retention_delete_delay: 2h
+  delete_request_store: filesystem
 
 schema_config:
   configs:
