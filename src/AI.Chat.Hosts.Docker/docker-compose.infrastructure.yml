@@ -51,6 +51,7 @@ services:
     command:
       - run
       - --server.http.listen-addr=0.0.0.0:3300
+      - --disable-reporting
       - /etc/alloy/config.alloy
     ports:
       - 3300:3300
