@@ -14,7 +14,7 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4317
       - OTEL_SERVICE_NAME=ai-chat-hosts-api
     volumes:
-      - ai.chat.hosts.config:/app/external
+      - ai.chat.hosts.api.data:/app/external
     ports:
       - 5117:8080
     networks:
@@ -25,5 +25,5 @@ networks:
     external: true
 
 volumes:
-  ai.chat.hosts.config:
+  ai.chat.hosts.api.data:
     external: true

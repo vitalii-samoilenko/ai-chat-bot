@@ -28,12 +28,12 @@ metrics_generator:
       source: tempo
       cluster: ai-chat-host-docker
   storage:
-    path: /tmp/tempo/generator/wal
+    path: /data/generator/wal
     remote_write:
       - url: http://prometheus:9090/api/v1/write
         send_exemplars: true
   traces_storage:
-    path: /tmp/tempo/generator/traces
+    path: /data/generator/traces
 
 compactor:
   compaction:
@@ -44,9 +44,9 @@ storage:
   trace:
     backend: local                     # backend configuration to use
     wal:
-      path: /tmp/tempo/wal             # where to store the wal locally
+      path: /data/wal             # where to store the wal locally
     local:
-      path: /tmp/tempo/blocks
+      path: /data/blocks
 
 overrides:
   defaults:
