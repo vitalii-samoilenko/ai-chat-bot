@@ -7,22 +7,10 @@
     <AssemblyVersion>0.9.4.0</AssemblyVersion>
     <FileVersion>0.9.4.0</FileVersion>
     <Version>0.9.4</Version>
-    <SpaRoot>..\AI.Chat.Hosts.API.Moderator.Proxy</SpaRoot>
-    <SpaProxyLaunchCommand>npm start</SpaProxyLaunchCommand>
-    <SpaProxyServerUrl>http://localhost:5119</SpaProxyServerUrl>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\AI.Chat.Hosts.API.Client\AI.Chat.Hosts.API.Client.csproj" />
-    <ProjectReference Include="..\AI.Chat.Hosts.API.Moderator.Proxy\AI.Chat.Hosts.API.Moderator.Proxy.esproj">
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.SpaProxy">
-      <Version>9.*-*</Version>
-    </PackageReference>
   </ItemGroup>
 
 </Project>

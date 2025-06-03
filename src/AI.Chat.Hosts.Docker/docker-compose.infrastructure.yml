@@ -7,7 +7,7 @@ services:
     image: grafana/loki
     volumes:
       - ./loki:/etc/loki
-      - loki.data:/data
+      - data.loki:/data
     command: 
       - -config.file=/etc/loki/config.yaml
     networks:
@@ -18,7 +18,7 @@ services:
     image: grafana/tempo
     volumes:
       - ./tempo:/etc/tempo
-      - tempo.data:/data
+      - data.tempo:/data
     command: 
       - -config.file=/etc/tempo/config.yaml
     networks:
@@ -29,7 +29,7 @@ services:
     image: prom/prometheus
     volumes:
       - ./prometheus:/etc/prometheus
-      - prometheus.data:/prometheus
+      - data.prometheus:/prometheus
     command: 
       - --config.file=/etc/prometheus/config.yaml
       - --web.enable-remote-write-receiver
@@ -82,9 +82,9 @@ networks:
     external: true
 
 volumes:
-  loki.data:
+  data.loki:
     external: true
-  tempo.data:
+  data.tempo:
     external: true
-  prometheus.data:
+  data.prometheus:
     external: true
