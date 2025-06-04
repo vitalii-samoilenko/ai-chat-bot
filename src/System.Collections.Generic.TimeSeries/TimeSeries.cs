@@ -188,13 +188,13 @@
             }
             entry = secondBucket[index];
 
-            var previousKey = key;
+            var previousKey = DateTime.MinValue;
             if (entry.Previous != null)
             {
                 entry.Previous.Next = entry.Next;
                 previousKey = entry.Previous.Key;
             }
-            var nextKey = key;
+            var nextKey = DateTime.MaxValue;
             if (entry.Next != null)
             {
                 entry.Next.Previous = entry.Previous;
