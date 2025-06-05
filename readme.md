@@ -69,7 +69,7 @@ Sample configuration section:
         "you"
       ],
       "Promoted": [
-        "botusername"
+        "botname"
       ],
       "Banned": [
 
@@ -98,14 +98,16 @@ Sample configuration section:
 ```
     "Adapter": {
       "Type": "OpenAI",
-      "Delay": "00:00:05",
-      "Threshold": 82000,
-      "Skip": 5,
+      "Delay": "00:01:00",
+      "Threshold": 999000,
+      "Skip": 1,
       "Period": "24:00:00",
-      "ApiKey": "your-api-key",
-      "Model": "gemini-2.0-flash",
+      "Model": {
+        "Name": "gemini-2.0-flash"
+      },
       "Client": {
         "Endpoint": "https://generativelanguage.googleapis.com/v1beta/openai/",
+        "ApiKey": "your-api-key",
         "NetworkTimeout": "00:02:00"
       }
     }
@@ -123,7 +125,7 @@ As of now following adapter __Types__ are supported:
 
 - OpenAI - you can use any vendor that is compatible with this API (Google, OpenAI, DeepSeek, Ollama etc)
 
-You must configure __ApiKey__, __Model__ and __Client__ __Endpoint__ with values obrained from your provider (refer to the documentation)
+You must configure __Model__ __Name__, __Client__ __ApiKey__ and __Client__ __Endpoint__ with values obrained from your provider (refer to the documentation)
 
 ### Clients
 
@@ -132,16 +134,16 @@ Sample configuration section:
 ```
     "Client": {
       "Type": "Twitch",
-      "Username": "botusername",
+      "Botname": "botname",
       "Joined": "{0} has joined chat",
       "Prompt": "{0}: {1}",
 
-      "Delay": "00:00:10",
+      "Delay": "00:00:03",
       "Welcome": {
         "Mode": "OnFirstMessage"
       },
       "Auth": {
-        "Uri": "https://id.twitch.tv/oauth2/",
+        "BaseAddress": "https://id.twitch.tv/oauth2/",
         "ClientId": "your-client-id",
         "ClientSecret": "your-client-secret",
         "Scopes": [
@@ -200,7 +202,7 @@ Once started, client will join its' own channel and allow __Moderators__ to exec
 ```
 
 __Join__/__Leave__ will connect/disconnect bot to/from the destination channel.
-Connected bot will listen for messages tagged with its' __Username__. Once received, they will be sent to the model using __Prompt__ format
+Connected bot will listen for messages tagged with its' __Botname__. Once received, they will be sent to the model using __Prompt__ format
 
 __Ban__/__Unban__, __Mod__/__Unmod__, __Welcome__/__Unwelcome__ and __Promote__/__Demote__ will add/remove usernames to/from __Banned__, __Moderated__, __Welcomed__ and __Promoted__ list correspondingly
 
