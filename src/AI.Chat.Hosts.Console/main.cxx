@@ -8,15 +8,19 @@ int main() {
     try
     {
         ::OpenAI::Client client{ "https://generativelanguage.googleapis.com/v1beta/openai/", "apiKey" };
-        ::std::vector<::OpenAI::Message> messages{
+        ::OpenAI::CompletionContext<::std::vector<::OpenAI::Message>> context{
+            "gemini-2.0-flash",
             {
-                ::OpenAI::Role::User,
-                "Explain to me how AI works"
+                {
+                    ::OpenAI::Role::User,
+                    "Explain to me how AI works"
+                }
             }
         };
-        ::OpenAI::Message answer{ client.Complete("gemini-2.0-flash", messages.begin(), messages.end()) };
+        ::OpenAI::CompletionResult result{ client.Complete(context) };
 
-        ::std::cout << answer.Content << ::std::endl;
+        ::std::cout << result.Usage.TotalTokens << ::std::endl;
+        ::std::cout << result.Choices[0].Message.Content << ::std::endl;
     }
     catch(const ::std::exception& e)
     {
