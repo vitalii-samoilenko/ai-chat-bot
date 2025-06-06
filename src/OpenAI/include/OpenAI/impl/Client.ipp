@@ -5,19 +5,20 @@
 
 #include "boost/url.hpp"
 
-#include "eboost/beast/http/client.hpp"
 #include "eboost/beast/http/json_body.hpp"
+#include "eboost/beast/http/session.hpp"
 
 #include "OpenAI/Client.hpp"
 
 namespace OpenAI {
 
-Client::Client(const ::std::string& baseAddress, const ::std::string& apiKey)
+Client::Client(const ::std::string& baseAddress, const ::std::string& apiKey, ::std::chrono::steady_clock::duration timeout)
     : m_ssl{ false }
     , m_host{}
     , m_port{}
-    , m_completionsPath{}
-    , m_authorization{ "Bearer " + apiKey } {
+    , m_completionsTarget{}
+    , m_authorization{ "Bearer " + apiKey }
+    , m_timeout{ timeout } {
     ::boost::system::result<::boost::urls::url_view> result{ ::boost::urls::parse_uri(baseAddress) };
     if (!result.has_value()) {
         throw ::std::invalid_argument{ "baseAddress" };
@@ -34,7 +35,7 @@ Client::Client(const ::std::string& baseAddress, const ::std::string& apiKey)
         : m_ssl
             ? "443"
             : "80";
-    m_completionsPath = url.path() + "chat/completions";
+    m_completionsTarget = url.path() + "chat/completions";
 };
 
 ::std::string to_string(const Role& role) {
@@ -125,21 +126,25 @@ void tag_invoke(::boost::json::value_from_tag, ::boost::json::value& value, cons
 
 template<typename Range>
 CompletionResult Client::Complete(const CompletionContext<Range>& context) {
-    ::boost::beast::http::request<::eboost::beast::http::json_body> request{ ::boost::beast::http::verb::post, m_completionsPath, 11 };
+    auto pSession = ::std::make_shared<::eboost::beast::http::session<
+        ::eboost::beast::http::json_body, ::eboost::beast::http::json_body>>(
+            m_ssl, m_timeout);
+
+    ::boost::beast::http::request<::eboost::beast::http::json_body>& request{ pSession->request() };
+    request.method(::boost::beast::http::verb::post);
+    request.target(m_completionsTarget);
+    request.version(11);
     request.set(::boost::beast::http::field::host, m_host);
     request.set(::boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     request.set(::boost::beast::http::field::authorization, m_authorization);
     request.set(::boost::beast::http::field::content_type, "application/json");
-
     request.body() = ::boost::json::value_from(context);
     request.prepare_payload();
 
-    ::boost::beast::http::response<::eboost::beast::http::json_body> response{ 
-        m_ssl
-            ? ::eboost::beast::http::client::send_secure<::eboost::beast::http::json_body, ::eboost::beast::http::json_body>(m_host, m_port, request)
-            : ::eboost::beast::http::client::send<::eboost::beast::http::json_body, ::eboost::beast::http::json_body>(m_host, m_port, request)
-    };
+    pSession->run(m_host, m_port);
+    pSession->wait();
 
+    ::boost::beast::http::response<::eboost::beast::http::json_body>& response{ pSession->response() };
     return ::boost::json::value_to<CompletionResult>(response.body());
 };
 

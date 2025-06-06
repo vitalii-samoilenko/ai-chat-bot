@@ -1,6 +1,7 @@
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
+#include <chrono>
 #include <string>
 #include <vector>
 
@@ -52,7 +53,7 @@ public:
     Client& operator=(const Client&) = delete;
     Client& operator=(Client&&) = delete;
 
-    Client(const ::std::string& baseAddress, const ::std::string& apiKey);
+    Client(const ::std::string& baseAddress, const ::std::string& apiKey, ::std::chrono::steady_clock::duration timeout);
 
     template<typename Range>
     ::OpenAI::CompletionResult Complete(const ::OpenAI::CompletionContext<Range>& context);
@@ -61,8 +62,9 @@ private:
     bool m_ssl;
     ::std::string m_host;
     ::std::string m_port;
-    ::std::string m_completionsPath;
+    ::std::string m_completionsTarget;
     ::std::string m_authorization;
+    ::std::chrono::steady_clock::duration m_timeout;
 };
 
 } // OpenAI

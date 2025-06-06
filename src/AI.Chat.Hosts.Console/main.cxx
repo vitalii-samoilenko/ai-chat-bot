@@ -7,7 +7,11 @@
 int main() {
     try
     {
-        ::OpenAI::Client client{ "https://generativelanguage.googleapis.com/v1beta/openai/", "apiKey" };
+        ::OpenAI::Client client{
+            "https://generativelanguage.googleapis.com/v1beta/openai/",
+            "apiKey",
+            ::std::chrono::seconds{ 30 }
+        };
         ::OpenAI::CompletionContext<::std::vector<::OpenAI::Message>> context{
             "gemini-2.0-flash",
             {
