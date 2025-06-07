@@ -7,7 +7,7 @@
 int main() {
     try
     {
-        ::OpenAI::Client client{
+        ::OpenAI::Client<::OpenAI::Type::Secure> client{
             "https://generativelanguage.googleapis.com/v1beta/openai/",
             "apiKey",
             ::std::chrono::seconds{ 30 }

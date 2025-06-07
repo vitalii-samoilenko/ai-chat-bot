@@ -42,6 +42,11 @@ struct CompletionContext {
     Range Messages;
 };
 
+enum class Type {
+    Plain,
+    Secure
+};
+template<Type>
 class Client {
 public:
     Client() = delete;
@@ -59,7 +64,6 @@ public:
     ::OpenAI::CompletionResult Complete(const ::OpenAI::CompletionContext<Range>& context);
 
 private:
-    bool m_ssl;
     ::std::string m_host;
     ::std::string m_port;
     ::std::string m_completionsTarget;

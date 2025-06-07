@@ -3,18 +3,20 @@
 
 #include <stdexcept>
 
+#include "boost/asio/ssl.hpp"
+#include "boost/asio/strand.hpp"
+#include "boost/beast.hpp"
 #include "boost/url.hpp"
 
 #include "eboost/beast/http/json_body.hpp"
-#include "eboost/beast/http/session.hpp"
 
 #include "OpenAI/Client.hpp"
 
 namespace OpenAI {
 
-Client::Client(const ::std::string& baseAddress, const ::std::string& apiKey, ::std::chrono::steady_clock::duration timeout)
-    : m_ssl{ false }
-    , m_host{}
+template<>
+Client<Type::Secure>::Client(const ::std::string& baseAddress, const ::std::string& apiKey, ::std::chrono::steady_clock::duration timeout)
+    : m_host{}
     , m_port{}
     , m_completionsTarget{}
     , m_authorization{ "Bearer " + apiKey }
@@ -24,17 +26,13 @@ Client::Client(const ::std::string& baseAddress, const ::std::string& apiKey, ::
         throw ::std::invalid_argument{ "baseAddress" };
     }
     ::boost::urls::url_view url{ result.value() };
-    if (url.scheme() == "https") {
-        m_ssl = true;
-    } else if (!(url.scheme() == "http")) {
+    if (url.scheme() != "https") {
         throw ::std::invalid_argument{ "baseAddress" };
     }
     m_host = url.host();
     m_port = url.has_port()
         ? url.port()
-        : m_ssl
-            ? "443"
-            : "80";
+        : "443";
     m_completionsTarget = url.path() + "chat/completions";
 };
 
@@ -124,16 +122,32 @@ void tag_invoke(::boost::json::value_from_tag, ::boost::json::value& value, cons
     };
 }
 
-template<typename Range>
-CompletionResult Client::Complete(const CompletionContext<Range>& context) {
-    auto pSession = ::std::make_shared<::eboost::beast::http::session<
-        ::eboost::beast::http::json_body, ::eboost::beast::http::json_body>>(
-            m_ssl, m_timeout);
+void ensureSuccess(::boost::beast::error_code errorCode) {
+    if (errorCode) {
+        throw ::boost::beast::system_error{ errorCode } ;
+    }
+}
 
-    ::boost::beast::http::request<::eboost::beast::http::json_body>& request{ pSession->request() };
-    request.method(::boost::beast::http::verb::post);
-    request.target(m_completionsTarget);
-    request.version(11);
+template<>
+template<typename Range>
+CompletionResult Client<Type::Secure>::Complete(const CompletionContext<Range>& context) {
+    ::boost::asio::io_context ioContext{};
+
+    ::boost::asio::ip::tcp::resolver resolver{ ::boost::asio::make_strand(ioContext) };
+
+    ::boost::asio::ssl::context sslContext{ ::boost::asio::ssl::context::tlsv12_client };
+    sslContext.set_verify_mode(::boost::asio::ssl::verify_none);
+
+    ::boost::asio::ssl::stream<::boost::beast::tcp_stream> stream{ ::boost::asio::make_strand(ioContext), sslContext };
+    if (!::SSL_set_tlsext_host_name(stream.native_handle(), m_host.c_str())) {
+        throw ::boost::beast::system_error{
+            static_cast<int>(::ERR_get_error()),
+            ::boost::asio::error::get_ssl_category()
+        };
+    }
+    stream.set_verify_callback(::boost::asio::ssl::host_name_verification(m_host));
+
+    ::boost::beast::http::request<::eboost::beast::http::json_body> request{ ::boost::beast::http::verb::post, m_completionsTarget, 11 };
     request.set(::boost::beast::http::field::host, m_host);
     request.set(::boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     request.set(::boost::beast::http::field::authorization, m_authorization);
@@ -141,10 +155,71 @@ CompletionResult Client::Complete(const CompletionContext<Range>& context) {
     request.body() = ::boost::json::value_from(context);
     request.prepare_payload();
 
-    pSession->run(m_host, m_port);
-    pSession->wait();
+    ::boost::beast::flat_buffer buffer{};
 
-    ::boost::beast::http::response<::eboost::beast::http::json_body>& response{ pSession->response() };
+    ::boost::beast::http::response<::eboost::beast::http::json_body> response{};
+
+    // Set a timeout on the operation
+    ::boost::beast::get_lowest_layer(stream).expires_after(m_timeout);
+
+     // Look up the domain name
+    resolver.async_resolve(m_host, m_port, [&](::boost::beast::error_code errorCode, ::boost::asio::ip::tcp::resolver::results_type results)->void {
+    ensureSuccess(errorCode);
+
+    // Make the connection on the IP address we get from a lookup
+    ::boost::beast::get_lowest_layer(stream).async_connect(results, [&](::boost::beast::error_code errorCode, ::boost::asio::ip::tcp::resolver::results_type::endpoint_type)->void {
+    ensureSuccess(errorCode);
+
+    // Perform the SSL handshake
+    stream.async_handshake(::boost::asio::ssl::stream_base::client, [&](::boost::beast::error_code errorCode)->void {
+    ensureSuccess(errorCode);
+
+    // Send the HTTP request to the remote host
+    ::boost::beast::http::async_write(stream, request, [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
+    ::boost::ignore_unused(transferredBytes);
+    ensureSuccess(errorCode);
+
+    // Receive the HTTP response
+    ::boost::beast::http::async_read(stream, buffer, response, [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
+    ::boost::ignore_unused(transferredBytes);
+    ensureSuccess(errorCode);
+
+    // Gracefully close the stream
+    stream.async_shutdown([&](::boost::beast::error_code errorCode)->void{
+    // ssl::error::stream_truncated, also known as an SSL "short read",
+    // indicates the peer closed the connection without performing the
+    // required closing handshake (for example, Google does this to
+    // improve performance). Generally this can be a security issue,
+    // but if your communication protocol is self-terminated (as
+    // it is with both HTTP and WebSocket) then you may simply
+    // ignore the lack of close_notify.
+    //
+    // https://github.com/boostorg/beast/issues/38
+    //
+    // https://security.stackexchange.com/questions/91435/how-to-handle-a-malicious-ssl-tls-shutdown
+    //
+    // When a short read would cut off the end of an HTTP message,
+    // Beast returns the error beast::http::error::partial_message.
+    // Therefore, if we see a short read here, it has occurred
+    // after the message has been completed, so it is safe to ignore it.
+    //
+    // not_connected happens sometimes so don't bother reporting it.
+
+    if (errorCode == ::boost::asio::ssl::error::stream_truncated) {
+        return;
+    }
+    ensureSuccess(errorCode);
+
+    // If we get here then the connection is closed gracefully
+    }); // shutdown
+    }); // read
+    }); // write
+    }); // handshake
+    }); // connect
+    }); // resolve
+
+    ioContext.run();
+
     return ::boost::json::value_to<CompletionResult>(response.body());
 };
 
