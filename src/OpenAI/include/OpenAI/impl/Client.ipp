@@ -48,7 +48,7 @@ Client::Client(const ::std::string& baseAddress, const ::std::string& apiKey, ::
             return "assistant";
     }
     throw ::std::invalid_argument{ "role" };
-}
+};
 Role tag_invoke(::boost::json::value_to_tag<Role>, const ::boost::json::value& value) {
     const ::boost::json::string& string{ value.as_string() };
     if (string == "system") {
@@ -61,20 +61,20 @@ Role tag_invoke(::boost::json::value_to_tag<Role>, const ::boost::json::value& v
         return Role::Assistant;
     }
     throw ::std::invalid_argument{ "value" };
-}
+};
 
 void tag_invoke(::boost::json::value_from_tag, ::boost::json::value& value, const Message& message) {
     value = {
         { "role" , to_string(message.Role) },
         { "content", message.Content },
     };
-}
+};
 Message tag_invoke(::boost::json::value_to_tag<Message>, const ::boost::json::value& value) {
     return {
         ::boost::json::value_to<Role>(value.at("role")),
         ::boost::json::value_to<::std::string>(value.at("content")),
     };
-}
+};
 
 Usage tag_invoke(::boost::json::value_to_tag<Usage>, const ::boost::json::value& value) {
     return {
@@ -82,7 +82,7 @@ Usage tag_invoke(::boost::json::value_to_tag<Usage>, const ::boost::json::value&
         ::boost::json::value_to<size_t>(value.at("prompt_tokens")),
         ::boost::json::value_to<size_t>(value.at("total_tokens")),
     };
-}
+};
 
 FinishReason tag_invoke(::boost::json::value_to_tag<FinishReason>, const ::boost::json::value& value) {
     const ::boost::json::string& string{ value.as_string() };
@@ -99,7 +99,7 @@ FinishReason tag_invoke(::boost::json::value_to_tag<FinishReason>, const ::boost
         return FinishReason::ToolCalls;
     }
     throw ::std::invalid_argument{ "value" };
-}
+};
 
 Choice tag_invoke(::boost::json::value_to_tag<Choice>, const ::boost::json::value& value) {
     return {
@@ -107,14 +107,14 @@ Choice tag_invoke(::boost::json::value_to_tag<Choice>, const ::boost::json::valu
         ::boost::json::value_to<size_t>(value.at("index")),
         ::boost::json::value_to<Message>(value.at("message")),
     };
-}
+};
 
 CompletionResult tag_invoke(::boost::json::value_to_tag<CompletionResult>, const ::boost::json::value& value) {
     return {
         ::boost::json::value_to<::std::vector<Choice>>(value.at("choices")),
         ::boost::json::value_to<Usage>(value.at("usage")),
     };
-}
+};
 
 template<typename Range>
 void tag_invoke(::boost::json::value_from_tag, ::boost::json::value& value, const CompletionContext<Range>& context) {
@@ -122,7 +122,7 @@ void tag_invoke(::boost::json::value_from_tag, ::boost::json::value& value, cons
         { "model" , context.Model },
         { "messages", ::boost::json::value_from(context.Messages) },
     };
-}
+};
 
 template<typename Range>
 CompletionResult Client::Complete(const CompletionContext<Range>& context) {
@@ -135,21 +135,12 @@ CompletionResult Client::Complete(const CompletionContext<Range>& context) {
     request.set(::boost::beast::http::field::content_type, "application/json");
 
     ::boost::beast::http::response<::eboost::beast::http::json_body> response{
-        m_ssl
-            ? ::eboost::beast::http::client::send<
-                ::eboost::beast::http::client::channel::secure,
-                ::eboost::beast::http::json_body,
-                ::eboost::beast::http::json_body>(
-                    m_host, m_port,
-                    m_timeout,
-                    request)
-            : ::eboost::beast::http::client::send<
-                ::eboost::beast::http::client::channel::plain,
-                ::eboost::beast::http::json_body,
-                ::eboost::beast::http::json_body>(
-                    m_host, m_port,
-                    m_timeout,
-                    request)
+        ::eboost::beast::http::client::send<
+            ::eboost::beast::http::json_body,
+            ::eboost::beast::http::json_body>(
+                m_ssl, m_host, m_port,
+                m_timeout,
+                request)
     };
     return ::boost::json::value_to<CompletionResult>(response.body());
 };

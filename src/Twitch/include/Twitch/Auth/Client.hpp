@@ -7,6 +7,15 @@
 namespace Twitch {
 namespace Auth {
 
+struct AccessContext {
+    ::std::string AccessToken;
+    ::std::string RefreshToken;
+};
+struct AuthContext {
+    ::std::string DeviceCode;
+    ::std::string VerificationUri;
+};
+
 class Client {
 public:
     Client() = delete;
@@ -21,7 +30,9 @@ public:
     Client(const ::std::string& baseAddress, ::std::chrono::steady_clock::duration timeout);
 
     bool ValidateToken(const ::std::string& token);
-    ::std::string RefreshToken(const ::std::string& clientId, const ::std::string& clientSecret, const ::std::string& refreshToken);
+    AccessContext RefreshToken(const ::std::string& clientId, const ::std::string& clientSecret, const ::std::string& refreshToken);
+    AccessContext IssueToken(const ::std::string& clientId, const ::std::string& deviceCode, const ::std::string& scopes);
+    AuthContext RequestAccess(const ::std::string& clientId, const ::std::string& scopes);
 
 private:
     bool m_ssl;
@@ -29,6 +40,7 @@ private:
     ::std::string m_port;
     ::std::string m_validateTarget;
     ::std::string m_tokenTarget;
+    ::std::string m_deviceTarget;
     ::std::chrono::steady_clock::duration m_timeout;
 };
 

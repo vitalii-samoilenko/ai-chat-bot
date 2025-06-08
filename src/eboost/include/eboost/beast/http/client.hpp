@@ -2,10 +2,7 @@
 #define EBOOST_BEAST_HTTP_CLIENT_HPP
 
 #include <chrono>
-#include <stdexcept>
 #include <string>
-#include <type_traits>
-#include <utility>
 
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/strand.hpp>
@@ -22,14 +19,20 @@ void ensureSuccess(::boost::beast::error_code errorCode) {
     }
 }
 
-enum class channel {
-    plain,
-    secure
-};
+struct secure_channel_tag{};
+struct plain_channel_tag{};
 
-template<channel Channel, typename RequestBody, typename ResponseBody,
-    ::std::enable_if_t<Channel == channel::secure, bool> = true>
-::boost::beast::http::response<ResponseBody> send(const ::std::string& host, const ::std::string& port, ::std::chrono::steady_clock::duration timeout, ::boost::beast::http::request<RequestBody>& request) {
+template<typename RequestBody, typename ResponseBody>
+::boost::beast::http::response<ResponseBody> send(bool ssl, const ::std::string& host, const ::std::string& port, ::std::chrono::steady_clock::duration timeout, ::boost::beast::http::request<RequestBody>& request) {
+    return ssl
+        ? send<RequestBody, ResponseBody>(secure_channel_tag{},
+            host, port, timeout, request)
+        : send<RequestBody, ResponseBody>(plain_channel_tag{},
+            host, port, timeout, request);
+}
+
+template<typename RequestBody, typename ResponseBody>
+::boost::beast::http::response<ResponseBody> send(secure_channel_tag, const ::std::string& host, const ::std::string& port, ::std::chrono::steady_clock::duration timeout, ::boost::beast::http::request<RequestBody>& request) {
     ::boost::asio::io_context ioContext{};
 
     ::boost::asio::ip::tcp::resolver resolver{ ::boost::asio::make_strand(ioContext) };
@@ -118,9 +121,8 @@ template<channel Channel, typename RequestBody, typename ResponseBody,
     return response;
 }
 
-template<channel Channel, typename RequestBody, typename ResponseBody,
-    ::std::enable_if_t<Channel == channel::plain, bool> = true>
-::boost::beast::http::response<ResponseBody> send(const ::std::string& host, const ::std::string& port, ::std::chrono::steady_clock::duration timeout, ::boost::beast::http::request<RequestBody>& request) {
+template<typename RequestBody, typename ResponseBody>
+::boost::beast::http::response<ResponseBody> send(plain_channel_tag, const ::std::string& host, const ::std::string& port, ::std::chrono::steady_clock::duration timeout, ::boost::beast::http::request<RequestBody>& request) {
     ::boost::asio::io_context ioContext{};
 
     ::boost::asio::ip::tcp::resolver resolver{ ::boost::asio::make_strand(ioContext) };

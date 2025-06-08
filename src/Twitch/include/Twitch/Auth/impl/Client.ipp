@@ -21,6 +21,7 @@ Client::Client(const ::std::string& baseAddress, ::std::chrono::steady_clock::du
     , m_port{}
     , m_validateTarget{}
     , m_tokenTarget{}
+    , m_deviceTarget{}
     , m_timeout{ timeout } {
     ::boost::system::result<::boost::urls::url_view> result{ ::boost::urls::parse_uri(baseAddress) };
     if (!result.has_value()) {
@@ -40,6 +41,20 @@ Client::Client(const ::std::string& baseAddress, ::std::chrono::steady_clock::du
             : "80";
     m_validateTarget = url.path() + "validate";
     m_tokenTarget = url.path() + "token";
+    m_deviceTarget = url.path() + "device";
+};
+
+AccessContext tag_invoke(::boost::json::value_to_tag<AccessContext>, const ::boost::json::value& value) {
+    return {
+        ::boost::json::value_to<::std::string>(value.at("access_token")),
+        ::boost::json::value_to<::std::string>(value.at("refresh_token")),
+    };
+};
+AuthContext tag_invoke(::boost::json::value_to_tag<AuthContext>, const ::boost::json::value& value) {
+    return {
+        ::boost::json::value_to<::std::string>(value.at("device_code")),
+        ::boost::json::value_to<::std::string>(value.at("verification_uri")),
+    };
 };
 
 bool Client::ValidateToken(const ::std::string& token) {
@@ -49,26 +64,17 @@ bool Client::ValidateToken(const ::std::string& token) {
     request.set(::boost::beast::http::field::authorization, "OAuth " + token);
 
     ::boost::beast::http::response<::eboost::beast::http::json_body> response{
-        m_ssl
-            ? ::eboost::beast::http::client::send<
-                ::eboost::beast::http::client::channel::secure,
-                ::boost::beast::http::empty_body,
-                ::eboost::beast::http::json_body>(
-                    m_host, m_port,
-                    m_timeout,
-                    request)
-            : ::eboost::beast::http::client::send<
-                ::eboost::beast::http::client::channel::plain,
-                ::boost::beast::http::empty_body,
-                ::eboost::beast::http::json_body>(
-                    m_host, m_port,
-                    m_timeout,
-                    request)
+        ::eboost::beast::http::client::send<
+            ::boost::beast::http::empty_body,
+            ::eboost::beast::http::json_body>(
+                m_ssl, m_host, m_port,
+                m_timeout,
+                request)
     };
     return response.result() == ::boost::beast::http::status::ok;
 };
 
-::std::string Client::RefreshToken(const ::std::string& clientId, const ::std::string& clientSecret, const ::std::string& refreshToken) {
+AccessContext Client::RefreshToken(const ::std::string& clientId, const ::std::string& clientSecret, const ::std::string& refreshToken) {
     ::boost::beast::http::request<::eboost::beast::http::form_body<::std::array<::std::pair<::std::string, ::std::string>, 4>>> request{
         ::boost::beast::http::verb::post, m_tokenTarget, 11,
         ::std::array<::std::pair<::std::string, ::std::string>, 4>{
@@ -82,23 +88,46 @@ bool Client::ValidateToken(const ::std::string& token) {
     request.set(::boost::beast::http::field::content_type, "application/x-www-form-urlencoded");
 
     ::boost::beast::http::response<::eboost::beast::http::json_body> response{
-        m_ssl
-            ? ::eboost::beast::http::client::send<
-                ::eboost::beast::http::client::channel::secure,
-                ::eboost::beast::http::form_body<::std::array<::std::pair<::std::string, ::std::string>, 4>>,
-                ::eboost::beast::http::json_body>(
-                    m_host, m_port,
-                    m_timeout,
-                    request)
-            : ::eboost::beast::http::client::send<
-                ::eboost::beast::http::client::channel::plain,
-                ::eboost::beast::http::form_body<::std::array<::std::pair<::std::string, ::std::string>, 4>>,
-                ::eboost::beast::http::json_body>(
-                    m_host, m_port,
-                    m_timeout,
-                    request)
+        ::eboost::beast::http::client::send<
+            ::eboost::beast::http::form_body<::std::array<::std::pair<::std::string, ::std::string>, 4>>,
+            ::eboost::beast::http::json_body>(
+                m_ssl, m_host, m_port,
+                m_timeout,
+                request)
     };
-    return ::boost::json::value_to<::std::string>(response.body().at("access_token"));
+    return ::boost::json::value_to<AccessContext>(response.body());
+};
+
+AccessContext Client::IssueToken(const ::std::string& clientId, const ::std::string& deviceCode, const ::std::string& scopes) {
+    ::boost::beast::http::request<::boost::beast::http::empty_body> request{
+        ::boost::beast::http::verb::post, m_tokenTarget + "?client_id=" + clientId + "&grant_type=urn:ietf:params:oauth:grant-type:device_code&device_code=" + deviceCode + "&scopes=" + scopes, 11,
+    };
+
+    ::boost::beast::http::response<::eboost::beast::http::json_body> response{
+        ::eboost::beast::http::client::send<
+            ::boost::beast::http::empty_body,
+            ::eboost::beast::http::json_body>(
+                m_ssl, m_host, m_port,
+                m_timeout,
+                request)
+    };
+    return ::boost::json::value_to<AccessContext>(response.body());
+};
+
+AuthContext Client::RequestAccess(const ::std::string& clientId, const ::std::string& scopes) {
+    ::boost::beast::http::request<::boost::beast::http::empty_body> request{
+        ::boost::beast::http::verb::post, m_deviceTarget + "?client_id=" + clientId + "&scopes=" + scopes, 11,
+    };
+
+    ::boost::beast::http::response<::eboost::beast::http::json_body> response{
+        ::eboost::beast::http::client::send<
+            ::boost::beast::http::empty_body,
+            ::eboost::beast::http::json_body>(
+                m_ssl, m_host, m_port,
+                m_timeout,
+                request)
+    };
+    return ::boost::json::value_to<AuthContext>(response.body());
 };
 
 } // Auth
