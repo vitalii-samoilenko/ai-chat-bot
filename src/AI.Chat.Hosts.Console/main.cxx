@@ -3,11 +3,12 @@
 #include <vector>
 
 #include "OpenAI/Client.hpp"
+#include "Twitch/Auth/Client.hpp"
 
 int main() {
     try
     {
-        ::OpenAI::Client<::OpenAI::Type::Secure> client{
+        ::OpenAI::Client openAiClient{
             "https://generativelanguage.googleapis.com/v1beta/openai/",
             "apiKey",
             ::std::chrono::seconds{ 30 }
@@ -17,14 +18,23 @@ int main() {
             {
                 {
                     ::OpenAI::Role::User,
-                    "Explain to me how AI works"
+                    "Hello!"
                 }
             }
         };
-        ::OpenAI::CompletionResult result{ client.Complete(context) };
+        ::OpenAI::CompletionResult result{ openAiClient.Complete(context) };
 
         ::std::cout << result.Usage.TotalTokens << ::std::endl;
         ::std::cout << result.Choices[0].Message.Content << ::std::endl;
+
+        ::Twitch::Auth::Client twitchAuthClient {
+            "https://id.twitch.tv/oauth2/",
+            ::std::chrono::seconds{ 30 }
+        };
+
+        bool isValid{ twitchAuthClient.ValidateToken("accessToken") };
+
+        ::std::cout << isValid << ::std::endl;
     }
     catch(const ::std::exception& e)
     {

@@ -13,8 +13,8 @@
 //
 //------------------------------------------------------------------------------
 
-#ifndef EBOOST_BEAST_JSON_BODY_HPP
-#define EBOOST_BEAST_JSON_BODY_HPP
+#ifndef EBOOST_BEAST_HTTP_JSON_BODY_HPP
+#define EBOOST_BEAST_HTTP_JSON_BODY_HPP
 
 #include <boost/json.hpp>
 #include <boost/json/stream_parser.hpp>

@@ -6,5 +6,6 @@ add_executable(AI.Chat.Hosts.Console main.cxx)
 target_link_libraries(AI.Chat.Hosts.Console
   PRIVATE
     OpenAI
+    Twitch
 )
 target_compile_features(AI.Chat.Hosts.Console PRIVATE cxx_std_11)
