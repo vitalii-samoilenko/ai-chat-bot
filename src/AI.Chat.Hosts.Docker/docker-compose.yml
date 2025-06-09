@@ -2,28 +2,15 @@ name:
   ai-chat-hosts-docker
 
 services:
-  ai-chat-hosts-api:
-    container_name: ai-chat-hosts-api
-    depends_on:
-      - alloy
-    image: ai.chat.hosts.api
+  ai-chat-hosts-console:
+    container_name: ai-chat-hosts-console
+    image: ai.chat.hosts.console
     build:
       context: ../..
-      dockerfile: src/AI.Chat.Hosts.API/Dockerfile
-    environment:
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4317
-      - OTEL_SERVICE_NAME=ai-chat-hosts-api
-    volumes:
-      - data.ai.chat.hosts.api:/app/external
-    ports:
-      - 5117:8080
+      dockerfile: src/AI.Chat.Hosts.Console/Dockerfile
     networks:
       - ai-chat-hosts-docker
 
 networks:
   ai-chat-hosts-docker:
-    external: true
-
-volumes:
-  data.ai.chat.hosts.api:
     external: true
