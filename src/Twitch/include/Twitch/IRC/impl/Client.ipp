@@ -24,13 +24,13 @@ Client::Client(const ::std::string& baseAddress, ::std::chrono::milliseconds tim
     , m_subscriptions{} {
     ::boost::system::result<::boost::urls::url_view> result{ ::boost::urls::parse_uri(baseAddress) };
     if (!result.has_value()) {
-        throw ::std::invalid_argument{ "baseAddress" };
+        throw ::std::invalid_argument{ "Invalid URI" };
     }
     ::boost::urls::url_view url{ result.value() };
     if (url.scheme() == "wss") {
         m_ssl = true;
     } else if (!(url.scheme() == "ws")) {
-        throw ::std::invalid_argument{ "baseAddress" };
+        throw ::std::invalid_argument{ "Scheme is not supported" };
     }
     m_host = url.host();
     m_port = url.has_port()
@@ -114,45 +114,44 @@ bool run(secure_channel_tag,
     clientContextImpl.secureStream = stream;
     Context clientContext{ clientContextImpl };
 
-    ::boost::xpressive::mark_tag tags_group{ 1 };
-    ::boost::xpressive::mark_tag ping_group{ 2 };
-    ::boost::xpressive::mark_tag username_group{ 3 };
-    ::boost::xpressive::mark_tag command_group{ 4 };
-    ::boost::xpressive::mark_tag args_group{ 5 };
-    ::boost::xpressive::sregex message_group{ 
-        //::boost::xpressive::sregex::compile(R"(^(?:@(?<tags>\S+) )?(?:(?<ping>PING) )?:(?:(?<username>[a-z]+)!\g<username>@\g<username>[.])?tmi[.]twitch[.]tv(?: (?<command>[A-Z]+)(?: (?<args>.+))*)?$)")
-        !('@' >> (tags_group = +~::boost::xpressive::_s) >> ' ')
-        >> !((ping_group = "PING") >> ' ')
-        >> ':'
-            >> !((username_group = +::boost::xpressive::range('a', 'z')) >> '!' >> username_group >> '@' >> username_group >> '.')
-            >> "tmi.twitch.tv"
-            >> !(' ' >> (command_group = +::boost::xpressive::range('A', 'Z')) >> *(' ' >> (args_group = +::boost::xpressive::_)))
+    ::boost::xpressive::mark_tag ping_group{ 1 };
+    ::boost::xpressive::mark_tag username_group{ 2 };
+    ::boost::xpressive::mark_tag privmsg_group{ 3 };
+    ::boost::xpressive::mark_tag channel_group{ 4 };
+    ::boost::xpressive::mark_tag message_group{ 5 };
+    ::boost::xpressive::mark_tag notice_group{ 6 };
+    ::boost::xpressive::mark_tag reason_group{ 7 };
+    ::boost::xpressive::mark_tag reconnect_group{ 8 };
+    ::boost::xpressive::sregex command_group{ 
+        //::boost::xpressive::sregex::compile(R"((?:(?<ping>PING) :tmi[.]twitch[.]tv)|(?::(?<username>[a-z]+)!\g<username>@\g<username>[.]tmi[.]twitch[.]tv (?<privmsg>PRIVMSG) #(?<channel>[a-z]+) :(?<message>.+))|(?::tmi[.]twitch[.]tv (?<notice>NOTICE) [*] :(?<reason>.+)))")
+        ((ping_group = "PING") >> " :tmi.twitch.tv" >> ::boost::xpressive::_ln)
+        | (':' >> (username_group = +::boost::xpressive::range('a', 'z')) >> '!' >> username_group >> '@' >> username_group >> ".tmi.twitch.tv "
+            >> (privmsg_group = "PRIVMSG") >> " #" >> (channel_group = +::boost::xpressive::range('a', 'z')) >> " :" >> (message_group = +~::boost::xpressive::_ln) >> ::boost::xpressive::_ln)
+        | (":tmi.twitch.tv " >> (notice_group = "NOTICE") >> " * :" >> (reason_group = +~::boost::xpressive::_ln) >> ::boost::xpressive::_ln)
+        | (":tmi.twitch.tv " >> (reconnect_group = "RECONNECT"))
     };
 
     ::std::function<void(::boost::beast::error_code, size_t)> loop = [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
         ensureSuccess(errorCode);
 
-        for (::boost::xpressive::sregex_iterator current( response.begin(), response.end(), message_group ), end{}; current != end; ++current ) {
+        for (::boost::xpressive::sregex_iterator current( response.begin(), response.end(), command_group ), end{}; current != end; ++current ) {
             const ::boost::xpressive::smatch& what{ *current };
-            if (what[ping_group] == "PING") {
+            if (what[ping_group]) {
                 request = "PONG :tmi.twitch.tv";
                 stream.async_write(::boost::asio::buffer(request), [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
                 ::boost::ignore_unused(transferredBytes);
                 ensureSuccess(errorCode);
 
                 }); // PONG
-            } else {
-                const ::std::string& identifier{ what[command_group] };
-                if (identifier == "PRIVMSG") {
-                    Message message{ what[username_group], "", what[args_group] };
-                    for (const auto& target_subscription : subscriptions) {
-                        const Subscription& subscription{ target_subscription.second };
-                        subscription.OnMessage(clientContext, message);
-                    }
-                } else if (identifier == "RECONNECT") {
-                    reconnect = true;
-                    stop = true;
+            } else if (what[privmsg_group]) {
+                Message message{ what[username_group], what[channel_group], what[message_group] };
+                for (const auto& target_subscription : subscriptions) {
+                    const Subscription& subscription{ target_subscription.second };
+                    subscription.OnMessage(clientContext, message);
                 }
+            } else if (what[reconnect_group]) {
+                reconnect = true;
+                stop = true;
             }
         }
         buffer.consume(transferredBytes);
@@ -207,9 +206,9 @@ bool run(secure_channel_tag,
     ensureSuccess(errorCode);
 
     ::boost::xpressive::smatch what{};
-    if (::boost::xpressive::regex_match(response, what, message_group)
-        && what[command_group] == "NOTICE") {
-        return;
+    if (::boost::xpressive::regex_match(response, what, command_group)
+        && what[notice_group]) {
+        throw ::std::invalid_argument{ what[reason_group] };
     }
     buffer.consume(transferredBytes);
 

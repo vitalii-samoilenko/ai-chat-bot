@@ -21,13 +21,13 @@ Client::Client(const ::std::string& baseAddress, const ::std::string& apiKey, ::
     , m_timeout{ timeout } {
     ::boost::system::result<::boost::urls::url_view> result{ ::boost::urls::parse_uri(baseAddress) };
     if (!result.has_value()) {
-        throw ::std::invalid_argument{ "baseAddress" };
+        throw ::std::invalid_argument{ "Invalid URI" };
     }
     ::boost::urls::url_view url{ result.value() };
     if (url.scheme() == "https") {
         m_ssl = true;
     } else if (!(url.scheme() == "http")) {
-        throw ::std::invalid_argument{ "baseAddress" };
+        throw ::std::invalid_argument{ "Scheme is not supported" };
     }
     m_host = url.host();
     m_port = url.has_port()
@@ -47,7 +47,7 @@ Client::Client(const ::std::string& baseAddress, const ::std::string& apiKey, ::
         case Role::Assistant:
             return "assistant";
     }
-    throw ::std::invalid_argument{ "role" };
+    throw ::std::invalid_argument{ "Role is not supported" };
 };
 Role tag_invoke(::boost::json::value_to_tag<Role>, const ::boost::json::value& value) {
     const ::boost::json::string& string{ value.as_string() };
@@ -60,7 +60,7 @@ Role tag_invoke(::boost::json::value_to_tag<Role>, const ::boost::json::value& v
     if (string == "assistant") {
         return Role::Assistant;
     }
-    throw ::std::invalid_argument{ "value" };
+    throw ::std::invalid_argument{ "Role is not supported" };
 };
 
 void tag_invoke(::boost::json::value_from_tag, ::boost::json::value& value, const Message& message) {
@@ -98,7 +98,7 @@ FinishReason tag_invoke(::boost::json::value_to_tag<FinishReason>, const ::boost
     if (string == "tool_calls") {
         return FinishReason::ToolCalls;
     }
-    throw ::std::invalid_argument{ "value" };
+    throw ::std::invalid_argument{ "Finish reason is not supported" };
 };
 
 Choice tag_invoke(::boost::json::value_to_tag<Choice>, const ::boost::json::value& value) {

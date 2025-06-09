@@ -25,13 +25,13 @@ Client::Client(const ::std::string& baseAddress, ::std::chrono::milliseconds tim
     , m_timeout{ timeout } {
     ::boost::system::result<::boost::urls::url_view> result{ ::boost::urls::parse_uri(baseAddress) };
     if (!result.has_value()) {
-        throw ::std::invalid_argument{ "baseAddress" };
+        throw ::std::invalid_argument{ "Invalid URI" };
     }
     ::boost::urls::url_view url{ result.value() };
     if (url.scheme() == "https") {
         m_ssl = true;
     } else if (!(url.scheme() == "http")) {
-        throw ::std::invalid_argument{ "baseAddress" };
+        throw ::std::invalid_argument{ "Scheme is not supported" };
     }
     m_host = url.host();
     m_port = url.has_port()
