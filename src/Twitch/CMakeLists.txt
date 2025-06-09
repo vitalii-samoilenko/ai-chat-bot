@@ -8,6 +8,7 @@ target_include_directories(twitch INTERFACE include)
 target_link_libraries(twitch
   INTERFACE
     Boost::url
+    Boost::xpressive
     EBoost
 )
 target_compile_features(twitch INTERFACE cxx_std_11)

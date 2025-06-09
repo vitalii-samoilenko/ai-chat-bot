@@ -53,10 +53,10 @@ public:
     Client& operator=(const Client&) = delete;
     Client& operator=(Client&&) = delete;
 
-    Client(const ::std::string& baseAddress, const ::std::string& apiKey, ::std::chrono::steady_clock::duration timeout);
+    Client(const ::std::string& baseAddress, const ::std::string& apiKey, ::std::chrono::milliseconds timeout);
 
     template<typename Range>
-    ::OpenAI::CompletionResult Complete(const ::OpenAI::CompletionContext<Range>& context);
+    ::OpenAI::CompletionResult Complete(const ::OpenAI::CompletionContext<Range>& context) const;
 
 private:
     bool m_ssl;
@@ -64,7 +64,7 @@ private:
     ::std::string m_port;
     ::std::string m_completionsTarget;
     ::std::string m_authorization;
-    ::std::chrono::steady_clock::duration m_timeout;
+    ::std::chrono::milliseconds m_timeout;
 };
 
 } // OpenAI

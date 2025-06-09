@@ -12,7 +12,7 @@
 
 namespace OpenAI {
 
-Client::Client(const ::std::string& baseAddress, const ::std::string& apiKey, ::std::chrono::steady_clock::duration timeout)
+Client::Client(const ::std::string& baseAddress, const ::std::string& apiKey, ::std::chrono::milliseconds timeout)
     : m_ssl{}
     , m_host{}
     , m_port{}
@@ -125,7 +125,7 @@ void tag_invoke(::boost::json::value_from_tag, ::boost::json::value& value, cons
 };
 
 template<typename Range>
-CompletionResult Client::Complete(const CompletionContext<Range>& context) {
+CompletionResult Client::Complete(const CompletionContext<Range>& context) const {
     ::boost::beast::http::request<::eboost::beast::http::json_body> request{
         ::boost::beast::http::verb::post, m_completionsTarget, 11,
         ::boost::json::value_from(context)

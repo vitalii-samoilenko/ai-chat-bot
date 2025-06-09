@@ -27,12 +27,12 @@ public:
     Client& operator=(const Client&) = delete;
     Client& operator=(Client&&) = delete;
 
-    Client(const ::std::string& baseAddress, ::std::chrono::steady_clock::duration timeout);
+    Client(const ::std::string& baseAddress, ::std::chrono::milliseconds timeout);
 
-    bool ValidateToken(const ::std::string& token);
-    AccessContext RefreshToken(const ::std::string& clientId, const ::std::string& clientSecret, const ::std::string& refreshToken);
-    AccessContext IssueToken(const ::std::string& clientId, const ::std::string& deviceCode, const ::std::string& scopes);
-    AuthContext RequestAccess(const ::std::string& clientId, const ::std::string& scopes);
+    bool ValidateToken(const ::std::string& token) const;
+    AccessContext RefreshToken(const ::std::string& clientId, const ::std::string& clientSecret, const ::std::string& refreshToken) const;
+    AccessContext IssueToken(const ::std::string& clientId, const ::std::string& deviceCode, const ::std::string& scopes) const;
+    AuthContext RequestAccess(const ::std::string& clientId, const ::std::string& scopes) const;
 
 private:
     bool m_ssl;
@@ -41,7 +41,7 @@ private:
     ::std::string m_validateTarget;
     ::std::string m_tokenTarget;
     ::std::string m_deviceTarget;
-    ::std::chrono::steady_clock::duration m_timeout;
+    ::std::chrono::milliseconds m_timeout;
 };
 
 } // Auth

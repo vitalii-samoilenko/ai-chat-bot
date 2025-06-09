@@ -15,7 +15,7 @@
 namespace Twitch {
 namespace Auth {
 
-Client::Client(const ::std::string& baseAddress, ::std::chrono::steady_clock::duration timeout)
+Client::Client(const ::std::string& baseAddress, ::std::chrono::milliseconds timeout)
     : m_ssl{}
     , m_host{}
     , m_port{}
@@ -57,7 +57,7 @@ AuthContext tag_invoke(::boost::json::value_to_tag<AuthContext>, const ::boost::
     };
 };
 
-bool Client::ValidateToken(const ::std::string& token) {
+bool Client::ValidateToken(const ::std::string& token) const {
     ::boost::beast::http::request<::boost::beast::http::empty_body> request{
         ::boost::beast::http::verb::get, m_validateTarget, 11,
     };
@@ -72,7 +72,7 @@ bool Client::ValidateToken(const ::std::string& token) {
     return response.result() == ::boost::beast::http::status::ok;
 };
 
-AccessContext Client::RefreshToken(const ::std::string& clientId, const ::std::string& clientSecret, const ::std::string& refreshToken) {
+AccessContext Client::RefreshToken(const ::std::string& clientId, const ::std::string& clientSecret, const ::std::string& refreshToken) const {
     ::boost::beast::http::request<::eboost::beast::http::form_body<::std::array<::std::pair<::std::string, ::std::string>, 4>>> request{
         ::boost::beast::http::verb::post, m_tokenTarget, 11,
         ::std::array<::std::pair<::std::string, ::std::string>, 4>{
@@ -94,7 +94,7 @@ AccessContext Client::RefreshToken(const ::std::string& clientId, const ::std::s
     return ::boost::json::value_to<AccessContext>(response.body());
 };
 
-AccessContext Client::IssueToken(const ::std::string& clientId, const ::std::string& deviceCode, const ::std::string& scopes) {
+AccessContext Client::IssueToken(const ::std::string& clientId, const ::std::string& deviceCode, const ::std::string& scopes) const {
     ::boost::beast::http::request<::boost::beast::http::empty_body> request{
         ::boost::beast::http::verb::post, m_tokenTarget + "?client_id=" + clientId + "&grant_type=urn:ietf:params:oauth:grant-type:device_code&device_code=" + deviceCode + "&scopes=" + scopes, 11,
     };
@@ -108,7 +108,7 @@ AccessContext Client::IssueToken(const ::std::string& clientId, const ::std::str
     return ::boost::json::value_to<AccessContext>(response.body());
 };
 
-AuthContext Client::RequestAccess(const ::std::string& clientId, const ::std::string& scopes) {
+AuthContext Client::RequestAccess(const ::std::string& clientId, const ::std::string& scopes) const {
     ::boost::beast::http::request<::boost::beast::http::empty_body> request{
         ::boost::beast::http::verb::post, m_deviceTarget + "?client_id=" + clientId + "&scopes=" + scopes, 11,
     };

@@ -23,7 +23,7 @@ struct secure_channel_tag{};
 struct plain_channel_tag{};
 
 template<typename ResponseBody, typename RequestBody>
-::boost::beast::http::response<ResponseBody> send(bool ssl, const ::std::string& host, const ::std::string& port, ::std::chrono::steady_clock::duration timeout, ::boost::beast::http::request<RequestBody>& request) {
+::boost::beast::http::response<ResponseBody> send(bool ssl, const ::std::string& host, const ::std::string& port, ::std::chrono::milliseconds timeout, ::boost::beast::http::request<RequestBody>& request) {
     return ssl
         ? send<ResponseBody, RequestBody>(secure_channel_tag{},
             host, port, timeout, request)
@@ -32,7 +32,7 @@ template<typename ResponseBody, typename RequestBody>
 }
 
 template<typename ResponseBody, typename RequestBody>
-::boost::beast::http::response<ResponseBody> send(secure_channel_tag, const ::std::string& host, const ::std::string& port, ::std::chrono::steady_clock::duration timeout, ::boost::beast::http::request<RequestBody>& request) {
+::boost::beast::http::response<ResponseBody> send(secure_channel_tag, const ::std::string& host, const ::std::string& port, ::std::chrono::milliseconds timeout, ::boost::beast::http::request<RequestBody>& request) {
     ::boost::asio::io_context ioContext{};
 
     ::boost::asio::ip::tcp::resolver resolver{ ::boost::asio::make_strand(ioContext) };
@@ -122,7 +122,7 @@ template<typename ResponseBody, typename RequestBody>
 }
 
 template<typename ResponseBody, typename RequestBody>
-::boost::beast::http::response<ResponseBody> send(plain_channel_tag, const ::std::string& host, const ::std::string& port, ::std::chrono::steady_clock::duration timeout, ::boost::beast::http::request<RequestBody>& request) {
+::boost::beast::http::response<ResponseBody> send(plain_channel_tag, const ::std::string& host, const ::std::string& port, ::std::chrono::milliseconds timeout, ::boost::beast::http::request<RequestBody>& request) {
     ::boost::asio::io_context ioContext{};
 
     ::boost::asio::ip::tcp::resolver resolver{ ::boost::asio::make_strand(ioContext) };
