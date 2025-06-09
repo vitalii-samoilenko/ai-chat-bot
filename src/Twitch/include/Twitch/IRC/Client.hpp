@@ -34,7 +34,7 @@ public:
     Context& operator=(const Context&) = delete;
     Context& operator=(Context&&) = delete;
 
-    Context(ContextImpl& impl)
+    explicit Context(ContextImpl& impl)
         : m_impl{ impl } {
 
     };

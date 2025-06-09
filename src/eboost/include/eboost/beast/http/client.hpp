@@ -8,31 +8,16 @@
 #include <boost/asio/strand.hpp>
 #include <boost/beast.hpp>
 
+#include "eboost/beast/channel.hpp"
+#include "eboost/beast/ensure_success.hpp"
+
 namespace eboost {
 namespace beast {
 namespace http {
 namespace client {
 
-void ensureSuccess(::boost::beast::error_code errorCode) {
-    if (errorCode) {
-        throw ::boost::beast::system_error{ errorCode } ;
-    }
-}
-
-struct secure_channel_tag{};
-struct plain_channel_tag{};
-
 template<typename ResponseBody, typename RequestBody>
-::boost::beast::http::response<ResponseBody> send(bool ssl, const ::std::string& host, const ::std::string& port, ::std::chrono::milliseconds timeout, ::boost::beast::http::request<RequestBody>& request) {
-    return ssl
-        ? send<ResponseBody, RequestBody>(secure_channel_tag{},
-            host, port, timeout, request)
-        : send<ResponseBody, RequestBody>(plain_channel_tag{},
-            host, port, timeout, request);
-}
-
-template<typename ResponseBody, typename RequestBody>
-::boost::beast::http::response<ResponseBody> send(secure_channel_tag, const ::std::string& host, const ::std::string& port, ::std::chrono::milliseconds timeout, ::boost::beast::http::request<RequestBody>& request) {
+::boost::beast::http::response<ResponseBody> send(::eboost::beast::secure_channel_tag, const ::std::string& host, const ::std::string& port, ::std::chrono::milliseconds timeout, ::boost::beast::http::request<RequestBody>& request) {
     ::boost::asio::io_context ioContext{};
 
     ::boost::asio::ip::tcp::resolver resolver{ ::boost::asio::make_strand(ioContext) };
@@ -61,25 +46,25 @@ template<typename ResponseBody, typename RequestBody>
 
      // Look up the domain name
     resolver.async_resolve(host, port, [&](::boost::beast::error_code errorCode, ::boost::asio::ip::tcp::resolver::results_type results)->void {
-    ensureSuccess(errorCode);
+    ::eboost::beast::ensure_success(errorCode);
 
     // Make the connection on the IP address we get from a lookup
     ::boost::beast::get_lowest_layer(stream).async_connect(results, [&](::boost::beast::error_code errorCode, ::boost::asio::ip::tcp::resolver::results_type::endpoint_type)->void {
-    ensureSuccess(errorCode);
+    ::eboost::beast::ensure_success(errorCode);
 
     // Perform the SSL handshake
     stream.async_handshake(::boost::asio::ssl::stream_base::client, [&](::boost::beast::error_code errorCode)->void {
-    ensureSuccess(errorCode);
+    ::eboost::beast::ensure_success(errorCode);
 
     // Send the HTTP request to the remote host
     ::boost::beast::http::async_write(stream, request, [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
     ::boost::ignore_unused(transferredBytes);
-    ensureSuccess(errorCode);
+    ::eboost::beast::ensure_success(errorCode);
 
     // Receive the HTTP response
     ::boost::beast::http::async_read(stream, buffer, response, [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
     ::boost::ignore_unused(transferredBytes);
-    ensureSuccess(errorCode);
+    ::eboost::beast::ensure_success(errorCode);
 
     // Gracefully close the stream
     stream.async_shutdown([&](::boost::beast::error_code errorCode)->void{
@@ -105,7 +90,7 @@ template<typename ResponseBody, typename RequestBody>
     if (errorCode == ::boost::asio::ssl::error::stream_truncated) {
         return;
     }
-    ensureSuccess(errorCode);
+    ::eboost::beast::ensure_success(errorCode);
 
     // If we get here then the connection is closed gracefully
 
@@ -122,7 +107,7 @@ template<typename ResponseBody, typename RequestBody>
 }
 
 template<typename ResponseBody, typename RequestBody>
-::boost::beast::http::response<ResponseBody> send(plain_channel_tag, const ::std::string& host, const ::std::string& port, ::std::chrono::milliseconds timeout, ::boost::beast::http::request<RequestBody>& request) {
+::boost::beast::http::response<ResponseBody> send(::eboost::beast::plain_channel_tag, const ::std::string& host, const ::std::string& port, ::std::chrono::milliseconds timeout, ::boost::beast::http::request<RequestBody>& request) {
     ::boost::asio::io_context ioContext{};
 
     ::boost::asio::ip::tcp::resolver resolver{ ::boost::asio::make_strand(ioContext) };
@@ -141,21 +126,21 @@ template<typename ResponseBody, typename RequestBody>
 
      // Look up the domain name
     resolver.async_resolve(host, port, [&](::boost::beast::error_code errorCode, ::boost::asio::ip::tcp::resolver::results_type results)->void {
-    ensureSuccess(errorCode);
+    ::eboost::beast::ensure_success(errorCode);
 
     // Make the connection on the IP address we get from a lookup
     stream.async_connect(results, [&](::boost::beast::error_code errorCode, ::boost::asio::ip::tcp::resolver::results_type::endpoint_type)->void {
-    ensureSuccess(errorCode);
+    ::eboost::beast::ensure_success(errorCode);
 
     // Send the HTTP request to the remote host
     ::boost::beast::http::async_write(stream, request, [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
     ::boost::ignore_unused(transferredBytes);
-    ensureSuccess(errorCode);
+    ::eboost::beast::ensure_success(errorCode);
 
     // Receive the HTTP response
     ::boost::beast::http::async_read(stream, buffer, response, [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
     ::boost::ignore_unused(transferredBytes);
-    ensureSuccess(errorCode);
+    ::eboost::beast::ensure_success(errorCode);
 
     // Gracefully close the socket
     stream.socket().shutdown(::boost::asio::ip::tcp::socket::shutdown_both, errorCode);
@@ -164,7 +149,7 @@ template<typename ResponseBody, typename RequestBody>
     if (errorCode == ::boost::beast::errc::not_connected) {
         return;
     }
-    ensureSuccess(errorCode);
+    ::eboost::beast::ensure_success(errorCode);
 
     // If we get here then the connection is closed gracefully
 

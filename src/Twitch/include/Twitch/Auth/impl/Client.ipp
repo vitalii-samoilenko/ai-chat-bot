@@ -64,10 +64,17 @@ bool Client::ValidateToken(const ::std::string& token) const {
     request.set(::boost::beast::http::field::authorization, "OAuth " + token);
 
     ::boost::beast::http::response<::eboost::beast::http::json_body> response{
-        ::eboost::beast::http::client::send<::eboost::beast::http::json_body>(
-            m_ssl, m_host, m_port,
-            m_timeout,
-            request)
+        m_ssl
+            ? ::eboost::beast::http::client::send<::eboost::beast::http::json_body>(
+                ::eboost::beast::secure_channel_tag{},
+                m_host, m_port,
+                m_timeout,
+                request)
+            : ::eboost::beast::http::client::send<::eboost::beast::http::json_body>(
+                ::eboost::beast::plain_channel_tag{},
+                m_host, m_port,
+                m_timeout,
+                request)
     };
     return response.result() == ::boost::beast::http::status::ok;
 };
@@ -86,10 +93,17 @@ AccessContext Client::RefreshToken(const ::std::string& clientId, const ::std::s
     request.set(::boost::beast::http::field::content_type, "application/x-www-form-urlencoded");
 
     ::boost::beast::http::response<::eboost::beast::http::json_body> response{
-        ::eboost::beast::http::client::send<::eboost::beast::http::json_body>(
-            m_ssl, m_host, m_port,
-            m_timeout,
-            request)
+        m_ssl
+            ? ::eboost::beast::http::client::send<::eboost::beast::http::json_body>(
+                ::eboost::beast::secure_channel_tag{},
+                m_host, m_port,
+                m_timeout,
+                request)
+            : ::eboost::beast::http::client::send<::eboost::beast::http::json_body>(
+                ::eboost::beast::plain_channel_tag{},
+                m_host, m_port,
+                m_timeout,
+                request)
     };
     return ::boost::json::value_to<AccessContext>(response.body());
 };
@@ -100,10 +114,17 @@ AccessContext Client::IssueToken(const ::std::string& clientId, const ::std::str
     };
 
     ::boost::beast::http::response<::eboost::beast::http::json_body> response{
-        ::eboost::beast::http::client::send<::eboost::beast::http::json_body>(
-            m_ssl, m_host, m_port,
-            m_timeout,
-            request)
+        m_ssl
+            ? ::eboost::beast::http::client::send<::eboost::beast::http::json_body>(
+                ::eboost::beast::secure_channel_tag{},
+                m_host, m_port,
+                m_timeout,
+                request)
+            : ::eboost::beast::http::client::send<::eboost::beast::http::json_body>(
+                ::eboost::beast::plain_channel_tag{},
+                m_host, m_port,
+                m_timeout,
+                request)
     };
     return ::boost::json::value_to<AccessContext>(response.body());
 };
@@ -114,10 +135,17 @@ AuthContext Client::RequestAccess(const ::std::string& clientId, const ::std::st
     };
 
     ::boost::beast::http::response<::eboost::beast::http::json_body> response{
-        ::eboost::beast::http::client::send<::eboost::beast::http::json_body>(
-            m_ssl, m_host, m_port,
-            m_timeout,
-            request)
+        m_ssl
+            ? ::eboost::beast::http::client::send<::eboost::beast::http::json_body>(
+                ::eboost::beast::secure_channel_tag{},
+                m_host, m_port,
+                m_timeout,
+                request)
+            : ::eboost::beast::http::client::send<::eboost::beast::http::json_body>(
+                ::eboost::beast::plain_channel_tag{},
+                m_host, m_port,
+                m_timeout,
+                request)
     };
     return ::boost::json::value_to<AuthContext>(response.body());
 };

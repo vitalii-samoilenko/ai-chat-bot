@@ -3,13 +3,12 @@
 
 #include <stdexcept>
 
-#include "boost/asio/ssl.hpp"
-#include "boost/asio/strand.hpp"
 #include "boost/asio/buffer.hpp"
 #include "boost/beast.hpp"
-#include "boost/beast/ssl.hpp"
 #include "boost/xpressive/xpressive.hpp"
 #include "boost/url.hpp"
+
+#include "eboost/beast/websocket/client.hpp"
 
 #include "Twitch/IRC/Client.hpp"
 
@@ -40,225 +39,167 @@ Client::Client(const ::std::string& baseAddress, ::std::chrono::milliseconds tim
             : "80";
 };
 
-void ensureSuccess(::boost::beast::error_code errorCode) {
-    if (errorCode) {
-        throw ::boost::beast::system_error{ errorCode } ;
-    }
-};
-
 struct ContextImpl {
     const bool ssl;
     union {
-        ::std::reference_wrapper<::boost::beast::websocket::stream<::boost::beast::tcp_stream>> stream;
-        ::std::reference_wrapper<::boost::beast::websocket::stream<::boost::asio::ssl::stream<::boost::beast::tcp_stream>>> secureStream;
+        ::boost::beast::websocket::stream<::boost::beast::tcp_stream>* pPlainStream;
+        ::boost::beast::websocket::stream<::boost::asio::ssl::stream<::boost::beast::tcp_stream>>* pSecureStream;
     };
-    ::std::string& request;
-    bool& stop;
+    ::std::string join;
+    ::std::string pass;
+    ::std::string nick;
+    ::std::string request;
+    const ::std::string& response;
+    ::boost::asio::dynamic_string_buffer<char, ::std::char_traits<char>, ::std::allocator<char>> buffer;
+    bool stop;
+    bool rerun;
+    ::boost::xpressive::mark_tag ping_group;
+    ::boost::xpressive::mark_tag username_group;
+    ::boost::xpressive::mark_tag privmsg_group;
+    ::boost::xpressive::mark_tag channel_group;
+    ::boost::xpressive::mark_tag message_group;
+    ::boost::xpressive::mark_tag notice_group;
+    ::boost::xpressive::mark_tag reason_group;
+    ::boost::xpressive::mark_tag reconnect_group;
+    ::boost::xpressive::sregex command_group;
+    const ::std::unordered_map<const ::std::type_info*, Subscription>& subscriptions;
+    ::std::function<void(::boost::beast::error_code, size_t)> loop;
 };
 
+template<typename Stream>
+void send(ContextImpl& context, Stream& stream, const Message& message) {
+    context.request = "PRIVMSG #" + message.Channel + " :" + message.Content;
+    stream.async_write(::boost::asio::buffer(context.request), [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
+    ::boost::ignore_unused(transferredBytes);
+    ::eboost::beast::ensure_success(errorCode);
+
+    }); // PRIVMSG
+};
 void Context::Send(const Message& message) {
-    m_impl.request = "PRIVMSG #" + message.Channel + " :" + message.Content;
     if (m_impl.ssl) {
-        ::boost::beast::websocket::stream<::boost::asio::ssl::stream<::boost::beast::tcp_stream>>& stream{ m_impl.secureStream.get() };
-        stream.async_write(::boost::asio::buffer(m_impl.request), [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
-        ::boost::ignore_unused(transferredBytes);
-        ensureSuccess(errorCode);
-
-        }); // PRIVMSG
+        send(m_impl, *m_impl.pSecureStream, message);
     } else {
-        ::boost::beast::websocket::stream<::boost::beast::tcp_stream>& stream{ m_impl.stream.get() };
-        stream.async_write(::boost::asio::buffer(m_impl.request), [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
-        ::boost::ignore_unused(transferredBytes);
-        ensureSuccess(errorCode);
-
-        }); // PRIVMSG
+        send(m_impl, *m_impl.pPlainStream, message);
     }
 };
 void Context::Disconnect() {
     m_impl.stop = true;
 };
 
-struct secure_channel_tag{};
-struct plain_channel_tag{};
+template<typename Stream>
+void callback(ContextImpl& context, Stream& stream) {
+    stream.async_write(::boost::asio::buffer(context.pass), [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
+    ::boost::ignore_unused(transferredBytes);
+    ::eboost::beast::ensure_success(errorCode);
 
-template<typename Range>
-bool run(secure_channel_tag,
-    const ::std::string& host, const ::std::string& port,
-    ::std::chrono::milliseconds timeout,
-    const ::std::string& username, const ::std::string& accessToken, const Range& channels,
-    const ::std::unordered_map<const ::std::type_info*, Subscription>& subscriptions) {
-    ::boost::asio::io_context ioContext{};
+    stream.async_write(::boost::asio::buffer(context.nick), [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
+    ::boost::ignore_unused(transferredBytes);
+    ::eboost::beast::ensure_success(errorCode);
 
-    ::boost::asio::ip::tcp::resolver resolver{ ::boost::asio::make_strand(ioContext) };
+    stream.async_read(context.buffer, [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
+    ::eboost::beast::ensure_success(errorCode);
 
-    ::boost::asio::ssl::context sslContext{ ::boost::asio::ssl::context::tlsv12_client };
-    sslContext.set_verify_mode(::boost::asio::ssl::verify_none);
-
-    ::boost::beast::websocket::stream<::boost::asio::ssl::stream<::boost::beast::tcp_stream>> stream{ ::boost::asio::make_strand(ioContext), sslContext };
-    if (!::SSL_set_tlsext_host_name(stream.next_layer().native_handle(), host.c_str())) {
-        throw ::boost::beast::system_error{
-            static_cast<int>(::ERR_get_error()),
-            ::boost::asio::error::get_ssl_category()
-        };
+    ::boost::xpressive::smatch what{};
+    if (::boost::xpressive::regex_match(context.response, what, context.command_group)
+        && what[context.notice_group]) {
+        throw ::std::invalid_argument{ what[context.reason_group] };
     }
-    stream.next_layer().set_verify_callback(::boost::asio::ssl::host_name_verification(host));
+    context.buffer.consume(transferredBytes);
 
-    ::std::string request{};
-    ::std::string response{};
-    bool stop{ false };
-    bool reconnect{ false };
-    
-    ::boost::asio::dynamic_string_buffer buffer{ response };
+    stream.async_write(::boost::asio::buffer(context.join), [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
+    ::boost::ignore_unused(transferredBytes);
+    ::eboost::beast::ensure_success(errorCode);
 
-    ContextImpl clientContextImpl{ true, {}, request, stop };
-    clientContextImpl.secureStream = stream;
-    Context clientContext{ clientContextImpl };
+    context.loop = [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
+        ::eboost::beast::ensure_success(errorCode);
 
-    ::boost::xpressive::mark_tag ping_group{ 1 };
-    ::boost::xpressive::mark_tag username_group{ 2 };
-    ::boost::xpressive::mark_tag privmsg_group{ 3 };
-    ::boost::xpressive::mark_tag channel_group{ 4 };
-    ::boost::xpressive::mark_tag message_group{ 5 };
-    ::boost::xpressive::mark_tag notice_group{ 6 };
-    ::boost::xpressive::mark_tag reason_group{ 7 };
-    ::boost::xpressive::mark_tag reconnect_group{ 8 };
-    ::boost::xpressive::sregex command_group{ 
-        //::boost::xpressive::sregex::compile(R"((?:(?<ping>PING) :tmi[.]twitch[.]tv)|(?::(?<username>[a-z]+)!\g<username>@\g<username>[.]tmi[.]twitch[.]tv (?<privmsg>PRIVMSG) #(?<channel>[a-z]+) :(?<message>.+))|(?::tmi[.]twitch[.]tv (?<notice>NOTICE) [*] :(?<reason>.+)))")
-        ((ping_group = "PING") >> " :tmi.twitch.tv" >> ::boost::xpressive::_ln)
-        | (':' >> (username_group = +::boost::xpressive::range('a', 'z')) >> '!' >> username_group >> '@' >> username_group >> ".tmi.twitch.tv "
-            >> (privmsg_group = "PRIVMSG") >> " #" >> (channel_group = +::boost::xpressive::range('a', 'z')) >> " :" >> (message_group = +~::boost::xpressive::_ln) >> ::boost::xpressive::_ln)
-        | (":tmi.twitch.tv " >> (notice_group = "NOTICE") >> " * :" >> (reason_group = +~::boost::xpressive::_ln) >> ::boost::xpressive::_ln)
-        | (":tmi.twitch.tv " >> (reconnect_group = "RECONNECT"))
-    };
-
-    ::std::function<void(::boost::beast::error_code, size_t)> loop = [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
-        ensureSuccess(errorCode);
-
-        for (::boost::xpressive::sregex_iterator current( response.begin(), response.end(), command_group ), end{}; current != end; ++current ) {
+        for (::boost::xpressive::sregex_iterator current{ context.response.begin(), context.response.end(), context.command_group }, end{}; current != end; ++current) {
             const ::boost::xpressive::smatch& what{ *current };
-            if (what[ping_group]) {
-                request = "PONG :tmi.twitch.tv";
-                stream.async_write(::boost::asio::buffer(request), [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
+            if (what[context.ping_group]) {
+                context.request = "PONG :tmi.twitch.tv";
+                stream.async_write(::boost::asio::buffer(context.request), [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
                 ::boost::ignore_unused(transferredBytes);
-                ensureSuccess(errorCode);
+                ::eboost::beast::ensure_success(errorCode);
 
                 }); // PONG
-            } else if (what[privmsg_group]) {
-                Message message{ what[username_group], what[channel_group], what[message_group] };
-                for (const auto& target_subscription : subscriptions) {
+            } else if (what[context.privmsg_group]) {
+                Message message{ what[context.username_group], what[context.channel_group], what[context.message_group] };
+                for (const auto& target_subscription : context.subscriptions) {
                     const Subscription& subscription{ target_subscription.second };
-                    subscription.OnMessage(clientContext, message);
+                    Context wrapper{ context };
+                    subscription.OnMessage(wrapper, message);
                 }
-            } else if (what[reconnect_group]) {
-                reconnect = true;
-                stop = true;
+            } else if (what[context.reconnect_group]) {
+                context.rerun = true;
+                context.stop = true;
             }
         }
-        buffer.consume(transferredBytes);
+        context.buffer.consume(transferredBytes);
 
-        if (stop) {
+        if (context.stop) {
             // Gracefully close the stream
             stream.async_close(::boost::beast::websocket::close_code::normal, [&](::boost::beast::error_code errorCode)->void {
-            ensureSuccess(errorCode);
+            ::eboost::beast::ensure_success(errorCode);
 
             // If we get here then the connection is closed gracefully
 
             }); // shutdown
         } else {
-            stream.async_read(buffer, loop);
+            stream.async_read(context.buffer, context.loop);
         }
     };
+    stream.async_read(context.buffer, context.loop);
 
-    // Set a timeout on the operation
-    ::boost::beast::get_lowest_layer(stream).expires_after(timeout);
-
-     // Look up the domain name
-    resolver.async_resolve(host, port, [&](::boost::beast::error_code errorCode, ::boost::asio::ip::tcp::resolver::results_type results)->void {
-    ensureSuccess(errorCode);
-
-    // Make the connection on the IP address we get from a lookup
-    ::boost::beast::get_lowest_layer(stream).async_connect(results, [&](::boost::beast::error_code errorCode, ::boost::asio::ip::tcp::resolver::results_type::endpoint_type)->void {
-    ensureSuccess(errorCode);
-
-    // Perform the SSL handshake
-    stream.next_layer().async_handshake(::boost::asio::ssl::stream_base::client, [&](::boost::beast::error_code errorCode)->void {
-    ensureSuccess(errorCode);
-
-    ::boost::beast::get_lowest_layer(stream).expires_never();
-    stream.set_option(
-        ::boost::beast::websocket::stream_base::timeout::suggested(
-            ::boost::beast::role_type::client));
-
-    stream.async_handshake(host + ":" + port, "/", [&](::boost::beast::error_code errorCode)->void {
-    ensureSuccess(errorCode);
-
-    request = "PASS oauth:" + accessToken;
-    stream.async_write(::boost::asio::buffer(request), [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
-    ::boost::ignore_unused(transferredBytes);
-    ensureSuccess(errorCode);
-
-    request = "NICK " + username;
-    stream.async_write(::boost::asio::buffer(request), [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
-    ::boost::ignore_unused(transferredBytes);
-    ensureSuccess(errorCode);
-
-    stream.async_read(buffer, [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
-    ensureSuccess(errorCode);
-
-    ::boost::xpressive::smatch what{};
-    if (::boost::xpressive::regex_match(response, what, command_group)
-        && what[notice_group]) {
-        throw ::std::invalid_argument{ what[reason_group] };
-    }
-    buffer.consume(transferredBytes);
-
-    request = "JOIN ";
-    for (const ::std::string& channel : channels) {
-        request += '#' + channel + ',';
-    }
-    request.resize(request.size() - 1);
-    stream.async_write(::boost::asio::buffer(request), [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
-    ::boost::ignore_unused(transferredBytes);
-    ensureSuccess(errorCode);
-
-    stream.async_read(buffer, loop);
-    
     }); // JOIN
-    }); // Auth
+    }); // NOTICE
     }); // NICK
     }); // PASS
-    }); // WS handshake
-    }); // SSL handshake
-    }); // connect
-    }); // resolve
-
-    ioContext.run();
-
-    return reconnect;
-};
-template<typename Range>
-bool run(plain_channel_tag,
-    const ::std::string& host, const ::std::string& port,
-    ::std::chrono::milliseconds timeout,
-    const ::std::string& username, const ::std::string& accessToken, const Range& channels,
-    const ::std::unordered_map<const ::std::type_info*, Subscription>& subscriptions) {
-    return false;
 };
 
 template<typename Range>
 bool Client::Run(const ::std::string& username, const ::std::string& accessToken, const Range& channels) const {
+    ::std::string response{};
+    ContextImpl context{
+        m_ssl, {},
+        "JOIN ", "PASS oauth:" + accessToken, "NICK " + username,
+        {}, response, ::boost::asio::dynamic_string_buffer{ response },
+        false, false,
+        { 1 }, { 2 }, { 3 }, { 4 },
+        { 5 }, { 6 }, { 7 }, { 8 },
+        {},
+        m_subscriptions, {}
+    };
+    for (const ::std::string& channel : channels) {
+        context.join += '#' + channel + ',';
+    }
+    context.join.resize(context.join.size() - 1);
+    context.command_group =
+        ((context.ping_group = "PING") >> " :tmi.twitch.tv" >> ::boost::xpressive::_ln)
+        | (':' >> (context.username_group = +::boost::xpressive::range('a', 'z')) >> '!' >> context.username_group >> '@' >> context.username_group >> ".tmi.twitch.tv "
+            >> (context.privmsg_group = "PRIVMSG") >> " #" >> (context.channel_group = +::boost::xpressive::range('a', 'z')) >> " :" >> (context.message_group = +~::boost::xpressive::_ln) >> ::boost::xpressive::_ln)
+        | (":tmi.twitch.tv " >> (context.notice_group = "NOTICE") >> " * :" >> (context.reason_group = +~::boost::xpressive::_ln) >> ::boost::xpressive::_ln)
+        | (":tmi.twitch.tv " >> (context.reconnect_group = "RECONNECT"));
+
     if (m_ssl) {
-        return run<Range>(secure_channel_tag{},
+        ::eboost::beast::websocket::client::run(
+            ::eboost::beast::secure_channel_tag{},
             m_host, m_port,
             m_timeout,
-            username, accessToken, channels,
-            m_subscriptions);
+            [&](::boost::beast::websocket::stream<::boost::asio::ssl::stream<::boost::beast::tcp_stream>>& stream)->void {
+                context.pSecureStream = &stream;
+                callback(context, stream);
+            });
+    } else {
+        ::eboost::beast::websocket::client::run(
+            ::eboost::beast::plain_channel_tag{},
+            m_host, m_port,
+            m_timeout,
+            [&](::boost::beast::websocket::stream<::boost::beast::tcp_stream>& stream)->void {
+                context.pPlainStream = &stream;
+                callback(context, stream);
+            });
     }
-    return run<Range>(plain_channel_tag{},
-        m_host, m_port,
-        m_timeout,
-        username, accessToken, channels,
-        m_subscriptions);
+    return context.rerun;
 };
 
 } // Auth

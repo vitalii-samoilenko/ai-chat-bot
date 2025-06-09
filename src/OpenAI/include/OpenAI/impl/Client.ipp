@@ -135,10 +135,17 @@ CompletionResult Client::Complete(const CompletionContext<Range>& context) const
     request.set(::boost::beast::http::field::content_type, "application/json");
 
     ::boost::beast::http::response<::eboost::beast::http::json_body> response{
-        ::eboost::beast::http::client::send<::eboost::beast::http::json_body>(
-            m_ssl, m_host, m_port,
-            m_timeout,
-            request)
+        m_ssl
+            ? ::eboost::beast::http::client::send<::eboost::beast::http::json_body>(
+                ::eboost::beast::secure_channel_tag{},
+                m_host, m_port,
+                m_timeout,
+                request)
+            : ::eboost::beast::http::client::send<::eboost::beast::http::json_body>(
+                ::eboost::beast::plain_channel_tag{},
+                m_host, m_port,
+                m_timeout,
+                request)
     };
     return ::boost::json::value_to<CompletionResult>(response.body());
 };
