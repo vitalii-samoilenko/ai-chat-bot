@@ -48,7 +48,6 @@ struct ContextImpl {
     ::std::string join;
     ::std::string pass;
     ::std::string nick;
-    ::std::string request;
     const ::std::string& response;
     ::boost::asio::dynamic_string_buffer<char, ::std::char_traits<char>, ::std::allocator<char>> buffer;
     bool stop;
@@ -68,8 +67,8 @@ struct ContextImpl {
 
 template<typename Stream>
 void send(ContextImpl& context, Stream& stream, const Message& message) {
-    context.request = "PRIVMSG #" + message.Channel + " :" + message.Content;
-    stream.async_write(::boost::asio::buffer(context.request), [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
+    ::std::string request{ "PRIVMSG #" + message.Channel + " :" + message.Content };
+    stream.async_write(::boost::asio::buffer(request), [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
     ::boost::ignore_unused(transferredBytes);
     ::eboost::beast::ensure_success(errorCode);
 
@@ -81,9 +80,6 @@ void Context::Send(const Message& message) {
     } else {
         send(m_impl, *m_impl.pPlainStream, message);
     }
-};
-void Context::Disconnect() {
-    m_impl.stop = true;
 };
 
 template<typename Stream>
@@ -116,8 +112,8 @@ void callback(ContextImpl& context, Stream& stream) {
         for (::boost::xpressive::sregex_iterator current{ context.response.begin(), context.response.end(), context.command_group }, end{}; current != end; ++current) {
             const ::boost::xpressive::smatch& what{ *current };
             if (what[context.ping_group]) {
-                context.request = "PONG :tmi.twitch.tv";
-                stream.async_write(::boost::asio::buffer(context.request), [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
+                ::std::string request{ "PONG :tmi.twitch.tv" };
+                stream.async_write(::boost::asio::buffer(request), [&](::boost::beast::error_code errorCode, size_t transferredBytes)->void {
                 ::boost::ignore_unused(transferredBytes);
                 ::eboost::beast::ensure_success(errorCode);
 
@@ -162,7 +158,7 @@ bool Client::Run(const ::std::string& username, const ::std::string& accessToken
     ContextImpl context{
         m_ssl, {},
         "JOIN ", "PASS oauth:" + accessToken, "NICK " + username,
-        {}, response, ::boost::asio::dynamic_string_buffer{ response },
+        response, ::boost::asio::dynamic_string_buffer{ response },
         false, false,
         { 1 }, { 2 }, { 3 }, { 4 },
         { 5 }, { 6 }, { 7 }, { 8 },

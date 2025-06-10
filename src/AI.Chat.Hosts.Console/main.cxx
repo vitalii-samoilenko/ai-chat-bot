@@ -28,39 +28,34 @@ int main() {
             "https://id.twitch.tv/oauth2/",
             ::std::chrono::milliseconds{ 30 * 1000 }
         };
-
-        // ::Twitch::Auth::AccessContext accessContext{
-        //     twitchAuthClient.RefreshToken(
-        //         "clientId", "clientSecret",
-        //         "refreshToken")
-        // };
-
-        // ::std::cout << accessContext.AccessToken << ::std::endl;
+        ::Twitch::Auth::AccessContext accessContext{
+            "accessToken",
+            "refreshToken"
+        };
 
         ::Twitch::IRC::Client twitchIrcClient {
             "wss://irc-ws.chat.twitch.tv",
             ::std::chrono::milliseconds{ 30 * 1000 }
         };
+        ::std::vector<::std::string> channels{ "botname" };
+
         ::Twitch::IRC::Subscription& openAiSubscription{ twitchIrcClient.Subscribe<::OpenAI::Client>() };
         openAiSubscription.OnMessage([&](::Twitch::IRC::Context& context, const ::Twitch::IRC::Message& message)->void {
             aiContext.Messages.push_back(::OpenAI::Message{ ::OpenAI::Role::User, message.Content });
             ::OpenAI::CompletionResult result{ openAiClient.Complete(aiContext) };
             const ::OpenAI::Message& reply{ result.Choices[0].Message };
             aiContext.Messages.push_back(reply);
-            ::std::cout << result.Usage.TotalTokens << ::std::endl;
-
-            context.Send({
-                "", "channel",
-                reply.Content
-            });
-            //context.Disconnect();
+            context.Send({ "", message.Channel, reply.Content });
         });
-        
-        while (twitchIrcClient.Run(
-            "channel", "accessToken",
-            ::std::vector<::std::string>{
-                "channel"
-            }));
+
+        do {
+            if (!twitchAuthClient.ValidateToken(accessContext.AccessToken)) {
+                accessContext = twitchAuthClient.RefreshToken(
+                    "clientId", "clientSecret",
+                    accessContext.RefreshToken);
+            }
+        }
+        while (twitchIrcClient.Run("botname", accessContext.AccessToken, channels));
     }
     catch(const ::std::exception& e)
     {

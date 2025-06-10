@@ -40,7 +40,6 @@ public:
     };
 
     void Send(const Message& message);
-    void Disconnect();
     
 private:
     ContextImpl& m_impl;
