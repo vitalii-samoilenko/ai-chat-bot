@@ -158,7 +158,7 @@ bool Client::Run(const ::std::string& username, const ::std::string& accessToken
     ContextImpl context{
         m_ssl, {},
         "JOIN ", "PASS oauth:" + accessToken, "NICK " + username,
-        response, ::boost::asio::dynamic_string_buffer{ response },
+        response, ::boost::asio::dynamic_string_buffer<char, ::std::char_traits<char>, ::std::allocator<char>>{ response },
         false, false,
         { 1 }, { 2 }, { 3 }, { 4 },
         { 5 }, { 6 }, { 7 }, { 8 },

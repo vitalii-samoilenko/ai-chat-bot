@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.25.1)
 
 project(AI VERSION 0.1)
 
+if(MSVC)
+    add_compile_options(/bigobj)
+endif()
+
 add_subdirectory(libs/boost)
 
 add_subdirectory(src/eboost)
