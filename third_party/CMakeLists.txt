@@ -7,7 +7,6 @@ if(NOT OpenSSL_FOUND)
     set(OPENSSL_SOURCE_DIR ${PROJECT_SOURCE_DIR}/openssl)
     set(OPENSSL_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/openssl)
     set(OPENSSL_INSTALL_DIR ${CMAKE_SOURCE_DIR}/install/OpenSSL)
-    set(OPENSSL_SSL_DIR ${OPENSSL_INSTALL_DIR}/ssl)
     if(WIN32)
         set(CONFIGURE_COMMAND perl ${OPENSSL_SOURCE_DIR}/Configure -static)
         if(MSVC)
@@ -37,7 +36,7 @@ if(NOT OpenSSL_FOUND)
     if(NOT EXISTS ${OPENSSL_BINARY_DIR}/makefile)
         make_directory(${OPENSSL_BINARY_DIR})
         execute_process(COMMAND ${CONFIGURE_COMMAND}
-                --prefix=${OPENSSL_INSTALL_DIR} --openssldir=${OPENSSL_SSL_DIR} no-apps no-docs
+                --prefix=${OPENSSL_INSTALL_DIR} --openssldir=${OPENSSL_INSTALL_DIR}/ssl no-apps no-docs
             WORKING_DIRECTORY ${OPENSSL_BINARY_DIR}
             COMMAND_ERROR_IS_FATAL ANY
         )
