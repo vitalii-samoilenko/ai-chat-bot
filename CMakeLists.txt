@@ -6,7 +6,7 @@ if(MSVC)
     add_compile_options(/bigobj)
 endif()
 
-add_subdirectory(libs/boost)
+add_subdirectory(third_party)
 
 add_subdirectory(src/eboost)
 add_subdirectory(src/OpenAI)

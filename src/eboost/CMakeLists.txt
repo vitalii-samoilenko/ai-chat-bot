@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.25.1)
 
 project(eboost VERSION 0.1 LANGUAGES CXX)
 
-find_package(OpenSSL)
+find_package(OpenSSL REQUIRED)
 
 add_library(eboost INTERFACE)
 add_library(EBoost ALIAS eboost)
