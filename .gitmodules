@@ -1,6 +1,6 @@
-[submodule "libs/boost"]
-	path = libs/boost
-	url = https://github.com/boostorg/boost
-[submodule "libs/openssl"]
-	path = libs/openssl
+[submodule "third_party/openssl"]
+	path = third_party/openssl
 	url = https://github.com/openssl/openssl
+[submodule "third_party/boost"]
+	path = third_party/boost
+	url = https://github.com/boostorg/boost
