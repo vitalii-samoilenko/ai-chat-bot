@@ -67,3 +67,20 @@ if(NOT Boost_FOUND)
     endif()
     add_subdirectory(boost)
 endif()
+
+find_package(opentelemetry-cpp CONFIG)
+if(NOT opentelemetry-cpp_FOUND)
+    if(NOT EXISTS ${PROJECT_SOURCE_DIR}/opentelemetry-cpp/CMakeLists.txt)
+        execute_process(COMMAND git submodule update
+                --init --recursive third_party/opentelemetry-cpp
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMAND_ERROR_IS_FATAL ANY
+        )
+    endif()
+    set(BUILD_TESTING OFF)
+    set(WITH_FUNC_TESTS OFF)
+    set(WITH_BENCHMARK OFF)
+    set(WITH_EXAMPLES OFF)
+    set(WITH_ETW OFF)
+    add_subdirectory(opentelemetry-cpp)
+endif()
