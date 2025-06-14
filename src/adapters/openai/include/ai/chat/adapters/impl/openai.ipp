@@ -9,22 +9,10 @@ namespace adapters {
 
 template<typename Range>
 template<typename... Args>
-openai<Range>::openai(::openai::completion_context<Range>&& context, Args&& ...args)
-    : _context{ ::std::move(context) }
+openai<Range>::openai(const ::std::string& model, const Range& messages, Args&& ...args)
+    : _context{ model, messages }
     , _client{ ::std::forward<Args>(args)... } {
 
-};
-template<typename Range>
-template<typename... Args>
-openai<Range>::openai(Args&& ...args)
-    : _context{}
-    , _client{ ::std::forward<Args>(args)... } {
-
-};
-
-template<typename Range>
-::openai::completion_context<Range>& openai<Range>::context() {
-    return _context;
 };
 
 template<typename Range>

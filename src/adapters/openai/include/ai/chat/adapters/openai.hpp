@@ -23,16 +23,12 @@ public:
     openai& operator=(openai&&) = delete;
 
     template<typename... Args>
-    explicit openai(Args&& ...args);
-    template<typename... Args>
-    explicit openai(::openai::completion_context<Range>&& context, Args&& ...args);
-
-    ::openai::completion_context<Range>& context();
+    openai(const ::std::string& model, const Range& messages, Args&& ...args);
 
     ::std::pair<::std::string, size_t> complete() const;
 
 private:
-    ::openai::completion_context<Range> _context;
+    ::openai::completion_context<const Range&> _context;
     ::openai::client _client;
 };
 

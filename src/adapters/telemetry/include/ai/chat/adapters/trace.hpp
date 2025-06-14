@@ -12,7 +12,7 @@ namespace chat {
 namespace adapters {
 
 template<typename Adapter>
-class trace {
+class trace : private Adapter {
 public:
     trace() = delete;
     trace(const trace&) = delete;
@@ -26,12 +26,9 @@ public:
     template<typename... Args>
     explicit trace(Args&& ...args);
 
-    Adapter& next();
-
     ::std::pair<::std::string, size_t> complete() const;
 
 private:
-    Adapter _next;
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Tracer> _p_tracer;
 };
 

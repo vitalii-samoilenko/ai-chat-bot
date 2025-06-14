@@ -12,7 +12,7 @@ namespace adapters {
 template<typename Adapter>
 template<typename... Args>
 trace<Adapter>::trace(Args&& ...args)
-    : _next{ ::std::forward<Args>(args)...  }
+    : Adapter{ ::std::forward<Args>(args)...  }
     , _p_tracer{
         ::opentelemetry::trace::Provider::GetTracerProvider()
             ->GetTracer(
@@ -23,15 +23,10 @@ trace<Adapter>::trace(Args&& ...args)
 };
 
 template<typename Adapter>
-Adapter& trace<Adapter>::next() {
-    return _next;
-};
-
-template<typename Adapter>
 ::std::pair<::std::string, size_t> trace<Adapter>::complete() const {
     auto scope = _p_tracer->WithActiveSpan(
         _p_tracer->StartSpan("adapter::complete"));
-    return _next.complete();
+    return Adapter::complete();
 };
 
 } // adapters

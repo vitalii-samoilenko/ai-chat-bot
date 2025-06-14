@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 
+#include "ai/chat/adapters/content_length.hpp"
 #include "ai/chat/adapters/openai.hpp"
 #include "ai/chat/adapters/trace.hpp"
 #include "ai/chat/adapters/total_tokens.hpp"
@@ -46,18 +47,18 @@ int main() {
         init_meter();
         init_tracer();
 
+        ::std::vector<::openai::message> messages{
+            {
+                ::openai::role::system,
+                "Message must not be longer than 200 symbols"
+            }
+        };
+        ::ai::chat::adapters::content_length<
         ::ai::chat::adapters::total_tokens<
         ::ai::chat::adapters::trace<
-        ::ai::chat::adapters::openai<::std::vector<::openai::message>>>> adapter{
-            ::openai::completion_context<::std::vector<::openai::message>>{
-                "gemini-2.0-flash",
-                {
-                    {
-                        ::openai::role::system,
-                        "Message must not be longer than 200 symbols"
-                    }
-                }
-            },
+        ::ai::chat::adapters::openai<::std::vector<::openai::message>>
+        >>> adapter{
+            "gemini-2.0-flash", messages,
             "https://generativelanguage.googleapis.com/v1beta/openai/",
             "api_key",
             ::std::chrono::milliseconds{ 30 * 1000 }
@@ -80,9 +81,9 @@ int main() {
 
         ::twitch::irc::subscription& subscription{ irc_client.subscribe<decltype(adapter)>() };
         subscription.on_message([&](::twitch::irc::context& context, const ::twitch::irc::message& message)->void {
-            adapter.next().next().context().messages.push_back({ ::openai::role::user, message.content });
+            messages.push_back({ ::openai::role::user, message.content });
             ::std::pair<::std::string, size_t> result{ adapter.complete() };
-            adapter.next().next().context().messages.push_back({ ::openai::role::assistant, result.first });
+            messages.push_back({ ::openai::role::assistant, result.first });
             context.send({ "", message.channel, result.first });
         });
 

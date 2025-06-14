@@ -12,7 +12,7 @@ namespace chat {
 namespace adapters {
 
 template<typename Adapter>
-class total_tokens {
+class total_tokens : private Adapter {
 public:
     total_tokens() = delete;
     total_tokens(const total_tokens&) = delete;
@@ -26,12 +26,9 @@ public:
     template<typename... Args>
     explicit total_tokens(Args&& ...args);
 
-    Adapter& next();
-
     ::std::pair<::std::string, size_t> complete() const;
 
 private:
-    Adapter _next;
     ::opentelemetry::nostd::unique_ptr<::opentelemetry::metrics::Gauge<int64_t>> _p_total_tokens;
 };
 
