@@ -3,11 +3,12 @@
 #include <iostream>
 #include <vector>
 
+#include "ai/chat/adapters/rate_limited.hpp"
 #include "ai/chat/adapters/openai.hpp"
-#include "ai/chat/adapters/content_length.hpp"
 #include "ai/chat/adapters/log.hpp"
-#include "ai/chat/adapters/trace.hpp"
+#include "ai/chat/adapters/content_length.hpp"
 #include "ai/chat/adapters/total_tokens.hpp"
+#include "ai/chat/adapters/trace.hpp"
 #include "twitch/auth/client.hpp"
 #include "twitch/irc/client.hpp"
 
@@ -71,8 +72,10 @@ int main() {
         ::ai::chat::adapters::content_length<
         ::ai::chat::adapters::total_tokens<
         ::ai::chat::adapters::trace<
+        ::ai::chat::adapters::rate_limited<
         ::ai::chat::adapters::openai<::std::vector<::openai::message>>
-        >>>> adapter{
+        >>>>> adapter{
+            1,
             "gemini-2.0-flash", messages,
             "https://generativelanguage.googleapis.com/v1beta/openai/",
             "api_key",
