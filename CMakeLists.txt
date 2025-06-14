@@ -8,7 +8,6 @@ endif()
 
 add_subdirectory(third_party)
 
-add_subdirectory(src/eboost)
-add_subdirectory(src/OpenAI)
-add_subdirectory(src/Twitch)
-add_subdirectory(src/AI.Chat.Hosts.Console)
+add_subdirectory(src/adapters/openai)
+add_subdirectory(src/adapters/telemetry)
+add_subdirectory(src/hosts/console)
