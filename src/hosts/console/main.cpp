@@ -3,8 +3,9 @@
 #include <iostream>
 #include <vector>
 
-#include "ai/chat/adapters/content_length.hpp"
 #include "ai/chat/adapters/openai.hpp"
+#include "ai/chat/adapters/content_length.hpp"
+#include "ai/chat/adapters/log.hpp"
 #include "ai/chat/adapters/trace.hpp"
 #include "ai/chat/adapters/total_tokens.hpp"
 #include "twitch/auth/client.hpp"
@@ -21,6 +22,11 @@
 #include "opentelemetry/sdk/trace/tracer_provider_factory.h"
 #include "opentelemetry/trace/provider.h"
 
+#include "opentelemetry/exporters/ostream/log_record_exporter_factory.h"
+#include "opentelemetry/sdk/logs/simple_log_record_processor_factory.h"
+#include "opentelemetry/sdk/logs/logger_provider_factory.h"
+#include "opentelemetry/logs/provider.h"
+
 void init_meter() {
     auto exporter = ::opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create();
     auto reader = ::opentelemetry::sdk::metrics::PeriodicExportingMetricReaderFactory::Create(::std::move(exporter),
@@ -31,21 +37,29 @@ void init_meter() {
     auto context = ::opentelemetry::sdk::metrics::MeterContextFactory::Create();
     context->AddMetricReader(::std::move(reader));
     auto sdk_provider = ::opentelemetry::sdk::metrics::MeterProviderFactory::Create(::std::move(context));
-    ::std::shared_ptr<opentelemetry::metrics::MeterProvider> api_provider{ ::std::move(sdk_provider) };
+    ::std::shared_ptr<::opentelemetry::metrics::MeterProvider> api_provider{ ::std::move(sdk_provider) };
     ::opentelemetry::metrics::Provider::SetMeterProvider(api_provider);
 };
 void init_tracer() {
   auto exporter  = ::opentelemetry::exporter::trace::OStreamSpanExporterFactory::Create();
   auto processor = ::opentelemetry::sdk::trace::SimpleSpanProcessorFactory::Create(std::move(exporter));
   auto sdk_provider = ::opentelemetry::sdk::trace::TracerProviderFactory::Create(std::move(processor));
-  ::std::shared_ptr<opentelemetry::trace::TracerProvider> api_provider{ ::std::move(sdk_provider) };
+  ::std::shared_ptr<::opentelemetry::trace::TracerProvider> api_provider{ ::std::move(sdk_provider) };
   ::opentelemetry::trace::Provider::SetTracerProvider(api_provider);
+};
+void init_logger() {
+    auto exporter = ::opentelemetry::exporter::logs::OStreamLogRecordExporterFactory::Create();
+    auto processor = ::opentelemetry::sdk::logs::SimpleLogRecordProcessorFactory::Create(::std::move(exporter));
+    auto sdk_provider = ::opentelemetry::sdk::logs::LoggerProviderFactory::Create(::std::move(processor));
+    ::std::shared_ptr<::opentelemetry::logs::LoggerProvider> api_provider{ ::std::move(sdk_provider) };
+    ::opentelemetry::logs::Provider::SetLoggerProvider(api_provider);
 };
 
 int main() {
     try {
         init_meter();
         init_tracer();
+        init_logger();
 
         ::std::vector<::openai::message> messages{
             {
@@ -53,11 +67,12 @@ int main() {
                 "Message must not be longer than 200 symbols"
             }
         };
+        ::ai::chat::adapters::log<
         ::ai::chat::adapters::content_length<
         ::ai::chat::adapters::total_tokens<
         ::ai::chat::adapters::trace<
         ::ai::chat::adapters::openai<::std::vector<::openai::message>>
-        >>> adapter{
+        >>>> adapter{
             "gemini-2.0-flash", messages,
             "https://generativelanguage.googleapis.com/v1beta/openai/",
             "api_key",

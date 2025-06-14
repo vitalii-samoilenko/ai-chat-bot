@@ -11,6 +11,7 @@ target_link_libraries(ai-chat-hosts-console
     Twitch
     opentelemetry-cpp::ostream_metrics_exporter
     opentelemetry-cpp::ostream_span_exporter
+    opentelemetry-cpp::ostream_log_record_exporter
 )
 target_compile_features(ai-chat-hosts-console PRIVATE cxx_std_17)
 
