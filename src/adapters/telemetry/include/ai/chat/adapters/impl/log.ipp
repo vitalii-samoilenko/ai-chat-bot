@@ -1,5 +1,5 @@
-#ifndef AI_CHAT_ADAPTERS_TRACE_IPP
-#define AI_CHAT_ADAPTERS_TRACE_IPP
+#ifndef AI_CHAT_ADAPTERS_LOG_IPP
+#define AI_CHAT_ADAPTERS_LOG_IPP
 
 #include "opentelemetry/logs/logger_provider.h"
 
