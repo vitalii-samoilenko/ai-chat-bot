@@ -1,3 +1,17 @@
+channel client
+chat history
+ai client
+
+history-channel-client binder
+history-ai-client binder
+
+traces
+metrics
+logs
+
+SIGTERM
+configuration
+
 moderator
 azure free tier host
 
