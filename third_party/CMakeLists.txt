@@ -88,5 +88,3 @@ if(NOT opentelemetry-cpp_FOUND)
 endif()
 
 add_subdirectory(eboost)
-add_subdirectory(openai)
-add_subdirectory(twitch)

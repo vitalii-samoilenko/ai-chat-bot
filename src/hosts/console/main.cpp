@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "ai/chat/adapters/rate_limited.hpp"
+#include "ai/chat/adapters/tokens_limited.hpp"
 #include "ai/chat/adapters/openai.hpp"
 #include "ai/chat/adapters/log.hpp"
 #include "ai/chat/adapters/content_length.hpp"
@@ -62,6 +63,7 @@ int main() {
         init_tracer();
         init_logger();
 
+        ::ai::chat::history history{};
         ::std::vector<::openai::message> messages{
             {
                 ::openai::role::system,
@@ -73,9 +75,11 @@ int main() {
         ::ai::chat::adapters::total_tokens<
         ::ai::chat::adapters::trace<
         ::ai::chat::adapters::rate_limited<
+        ::ai::chat::adapters::tokens_limited<
         ::ai::chat::adapters::openai<::std::vector<::openai::message>>
-        >>>>> adapter{
+        >>>>>> adapter{
             1,
+            history, 999000, ::std::chrono::nanoseconds{ 24 * 60 * 60 * 1000000000 },
             "gemini-2.0-flash", messages,
             "https://generativelanguage.googleapis.com/v1beta/openai/",
             "api_key",

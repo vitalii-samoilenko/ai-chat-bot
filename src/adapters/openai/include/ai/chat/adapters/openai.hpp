@@ -1,16 +1,24 @@
 #ifndef AI_CHAT_ADAPTERS_OPENAI_HPP
 #define AI_CHAT_ADAPTERS_OPENAI_HPP
 
+#include <chrono>
+#include <memory>
 #include <string>
-#include <utility>
-
-#include "openai/client.hpp"
 
 namespace ai {
 namespace chat {
 namespace adapters {
 
-template<typename Range>
+enum class role {
+    system,
+    user,
+    assistant
+};
+struct message {
+    role role;
+    ::std::string content;
+};
+
 class openai {
 public:
     openai() = delete;
@@ -22,14 +30,15 @@ public:
     openai& operator=(const openai&) = delete;
     openai& operator=(openai&&) = delete;
 
-    template<typename... Args>
-    openai(const ::std::string& model, const Range& messages, Args&& ...args);
+    openai(const ::std::string& address, ::std::chrono::milliseconds timeout);
 
-    ::std::pair<::std::string, size_t> complete() const;
+    size_t insert(const message& message);
+    message complete(const ::std::string& model, const ::std::string& key);
 
 private:
-    ::openai::completion_context<const Range&> _context;
-    ::openai::client _client;
+    class connection;
+
+    ::std::unique_ptr<connection> _p_context;
 };
 
 } // adapters

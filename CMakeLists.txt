@@ -8,7 +8,6 @@ endif()
 
 add_subdirectory(third_party)
 
-add_subdirectory(src/adapters/common)
+add_subdirectory(src/clients/twitch)
 add_subdirectory(src/adapters/openai)
-add_subdirectory(src/adapters/telemetry)
 add_subdirectory(src/hosts/console)

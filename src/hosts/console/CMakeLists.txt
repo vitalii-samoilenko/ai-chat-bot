@@ -6,10 +6,8 @@ add_executable(ai-chat-hosts-console main.cpp)
 add_executable(AI::Chat::Hosts::Console ALIAS ai-chat-hosts-console)
 target_link_libraries(ai-chat-hosts-console
   PRIVATE
-    AI::Chat::Adapters::Common
+    AI::Chat::Clients::Twitch
     AI::Chat::Adapters::OpenAI
-    AI::Chat::Adapters::Telemetry
-    Twitch
     opentelemetry-cpp::ostream_metrics_exporter
     opentelemetry-cpp::ostream_span_exporter
     opentelemetry-cpp::ostream_log_record_exporter

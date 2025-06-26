@@ -1,0 +1,67 @@
+#ifndef AI_CHAT_CLIENTS_TWITCH_HANDLERS_OBSERVABLE_IPP
+#define AI_CHAT_CLIENTS_TWITCH_HANDLERS_OBSERVABLE_IPP
+
+#include <functional>
+#include <utility>
+
+#include "ai/chat/clients/twitch/handlers/observable.hpp"
+
+namespace ai {
+namespace chat {
+namespace clients {
+namespace twitch {
+namespace handlers {
+
+struct observable::subscription {
+    ::std::function<void(const message&)> on_message;
+};
+
+observable::slot::slot(observable::slot&& other) {
+    _p_target = other._p_target;
+    _p_observer = other._p_observer;
+    other._p_target = nullptr;
+    other._p_observer = nullptr;
+};
+
+observable::slot::~slot() {
+    _p_target->_subscriptions.erase(_p_observer);
+};
+
+observable::slot& observable::slot::operator=(observable::slot&& other) {
+    _p_target = other._p_target;
+    _p_observer = other._p_observer;
+    other._p_target = nullptr;
+    other._p_observer = nullptr;
+};
+
+template<typename Action>
+void observable::slot::on_message(Action&& callback) {
+    _p_target->_subscriptions[_p_observer]
+        .on_message = ::std::forward(callback);
+};
+
+observable::slot::slot(const ::std::type_info* p_observer, observable* p_target)
+    : _p_observer{ p_observer }
+    , _p_target{ p_target } {
+
+};
+
+template<typename Observer>
+observable::slot subscribe() {
+    return { &typeid(Observer), this };
+};
+
+void observable::on_message(const message& message) const {
+    for (const auto& p_observer_n_subscription : _subscriptions) {
+        const subscription& subscription{ p_observer_n_subscription.second };
+        subscription.on_message(message);
+    }
+};
+
+} // handlers
+} // twitch
+} // clients
+} // chat
+} // ai
+
+#endif
