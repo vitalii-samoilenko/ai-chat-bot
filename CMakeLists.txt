@@ -10,4 +10,5 @@ add_subdirectory(third_party)
 
 add_subdirectory(src/clients/twitch)
 add_subdirectory(src/adapters/openai)
+add_subdirectory(src/histories/sqlite)
 add_subdirectory(src/hosts/console)

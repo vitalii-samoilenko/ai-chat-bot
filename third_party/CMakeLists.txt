@@ -87,4 +87,56 @@ if(NOT opentelemetry-cpp_FOUND)
     add_subdirectory(opentelemetry-cpp)
 endif()
 
+find_package(SQLite)
+if(NOT SQLite_FOUND)
+    set(SQLITE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/sqlite)
+    set(SQLITE_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/sqlite)
+    set(SQLITE_INSTALL_DIR ${CMAKE_SOURCE_DIR}/install/SQLite)
+    if(WIN32)
+        set(CONFIGURE_COMMAND cmake -E touch config.log)
+        if(MSVC)
+            execute_process(COMMAND "C:/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe"
+                -format value -property installationPath
+                OUTPUT_VARIABLE VS_INSTALLATION_PATH
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+                COMMAND_ERROR_IS_FATAL ANY
+            )
+            set(MAKE_COMMAND ${VS_INSTALLATION_PATH}/VC/Auxiliary/Build/vcvarsall.bat x64 && nmake /F Makefile.msc)
+        else()
+            message(FATAL_ERROR "Compiler not supported")
+        endif()
+    else()
+        set(CONFIGURE_COMMAND ${SQLITE_SOURCE_DIR}/configure)
+        set(MAKE_COMMAND make)
+    endif()
+
+    if(NOT EXISTS ${SQLITE_SOURCE_DIR}/configure)
+        execute_process(COMMAND git submodule update
+                --init --recursive third_party/sqlite
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMAND_ERROR_IS_FATAL ANY
+        )
+    endif()
+    if(NOT EXISTS ${SQLITE_BINARY_DIR}/config.log)
+        file(COPY ${SQLITE_SOURCE_DIR} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+        execute_process(COMMAND ${CONFIGURE_COMMAND}
+            WORKING_DIRECTORY ${SQLITE_BINARY_DIR}
+            COMMAND_ERROR_IS_FATAL ANY
+        )
+    endif()
+    if(NOT EXISTS ${SQLITE_BINARY_DIR}/sqlite3.c)
+        execute_process(COMMAND ${MAKE_COMMAND} sqlite3.c
+            WORKING_DIRECTORY ${SQLITE_BINARY_DIR}
+            COMMAND_ERROR_IS_FATAL ANY
+        )
+    endif()
+    if(NOT EXISTS ${SQLITE_INSTALL_DIR})
+        file(COPY ${SQLITE_BINARY_DIR}/sqlite3.c DESTINATION ${SQLITE_INSTALL_DIR}/include)
+        file(COPY ${SQLITE_BINARY_DIR}/sqlite3.h DESTINATION ${SQLITE_INSTALL_DIR}/include)
+    endif()
+    add_library(sqlite INTERFACE)
+    add_library(SQLite ALIAS sqlite)
+    target_include_directories(sqlite INTERFACE ${SQLITE_INSTALL_DIR}/include)
+endif()
+
 add_subdirectory(eboost)

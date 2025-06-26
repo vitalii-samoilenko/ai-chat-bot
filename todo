@@ -18,4 +18,5 @@ azure free tier host
 sll chain validation
 Content-Length
 
+reduce allocations (string_view)?
 websocket packets?

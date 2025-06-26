@@ -117,7 +117,7 @@ public:
             ::boost::beast::bind_front_handler(&on_websocket_handshake, this));
     };
     void on_websocket_handshake() {
-        constexpr char[] PASS{ "PASS oauth:" };
+        const char PASS[]{ "PASS oauth:" };
         ::boost::asio::mutable_buffer request{ _buffer.prepare(::std::size(PASS) - 1 + _access_token.size()) };
         ::std::memcpy(request.data(), reinterpret_cast<const void*>(PASS), ::std::size(PASS) - 1);
         ::std::memcpy(request.data() + ::std::size(PASS) - 1, reinterpret_cast<const void*>(_access_token.cdata()), _access_token.size());
@@ -126,7 +126,7 @@ public:
     };
     void on_pass(size_t bytes_transferred) {
         ::boost::ignore_unused(bytes_transferred);
-        constexpr char[] NICK{ "NICK " };
+        const char NICK[]{ "NICK " };
         ::boost::asio::mutable_buffer request{ _buffer.prepare(::std::size(NICK) - 1 + _username.size()) };
         ::std::memcpy(request.data(), reinterpret_cast<const void*>(NICK), ::std::size(NICK) - 1);
         ::std::memcpy(request.data() + ::std::size(NICK) - 1, reinterpret_cast<const void*>(_username.cdata()), _username.size());
@@ -159,7 +159,7 @@ public:
         for (::boost::xpressive::sregex_iterator current{ ::boost::asio::buffers_begin(_buffer), ::boost::asio::buffers_end(_buffer), _command_group }, end{}; !(current == end); ++current) {
             const ::boost::xpressive::smatch& what{ *current };
             if (what[_ping_group] && pong) {
-                constexpr char[] PONG{ "PONG :tmi.twitch.tv" };
+                const char PONG[]{ "PONG :tmi.twitch.tv" };
                 ::boost::asio::mutable_buffer request{ _buffer.prepare(::std::size(PONG) - 1) };
                 ::std::memcpy(request.data(), reinterpret_cast<const void*>(PONG), ::std::size(PONG) - 1);
                 _stream.async_write(request,
@@ -199,8 +199,8 @@ public:
 
     };
     void on_send(message message) {
-        constexpr char[] PRIVMSG{ "PRIVMSG #" };
-        constexpr char[] WHAT{ " :" };
+        const char PRIVMSG[]{ "PRIVMSG #" };
+        const char WHAT[]{ " :" };
         ::boost::asio::mutable_buffer request{ _buffer.prepare(::std::size(PRIVMSG) - 1 + message.channel.size() + ::std::size(WHAT) - 1 + message.content.size()) };
         ::std::memcpy(message.data(), reinterpret_cast<const void*>(PRIVMSG), ::std::size(PRIVMSG) - 1);
         ::std::memcpy(message.data() + ::std::size(PRIVMSG) - 1, reinterpret_cast<const void*>(message.channel.cdata()), message.channel.size());
@@ -218,7 +218,7 @@ template<typename Handler>
 template<typename... Args>
 irc<Handler>::irc(const ::std::string& address, ::std::chrono::milliseconds timeout, Args&& ...args)
     : Handler{ ::std::forward<Args>(args)... }
-    , _p_channel{ ::std::make_unique(*this) } {
+    , _p_channel{ new connection{ *this } } {
     ::boost::system::result<::boost::urls::url_view> result{ ::boost::urls::parse_uri(address) };
     if (!result.has_value()) {
         throw ::std::invalid_argument{ "invalid uri" };
