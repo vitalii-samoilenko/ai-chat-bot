@@ -18,6 +18,8 @@ namespace chat {
 namespace adapters {
 
 class openai::connection {
+    friend openai;
+
 public:
     // connection() = delete;
     connection(const connection&) = delete;
@@ -28,6 +30,7 @@ public:
     connection& operator=(const connection&) = delete;
     connection& operator=(connection&&) = delete;
 
+private:
     connection()
         : _context{}
         , _resolver{ _context }
@@ -151,40 +154,40 @@ struct completion_result {
     usage usage;
 };
 
-::std::string to_string(const role& role) {
+::std::string to_string(const openai::role_type& role) {
     switch (role) {
-        case role::system:
+        case openai::role_type::system:
             return "system";
-        case role::user:
+        case openai::role_type::user:
             return "user";
-        case role::assistant:
+        case openai::role_type::assistant:
             return "assistant";
     }
     throw ::std::invalid_argument{ "role is not supported" };
 };
-role tag_invoke(::boost::json::value_to_tag<role>, const ::boost::json::value& value) {
+role tag_invoke(::boost::json::value_to_tag<openai::role_type>, const ::boost::json::value& value) {
     const ::boost::json::string& string{ value.as_string() };
     if (string == "system") {
-        return role::system;
+        return openai::role_type::system;
     }
     if (string == "user") {
-        return role::user;
+        return openai::role_type::user;
     }
     if (string == "assistant") {
-        return role::assistant;
+        return openai::role_type::assistant;
     }
     throw ::std::invalid_argument{ "role is not supported" };
 };
 
-void tag_invoke(::boost::json::value_from_tag, ::boost::json::value& value, const message& message) {
+void tag_invoke(::boost::json::value_from_tag, ::boost::json::value& value, const openai::message_type& message) {
     value = {
         { "role" , to_string(message.role) },
         { "content", message.content },
     };
 };
-message tag_invoke(::boost::json::value_to_tag<message>, const ::boost::json::value& value) {
+message tag_invoke(::boost::json::value_to_tag<openai::message_type>, const ::boost::json::value& value) {
     return {
-        ::boost::json::value_to<role>(value.at("role")),
+        ::boost::json::value_to<openai::role_type>(value.at("role")),
         ::boost::json::value_to<::std::string>(value.at("content")),
     };
 };
@@ -218,7 +221,7 @@ choice tag_invoke(::boost::json::value_to_tag<choice>, const ::boost::json::valu
     return {
         ::boost::json::value_to<finish_reason>(value.at("finish_reason")),
         ::boost::json::value_to<size_t>(value.at("index")),
-        ::boost::json::value_to<message>(value.at("message")),
+        ::boost::json::value_to<openai::message_type>(value.at("message")),
     };
 };
 
@@ -229,12 +232,12 @@ completion_result tag_invoke(::boost::json::value_to_tag<completion_result>, con
     };
 };
 
-size_t openai::insert(const message& message) {
+openai::iterator_type openai::insert(const message_type& message) {
     ::boost::json::array& messages{ _p_context->_completion.at("messages").as_array() };
     messages.push_back(::boost::json::value_from(message));
     return messages.size() - 1;
 };
-message openai::complete(const ::std::string& model, const ::std::string& key) {
+openai::message_type openai::complete(const ::std::string& model, const ::std::string& key) {
     _p_context->_completion.at("model") = model;
     ::boost::beast::http::request<::eboost::beast::http::json_body> request{
         ::boost::beast::http::verb::post, "chat/completions", 11,

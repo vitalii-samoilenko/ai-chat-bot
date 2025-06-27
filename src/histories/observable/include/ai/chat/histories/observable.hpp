@@ -1,20 +1,17 @@
-#ifndef AI_CHAT_CLIENTS_TWITCH_HANDLERS_OBSERVABLE_HPP
-#define AI_CHAT_CLIENTS_TWITCH_HANDLERS_OBSERVABLE_HPP
+#ifndef AI_CHAT_HISTORIES_OBSERVABLE_HPP
+#define AI_CHAT_HISTORIES_OBSERVABLE_HPP
 
 #include <typeinfo>
 #include <unordered_map>
 
-#include "ai/chat/clients/twitch/irc.hpp"
-
 namespace ai {
 namespace chat {
-namespace clients {
-namespace twitch {
-namespace handlers {
+namespace histories {
 
-class observable {
+template<typename History>
+class observable : private History {
 public:
-    observable() = default;
+    observable() = delete;
     observable(const observable&) = delete;
     observable(observable&&) = delete;
 
@@ -46,13 +43,19 @@ public:
         observable* _p_target;
     };
 
+    using typename History::iterator_type;
+    using typename History::tag_type;
+    using typename History::message_type;
     using slot_type = slot;
+
+    template<typename... Args>
+    explicit observable(Args&& ...args);
 
     template<typename Observer>
     slot_type subscribe();
 
-protected:
-    void on_message(const message& message) const;
+    template<typename Client>
+    iterator_type insert(const message_type& message);
 
 private:
     class subscription;
@@ -60,9 +63,7 @@ private:
     ::std::unordered_map<const ::std::type_info*, subscription> _subscriptions;
 };
 
-} // handlers
-} // twitch
-} // clients
+} // histories
 } // chat
 } // ai
 

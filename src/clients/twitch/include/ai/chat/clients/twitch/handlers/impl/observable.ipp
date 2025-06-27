@@ -12,11 +12,15 @@ namespace clients {
 namespace twitch {
 namespace handlers {
 
-struct observable::subscription {
+class observable::subscription {
+    friend observable;
+    friend slot;
+
+private:
     ::std::function<void(const message&)> on_message;
 };
 
-observable::slot::slot(observable::slot&& other) {
+observable::slot::slot(slot&& other) {
     _p_target = other._p_target;
     _p_observer = other._p_observer;
     other._p_target = nullptr;
@@ -24,10 +28,12 @@ observable::slot::slot(observable::slot&& other) {
 };
 
 observable::slot::~slot() {
-    _p_target->_subscriptions.erase(_p_observer);
+    if (_p_target) {
+        _p_target->_subscriptions.erase(_p_observer);
+    }
 };
 
-observable::slot& observable::slot::operator=(observable::slot&& other) {
+observable::slot& observable::slot::operator=(slot&& other) {
     _p_target = other._p_target;
     _p_observer = other._p_observer;
     other._p_target = nullptr;
@@ -47,7 +53,7 @@ observable::slot::slot(const ::std::type_info* p_observer, observable* p_target)
 };
 
 template<typename Observer>
-observable::slot subscribe() {
+observable::slot_type observable::subscribe() {
     return { &typeid(Observer), this };
 };
 

@@ -20,6 +20,8 @@ namespace clients {
 namespace twitch {
 
 class auth::connection {
+    friend auth;
+    
 public:
     // connection() = delete;
     connection(const connection&) = delete;
@@ -30,6 +32,8 @@ public:
     connection& operator=(const connection&) = delete;
     connection& operator=(connection&&) = delete;
 
+private:
+
     connection()
         : _context{}
         , _resolver{ _context }
@@ -39,9 +43,7 @@ public:
         , _port{}
         , _path{}
         , _timeout{}
-        , _buffer{}
-        , _validate_token{ ::boost::beast::http::verb::get, "validate", 11, }
-        , _refresh_token{} {
+        , _buffer{} {
 
     };
 

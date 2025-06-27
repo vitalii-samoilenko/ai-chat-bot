@@ -15,6 +15,8 @@ namespace chat {
 namespace histories {
 
 class sqlite::connection {
+    friend sqlite;
+
 public:
     // connection() = delete;
     connection(const connection&) = delete;
@@ -25,6 +27,7 @@ public:
     connection& operator=(const connection&) = delete;
     connection& operator=(connection&&) = delete;
 
+private:
     connection()
         : _p_database{ nullptr }
         , _p_insert_begin{ nullptr }
@@ -117,7 +120,7 @@ public:
                 static_cast<int>(::std::size(INSERT_ROLLBACK) - 1),
                 &_p_insert_rollback, nullptr));
     };
-    ::std::chrono::nanoseconds on_insert(const message& message) {
+    iterator_type on_insert(const message_type& message) {
         ::std::chrono::steady_clock::time_point now{ ::std::chrono::steady_clock::now() };
         ensure_success(
             ::sqlite3_step(_p_insert_begin));
@@ -146,7 +149,7 @@ public:
         ensure_success(
             ::sqlite3_bind_null(_p_insert_content,
                 ::sqlite3_bind_parameter_index(_p_insert_content, "@CONTENT")));
-        for (const tag& tag : message.tags) {
+        for (const tag_type& tag : message.tags) {
             ensure_success(
                 ::sqlite3_bind_int64(_p_insert_tag,
                     ::sqlite3_bind_parameter_index(_p_insert_tag, "@TIMESTAMP"),
@@ -184,7 +187,7 @@ sqlite::sqlite(const ::std::string& filename)
     _p_chat->on_init();
 };
 
-::std::chrono::nanoseconds sqlite::insert(const message& message) {
+sqlite::iterator_type sqlite::insert(const message_type& message) {
     return _p_chat->on_insert(message);
 };
 

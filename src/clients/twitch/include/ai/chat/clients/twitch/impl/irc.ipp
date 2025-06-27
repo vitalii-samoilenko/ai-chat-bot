@@ -22,6 +22,8 @@ namespace twitch {
 
 template<typename Handler>
 class irc<Handler>::connection {
+    friend irc;
+
 public:
     connection() = delete;
     connection(const connection&) = delete;
@@ -32,6 +34,7 @@ public:
     connection& operator=(const connection&) = delete;
     connection& operator=(connection&&) = delete;
 
+private:
     explicit connection(Handler& handler)
         : _context{ 1 }
         , _resolver{ _context }
@@ -198,7 +201,7 @@ public:
     void on_close() {
 
     };
-    void on_send(message message) {
+    void on_send(message_type message) {
         const char PRIVMSG[]{ "PRIVMSG #" };
         const char WHAT[]{ " :" };
         ::boost::asio::mutable_buffer request{ _buffer.prepare(::std::size(PRIVMSG) - 1 + message.channel.size() + ::std::size(WHAT) - 1 + message.content.size()) };
@@ -249,7 +252,7 @@ void irc<Handler>::disconnect() {
         ::boost::beast::bind_front_handler(&channel::on_disconnect, _p_channel.get()));
 };
 template<typename Handler>
-void irc<Handler>::send(const message& message) {
+void irc<Handler>::send(const message_type& message) {
     ::boost::asio::post(_p_channel->_context,
         ::boost::beast::bind_front_handler(&channel::on_send, _p_channel.get(), message));
 };

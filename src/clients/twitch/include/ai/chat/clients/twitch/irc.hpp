@@ -28,12 +28,14 @@ public:
     irc& operator=(const irc&) = delete;
     irc& operator=(irc&&) = delete;
 
+    using message_type = message;
+
     template<typename... Args>
     irc(const ::std::string& address, ::std::chrono::milliseconds timeout, Args&& ...args);
 
     void connect(const ::std::string& username, const ::std::string& access_token);
     void disconnect();
-    void send(const message& message);
+    void send(const message_type& message);
 
 private:
     class connection;

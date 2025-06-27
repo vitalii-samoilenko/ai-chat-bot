@@ -30,10 +30,14 @@ public:
     openai& operator=(const openai&) = delete;
     openai& operator=(openai&&) = delete;
 
+    using iterator_type = size_t;
+    using role_type = role;
+    using message_type = message;
+
     openai(const ::std::string& address, ::std::chrono::milliseconds timeout);
 
-    size_t insert(const message& message);
-    message complete(const ::std::string& model, const ::std::string& key);
+    iterator_type insert(const message_type& message);
+    message_type complete(const ::std::string& model, const ::std::string& key);
 
 private:
     class connection;

@@ -31,9 +31,13 @@ public:
     sqlite& operator=(const sqlite&) = delete;
     sqlite& operator=(sqlite&&) = delete;
 
+    using iterator_type = ::std::chrono::nanoseconds;
+    using tag_type = tag;
+    using message_type = message;
+
     explicit sqlite(const ::std::string& filename);
 
-    ::std::chrono::nanoseconds insert(const message& message);
+    iterator_type insert(const message_type& message);
 
 private:
     class connection;
