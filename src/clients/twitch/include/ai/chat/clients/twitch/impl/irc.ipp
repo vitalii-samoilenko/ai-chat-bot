@@ -105,6 +105,9 @@ private:
         ::boost::beast::get_lowest_layer(_stream).expires_after(_timeout);
         _resolver.async_resolve(_host, _port,
             [this](::boost::beast::error_code error_code, ::boost::asio::ip::tcp::resolver::results_type results)->void {
+                if (error_code == ::boost::beast::errc::operation_canceled) {
+                    return;
+                }
                 ::eboost::beast::ensure_success(error_code);
                 on_resolve(::std::move(results));
             });
@@ -112,6 +115,9 @@ private:
     void on_resolve(::boost::asio::ip::tcp::resolver::results_type results) {
         ::boost::beast::get_lowest_layer(_stream).async_connect(results,
             [this](::boost::beast::error_code error_code, ::boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint_type)->void {
+                if (error_code == ::boost::beast::errc::operation_canceled) {
+                    return;
+                }
                 ::eboost::beast::ensure_success(error_code);
                 on_transport_connect(::std::move(endpoint_type));
             });
@@ -119,6 +125,9 @@ private:
     void on_transport_connect(::boost::asio::ip::tcp::resolver::results_type::endpoint_type) {
         _stream.next_layer().async_handshake(::boost::asio::ssl::stream_base::client,
             [this](::boost::beast::error_code error_code)->void {
+                if (error_code == ::boost::beast::errc::operation_canceled) {
+                    return;
+                }
                 ::eboost::beast::ensure_success(error_code);
                 on_ssl_handshake();
             });
@@ -128,6 +137,9 @@ private:
         _stream.set_option(::boost::beast::websocket::stream_base::timeout::suggested(::boost::beast::role_type::client));
         _stream.async_handshake(_authority, "/",
             [this](::boost::beast::error_code error_code)->void {
+                if (error_code == ::boost::beast::errc::operation_canceled) {
+                    return;
+                }
                 ::eboost::beast::ensure_success(error_code);
                 on_websocket_handshake();
             });
@@ -139,6 +151,9 @@ private:
         ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(PASS) - 1, _access_token.data(), _access_token.size());
         _stream.async_write(request,
             [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
+                if (error_code == ::boost::beast::errc::operation_canceled) {
+                    return;
+                }
                 ::eboost::beast::ensure_success(error_code);
                 on_pass(bytes_transferred);
             });
@@ -151,6 +166,9 @@ private:
         ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(NICK) - 1, _username.data(), _username.size());
         _stream.async_write(request,
             [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
+                if (error_code == ::boost::beast::errc::operation_canceled) {
+                    return;
+                }
                 ::eboost::beast::ensure_success(error_code);
                 on_nick(bytes_transferred);
             });
@@ -159,6 +177,9 @@ private:
         ::boost::ignore_unused(bytes_transferred);
         _stream.async_read(_buffer,
             [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
+                if (error_code == ::boost::beast::errc::operation_canceled) {
+                    return;
+                }
                 ::eboost::beast::ensure_success(error_code);
                 on_notice(bytes_transferred);
             });
@@ -177,6 +198,9 @@ private:
         ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(JOIN) - 1, _username.data(), _username.size());
         _stream.async_write(request,
             [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
+                if (error_code == ::boost::beast::errc::operation_canceled) {
+                    return;
+                }
                 ::eboost::beast::ensure_success(error_code);
                 on_join(bytes_transferred);
             });
@@ -185,6 +209,9 @@ private:
         ::boost::ignore_unused(bytes_transferred);
         _stream.async_read(_buffer,
             [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
+                if (error_code == ::boost::beast::errc::operation_canceled) {
+                    return;
+                }
                 ::eboost::beast::ensure_success(error_code);
                 on_read(bytes_transferred);
             });
@@ -201,6 +228,9 @@ private:
                 ::std::memcpy(request.data(), reinterpret_cast<const void*>(PONG), ::std::size(PONG) - 1);
                 _stream.async_write(request,
                     [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
+                        if (error_code == ::boost::beast::errc::operation_canceled) {
+                            return;
+                        }
                         ::eboost::beast::ensure_success(error_code);
                         on_pong(bytes_transferred);
                     });
@@ -224,6 +254,9 @@ private:
         } else {
             _stream.async_read(_buffer,
                 [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
+                    if (error_code == ::boost::beast::errc::operation_canceled) {
+                        return;
+                    }
                     ::eboost::beast::ensure_success(error_code);
                     on_read(bytes_transferred);
                 });
@@ -235,6 +268,9 @@ private:
     void on_reconnect() {
         _stream.async_close(::boost::beast::websocket::close_code::normal,
             [this](::boost::beast::error_code error_code)->void {
+                if (error_code == ::boost::beast::errc::operation_canceled) {
+                    return;
+                }
                 ::eboost::beast::ensure_success(error_code);
                 on_connect();
             });
@@ -255,6 +291,9 @@ private:
         ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(PRIVMSG) - 1 + message.channel.size() + ::std::size(WHAT) - 1, message.content.data(), message.content.size());
         _stream.async_write(request,
             [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
+                if (error_code == ::boost::beast::errc::operation_canceled) {
+                    return;
+                }
                 ::eboost::beast::ensure_success(error_code);
                 on_write(bytes_transferred);
             });
