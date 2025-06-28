@@ -30,7 +30,9 @@ public:
     ~connection() {
         ::sqlite3_finalize(_p_insert_rollback);
         ::sqlite3_finalize(_p_insert_commit);
-        ::sqlite3_finalize(_p_insert_tag);
+        ::sqlite3_finalize(_p_insert_tag_name);
+        ::sqlite3_finalize(_p_insert_tag_value);
+        ::sqlite3_finalize(_p_insert_message_tag);
         ::sqlite3_finalize(_p_insert_content);
         ::sqlite3_finalize(_p_insert_begin);
         ::sqlite3_close(_p_database);
@@ -41,7 +43,9 @@ private:
         : _p_database{ nullptr }
         , _p_insert_begin{ nullptr }
         , _p_insert_content{ nullptr }
-        , _p_insert_tag{ nullptr }
+        , _p_insert_tag_name{ nullptr }
+        , _p_insert_tag_value{ nullptr }
+        , _p_insert_message_tag{ nullptr }
         , _p_insert_commit{ nullptr }
         , _p_insert_rollback{ nullptr }
         , _filename{} {
@@ -51,7 +55,9 @@ private:
     ::sqlite3* _p_database;
     ::sqlite3_stmt* _p_insert_begin;
     ::sqlite3_stmt* _p_insert_content;
-    ::sqlite3_stmt* _p_insert_tag;
+    ::sqlite3_stmt* _p_insert_tag_name;
+    ::sqlite3_stmt* _p_insert_tag_value;
+    ::sqlite3_stmt* _p_insert_message_tag;
     ::sqlite3_stmt* _p_insert_commit;
     ::sqlite3_stmt* _p_insert_rollback;
     ::std::string _filename;
@@ -60,6 +66,7 @@ private:
         switch (error_code) {
         case SQLITE_OK:
         case SQLITE_ROW:
+        case SQLITE_DONE:
             return;
         default:
             throw ::std::exception{ ::sqlite3_errstr(error_code) };
@@ -70,101 +77,142 @@ private:
             ::sqlite3_open_v2(_filename.c_str(), &_p_database,
                 SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE,
                 nullptr));
-        ::sqlite3_stmt* _p_init{ nullptr };
-        auto on_exit = ::boost::scope::make_scope_exit([this, _p_init]()->void {
+        ::sqlite3_stmt* _p_init_message{ nullptr };
+        ::sqlite3_stmt* _p_init_tag_name{ nullptr };
+        ::sqlite3_stmt* _p_init_tag_value{ nullptr };
+        ::sqlite3_stmt* _p_init_message_tag{ nullptr };
+        auto on_exit = ::boost::scope::make_scope_exit([=]()->void {
             ensure_success(
-                ::sqlite3_finalize(_p_init));
+                ::sqlite3_finalize(_p_init_message));
+            ensure_success(
+                ::sqlite3_finalize(_p_init_tag_name));
+            ensure_success(
+                ::sqlite3_finalize(_p_init_tag_value));
+            ensure_success(
+                ::sqlite3_finalize(_p_init_message_tag));
         });
-        const char INIT[]{
-            "CREATE TABLE IF NOT EXISTS ai.message"
+        const char INIT_MESSAGE[]{
+            "CREATE TABLE IF NOT EXISTS message"
             "("
-                "timestamp INTEGER NOT NULL CONSTRAINT PK_ai_message PRIMARY KEY,"
-                "content TEXT NOT NULL"
-            ")"
-                "WITHOUT ROWID;"
-            "CREATE TABLE IF NOT EXISTS ai.tag_name"
-            "("
-                "id INTEGER NOT NULL CONSTRAINT PK_ai_tag_name PRIMARY KEY AUTOINCREMENT,"
-                "name TEXT NOT NULL CONSTRAINT UQ_ai_tag_name_name UNIQUE"
-            ")"
-                "WITHOUT ROWID;"
-            "CREATE TABLE IF NOT EXISTS ai.tag_value"
-            "("
-                "id INTEGER NOT NULL CONSTRAINT PK_ai_tag_value PRIMARY KEY AUTOINCREMENT,"
-                "name_id INTEGER NOT NULL CONSTRAINT FK_ai_tag_value_ai_tag_name REFERENCES ai.tag_name(id),"
-                "value TEXT NOT NULL CONSTRAINT UQ_ai_tag_value_value UNIQUE"
-            ")"
-                "WITHOUT ROWID;"
-            "CREATE TABLE IF NOT EXISTS ai.message_tag"
-            "("
-                "timestamp INTEGER NOT NULL CONSTRAINT FK_ai_message_tag_ai_message REFERENCES ai.message(timestamp),"
-                "value_id INTEGER NOT NULL CONSTRAINT FK_ai_message_tag_ai_tag_value REFERENCES ai.tag_value(id)"
-            ")"
-                "CONSTRAINT PK_ai_message_tag PRIMARY KEY(timestamp, value_id)"
-                "WITHOUT ROWID;"
+                  "timestamp INTEGER NOT NULL CONSTRAINT PK_message PRIMARY KEY"
+                ", content TEXT NOT NULL"
+            ") WITHOUT ROWID"
         };
         ensure_success(
-            ::sqlite3_prepare_v2(_p_database, INIT,
-                static_cast<int>(::std::size(INIT) - 1),
-                &_p_init, nullptr));
+            ::sqlite3_prepare_v2(_p_database, INIT_MESSAGE,
+                static_cast<int>(::std::size(INIT_MESSAGE) - 1),
+                &_p_init_message, nullptr));
         ensure_success(
-            ::sqlite3_step(_p_init));
+            ::sqlite3_step(_p_init_message));
+        const char INIT_TAG_NAME[]{
+            "CREATE TABLE IF NOT EXISTS tag_name"
+            "("
+                  "id INTEGER NOT NULL CONSTRAINT PK_tag_name PRIMARY KEY AUTOINCREMENT"
+                ", name TEXT NOT NULL CONSTRAINT UQ_tag_name_name UNIQUE"
+            ")"
+        };
+        ensure_success(
+            ::sqlite3_prepare_v2(_p_database, INIT_TAG_NAME,
+                static_cast<int>(::std::size(INIT_TAG_NAME) - 1),
+                &_p_init_tag_name, nullptr));
+        ensure_success(
+            ::sqlite3_step(_p_init_tag_name));
+        const char INIT_TAG_VALUE[]{
+            "CREATE TABLE IF NOT EXISTS tag_value"
+            "("
+                  "id INTEGER NOT NULL CONSTRAINT PK_tag_value PRIMARY KEY AUTOINCREMENT"
+                ", name_id INTEGER NOT NULL CONSTRAINT FK_tag_value_tag_name REFERENCES tag_name(id)"
+                ", value TEXT NOT NULL CONSTRAINT UQ_tag_value_value UNIQUE"
+            ")"
+        };
+        ensure_success(
+            ::sqlite3_prepare_v2(_p_database, INIT_TAG_VALUE,
+                static_cast<int>(::std::size(INIT_TAG_VALUE) - 1),
+                &_p_init_tag_value, nullptr));
+        ensure_success(
+            ::sqlite3_step(_p_init_tag_value));
+        const char INIT_MESSAGE_TAG[]{
+            "CREATE TABLE IF NOT EXISTS message_tag"
+            "("
+                  "timestamp INTEGER NOT NULL CONSTRAINT FK_message_tag_message REFERENCES message(timestamp)"
+                ", value_id INTEGER NOT NULL CONSTRAINT FK_message_tag_tag_value REFERENCES tag_value(id)"
+                ", CONSTRAINT PK_message_tag PRIMARY KEY(timestamp, value_id)"
+            ") WITHOUT ROWID"
+        };
+        ensure_success(
+            ::sqlite3_prepare_v2(_p_database, INIT_MESSAGE_TAG,
+                static_cast<int>(::std::size(INIT_MESSAGE_TAG) - 1),
+                &_p_init_message_tag, nullptr));
+        ensure_success(
+            ::sqlite3_step(_p_init_message_tag));
         const char INSERT_BEGIN[]{
-            "SAVEPOINT insert_message;"
+            "SAVEPOINT insert_message"
         };
         ensure_success(
             ::sqlite3_prepare_v2(_p_database, INSERT_BEGIN,
                 static_cast<int>(::std::size(INSERT_BEGIN) - 1),
                 &_p_insert_begin, nullptr));
         const char INSERT_CONTENT[]{
-            "INSERT INTO ai.message"
+            "INSERT INTO message"
             "("
                 "timestamp, content"
             ")"
-            "VALUES"
+            " VALUES"
             "("
                 "@TIMESTAMP, @CONTENT"
-            ");"
+            ")"
         };
         ensure_success(
             ::sqlite3_prepare_v2(_p_database, INSERT_CONTENT,
                 static_cast<int>(::std::size(INSERT_CONTENT) - 1),
                 &_p_insert_content, nullptr));
-        const char INSERT_TAG[]{
-            "INSERT OR IGNORE INTO ai.tag_name"
+        const char INSERT_TAG_NAME[]{
+            "INSERT OR IGNORE INTO tag_name"
             "("
                 "name"
             ")"
-            "VALUES"
+            " VALUES"
             "("
                 "@NAME"
-            ");"
-            "INSERT OR IGNORE INTO ai.tag_value"
+            ")"
+        };
+        ensure_success(
+            ::sqlite3_prepare_v2(_p_database, INSERT_TAG_NAME,
+                static_cast<int>(::std::size(INSERT_TAG_NAME) - 1),
+                &_p_insert_tag_name, nullptr));
+        const char INSERT_TAG_VALUE[]{
+            "INSERT OR IGNORE INTO tag_value"
             "("
                 "name_id, value"
             ")"
-            "SELECT id, @VALUE FROM ai.tag_name"
-            "WHERE name = @NAME;"
-            "INSERT OR IGNORE INTO ai.message_tag"
+            " SELECT id, @VALUE FROM tag_name"
+            " WHERE name = @NAME"
+        };
+        ensure_success(
+            ::sqlite3_prepare_v2(_p_database, INSERT_TAG_VALUE,
+                static_cast<int>(::std::size(INSERT_TAG_VALUE) - 1),
+                &_p_insert_tag_value, nullptr));
+        const char INSERT_MESSAGE_TAG[]{
+            "INSERT OR IGNORE INTO message_tag"
             "("
                 "timestamp, value_id"
             ")"
-            "SELECT @TIMESTAMP, value_id FROM ai.tag_value"
-            "WHERE value = @VALUE;"
+            " SELECT @TIMESTAMP, id FROM tag_value"
+            " WHERE value = @VALUE"
         };
         ensure_success(
-            ::sqlite3_prepare_v2(_p_database, INSERT_TAG,
-                static_cast<int>(::std::size(INSERT_TAG) - 1),
-                &_p_insert_tag, nullptr));
+            ::sqlite3_prepare_v2(_p_database, INSERT_MESSAGE_TAG,
+                static_cast<int>(::std::size(INSERT_MESSAGE_TAG) - 1),
+                &_p_insert_message_tag, nullptr));
         const char INSERT_COMMIT[]{
-            "RELEASE SAVEPOINT insert_message;"
+            "RELEASE SAVEPOINT insert_message"
         };
         ensure_success(
             ::sqlite3_prepare_v2(_p_database, INSERT_COMMIT,
                 static_cast<int>(::std::size(INSERT_COMMIT) - 1),
                 &_p_insert_commit, nullptr));
         const char INSERT_ROLLBACK[]{
-            "ROLLBACK TO SAVEPOINT insert_message;"
+            "ROLLBACK TO SAVEPOINT insert_message"
         };
         ensure_success(
             ::sqlite3_prepare_v2(_p_database, INSERT_ROLLBACK,
@@ -202,32 +250,43 @@ private:
                 ::sqlite3_bind_parameter_index(_p_insert_content, "@CONTENT")));
         for (const tag_type& tag : message.tags) {
             ensure_success(
-                ::sqlite3_bind_int64(_p_insert_tag,
-                    ::sqlite3_bind_parameter_index(_p_insert_tag, "@TIMESTAMP"),
-                    now.time_since_epoch().count()));
-            ensure_success(
-                ::sqlite3_bind_text(_p_insert_tag,
-                    ::sqlite3_bind_parameter_index(_p_insert_tag, "@NAME"),
+                ::sqlite3_bind_text(_p_insert_tag_name,
+                    ::sqlite3_bind_parameter_index(_p_insert_tag_name, "@NAME"),
                     tag.name.c_str(),
                     static_cast<int>(tag.name.size()),
                     SQLITE_STATIC));
             ensure_success(
-                ::sqlite3_bind_text(_p_insert_tag,
-                    ::sqlite3_bind_parameter_index(_p_insert_tag, "@VALUE"),
+                ::sqlite3_step(_p_insert_tag_name));
+            ensure_success(
+                ::sqlite3_bind_text(_p_insert_tag_value,
+                    ::sqlite3_bind_parameter_index(_p_insert_tag_value, "@VALUE"),
                     tag.value.c_str(),
                     static_cast<int>(tag.value.size()),
                     SQLITE_STATIC));
             ensure_success(
-                ::sqlite3_step(_p_insert_tag));
+                ::sqlite3_reset(_p_insert_tag_value));
             ensure_success(
-                ::sqlite3_reset(_p_insert_tag));
+                ::sqlite3_bind_int64(_p_insert_message_tag,
+                    ::sqlite3_bind_parameter_index(_p_insert_message_tag, "@TIMESTAMP"),
+                    now.time_since_epoch().count()));
+            ensure_success(
+                ::sqlite3_bind_text(_p_insert_message_tag,
+                    ::sqlite3_bind_parameter_index(_p_insert_message_tag, "@VALUE"),
+                    tag.value.c_str(),
+                    static_cast<int>(tag.value.size()),
+                    SQLITE_STATIC));
+            ensure_success(
+                ::sqlite3_reset(_p_insert_message_tag));
         }
         ensure_success(
-            ::sqlite3_bind_null(_p_insert_tag,
-                ::sqlite3_bind_parameter_index(_p_insert_tag, "@NAME")));
+            ::sqlite3_bind_null(_p_insert_tag_name,
+                ::sqlite3_bind_parameter_index(_p_insert_tag_name, "@NAME")));
         ensure_success(
-            ::sqlite3_bind_null(_p_insert_tag,
-                ::sqlite3_bind_parameter_index(_p_insert_tag, "@VALUE")));
+            ::sqlite3_bind_null(_p_insert_tag_value,
+                ::sqlite3_bind_parameter_index(_p_insert_tag_value, "@VALUE")));
+        ensure_success(
+            ::sqlite3_bind_null(_p_insert_message_tag,
+                ::sqlite3_bind_parameter_index(_p_insert_message_tag, "@VALUE")));
         return now.time_since_epoch();
     };
 };
