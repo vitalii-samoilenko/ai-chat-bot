@@ -121,7 +121,6 @@ private:
             "CREATE TABLE IF NOT EXISTS tag_value"
             "("
                   "id INTEGER NOT NULL CONSTRAINT PK_tag_value PRIMARY KEY AUTOINCREMENT"
-                ", name_id INTEGER NOT NULL CONSTRAINT FK_tag_value_tag_name REFERENCES tag_name(id)"
                 ", value TEXT NOT NULL CONSTRAINT UQ_tag_value_value UNIQUE"
             ")"
         };
@@ -135,8 +134,9 @@ private:
             "CREATE TABLE IF NOT EXISTS message_tag"
             "("
                   "timestamp INTEGER NOT NULL CONSTRAINT FK_message_tag_message REFERENCES message(timestamp)"
+                ", name_id INTEGER NOT NULL CONSTRAINT FK_message_tag_tag_name REFERENCES tag_name(id)"
                 ", value_id INTEGER NOT NULL CONSTRAINT FK_message_tag_tag_value REFERENCES tag_value(id)"
-                ", CONSTRAINT PK_message_tag PRIMARY KEY(timestamp, value_id)"
+                ", CONSTRAINT PK_message_tag PRIMARY KEY(timestamp, name_id, value_id)"
             ") WITHOUT ROWID"
         };
         ensure_success(
@@ -183,10 +183,12 @@ private:
         const char INSERT_TAG_VALUE[]{
             "INSERT OR IGNORE INTO tag_value"
             "("
-                "name_id, value"
+                "value"
             ")"
-            " SELECT id, @VALUE FROM tag_name"
-            " WHERE name = @NAME"
+            " VALUES"
+            "("
+                "@VALUE"
+            ")"
         };
         ensure_success(
             ::sqlite3_prepare_v2(_p_database, INSERT_TAG_VALUE,
@@ -195,10 +197,11 @@ private:
         const char INSERT_MESSAGE_TAG[]{
             "INSERT OR IGNORE INTO message_tag"
             "("
-                "timestamp, value_id"
+                "timestamp, name_id, value_id"
             ")"
-            " SELECT @TIMESTAMP, id FROM tag_value"
-            " WHERE value = @VALUE"
+            " SELECT @TIMESTAMP"
+            ", (SELECT id FROM tag_name WHERE name = @NAME)"
+            ", (SELECT id FROM tag_value WHERE value = @VALUE)"
         };
         ensure_success(
             ::sqlite3_prepare_v2(_p_database, INSERT_MESSAGE_TAG,
@@ -245,9 +248,6 @@ private:
             ::sqlite3_step(_p_insert_content));
         ensure_success(
             ::sqlite3_reset(_p_insert_content));
-        ensure_success(
-            ::sqlite3_bind_null(_p_insert_content,
-                ::sqlite3_bind_parameter_index(_p_insert_content, "@CONTENT")));
         for (const tag_type& tag : message.tags) {
             ensure_success(
                 ::sqlite3_bind_text(_p_insert_tag_name,
@@ -258,11 +258,15 @@ private:
             ensure_success(
                 ::sqlite3_step(_p_insert_tag_name));
             ensure_success(
+                ::sqlite3_reset(_p_insert_tag_name));
+            ensure_success(
                 ::sqlite3_bind_text(_p_insert_tag_value,
                     ::sqlite3_bind_parameter_index(_p_insert_tag_value, "@VALUE"),
                     tag.value.c_str(),
                     static_cast<int>(tag.value.size()),
                     SQLITE_STATIC));
+            ensure_success(
+                ::sqlite3_step(_p_insert_tag_value));
             ensure_success(
                 ::sqlite3_reset(_p_insert_tag_value));
             ensure_success(
@@ -271,22 +275,21 @@ private:
                     now.time_since_epoch().count()));
             ensure_success(
                 ::sqlite3_bind_text(_p_insert_message_tag,
+                    ::sqlite3_bind_parameter_index(_p_insert_message_tag, "@NAME"),
+                    tag.name.c_str(),
+                    static_cast<int>(tag.name.size()),
+                    SQLITE_STATIC));
+            ensure_success(
+                ::sqlite3_bind_text(_p_insert_message_tag,
                     ::sqlite3_bind_parameter_index(_p_insert_message_tag, "@VALUE"),
                     tag.value.c_str(),
                     static_cast<int>(tag.value.size()),
                     SQLITE_STATIC));
             ensure_success(
+                ::sqlite3_step(_p_insert_message_tag));
+            ensure_success(
                 ::sqlite3_reset(_p_insert_message_tag));
         }
-        ensure_success(
-            ::sqlite3_bind_null(_p_insert_tag_name,
-                ::sqlite3_bind_parameter_index(_p_insert_tag_name, "@NAME")));
-        ensure_success(
-            ::sqlite3_bind_null(_p_insert_tag_value,
-                ::sqlite3_bind_parameter_index(_p_insert_tag_value, "@VALUE")));
-        ensure_success(
-            ::sqlite3_bind_null(_p_insert_message_tag,
-                ::sqlite3_bind_parameter_index(_p_insert_message_tag, "@VALUE")));
         return now.time_since_epoch();
     };
 };
