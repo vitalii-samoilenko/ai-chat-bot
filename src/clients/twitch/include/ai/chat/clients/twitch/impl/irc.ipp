@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "boost/asio/buffer.hpp"
+#include "boost/asio/signal_set.hpp"
 #include "boost/asio/thread_pool.hpp"
 #include "boost/asio/ssl.hpp"
 #include "boost/beast.hpp"
@@ -36,11 +37,12 @@ public:
     connection& operator=(connection&&) = delete;
 
 private:
-    explicit connection(Handler& handler)
-        : _context{ 1 }
+    explicit connection(size_t dop, Handler& handler)
+        : _context{ dop }
         , _resolver{ _context }
         , _ssl_context{ ::boost::asio::ssl::context::tlsv12_client }
         , _stream{ _context, _ssl_context }
+        , _signals{ _context }
         , _handler{ handler }
         , _host{}
         , _port{}
@@ -69,6 +71,7 @@ private:
     ::boost::asio::ip::tcp::resolver _resolver;
     ::boost::asio::ssl::context _ssl_context;
     ::boost::beast::websocket::stream<::boost::asio::ssl::stream<::boost::beast::tcp_stream>> _stream;
+    ::boost::asio::signal_set _signals;
     Handler& _handler;
     ::std::string _host;
     ::std::string _port;
@@ -100,6 +103,14 @@ private:
             };
         }
         _stream.next_layer().set_verify_callback(::boost::asio::ssl::host_name_verification{ _host });
+
+        _signals.add(SIGINT);
+        _signals.add(SIGTERM);
+        _signals.async_wait(
+            [this](boost::system::error_code error_code, int) {
+                ::eboost::beast::ensure_success(error_code);
+                on_disconnect();
+            });
     };
     void on_connect() {
         ::boost::beast::get_lowest_layer(_stream).expires_after(_timeout);
@@ -278,7 +289,7 @@ private:
     void on_disconnect() {
         _stream.async_close(::boost::beast::websocket::close_code::normal,
             [this](::boost::beast::error_code error_code)->void {
-                ::eboost::beast::ensure_success(error_code);
+                _context.stop();
             });
     };
     void on_send(const message_type& message) {
@@ -305,9 +316,11 @@ private:
 
 template<typename Handler>
 template<typename... Args>
-irc<Handler>::irc(const ::std::string& address, ::std::chrono::milliseconds timeout, Args&& ...args)
+irc<Handler>::irc(size_t dop,
+    const ::std::string& address, ::std::chrono::milliseconds timeout,
+    Args&& ...args)
     : Handler{ ::std::forward<Args>(args)... }
-    , _p_channel{ new connection{ *this } } {
+    , _p_channel{ new connection{ dop, *this } } {
     ::boost::system::result<::boost::urls::url_view> result{ ::boost::urls::parse_uri(address) };
     if (!result.has_value()) {
         throw ::std::invalid_argument{ "invalid uri" };
@@ -345,6 +358,11 @@ void irc<Handler>::send(const message_type& message) {
     ::boost::asio::post(_p_channel->_context, [this, message]()->void {
         _p_channel->on_send(message);
     });
+};
+
+template<typename Handler>
+void irc<Handler>::attach() {
+    _p_channel->_context.attach();
 };
 
 } // twitch

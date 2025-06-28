@@ -1,5 +1,4 @@
 #include <chrono>
-#include <csignal>
 #include <exception>
 #include <future>
 #include <iostream>
@@ -58,17 +57,8 @@ void init_logger() {
     ::opentelemetry::logs::Provider::SetLoggerProvider(api_provider);
 };
 
-::std::promise<void> g_stop{};
-
-void handler(int) {
-    g_stop.set_value();
-};
-
 int main() {
     try {
-        ::std::signal(SIGTERM, &handler);
-        ::std::signal(SIGINT, &handler);
-
         init_meter();
         init_tracer();
         init_logger();
@@ -85,7 +75,7 @@ int main() {
         ::std::string key{ "key" };
 
         ::ai::chat::clients::twitch::auth auth{ auth_address, timeout };
-        ::ai::chat::clients::twitch::irc<::ai::chat::clients::twitch::handlers::observable> irc{ irc_address, timeout };
+        ::ai::chat::clients::twitch::irc<::ai::chat::clients::twitch::handlers::observable> irc{ 0, irc_address, timeout };
         ::ai::chat::adapters::openai openai{ openai_address, timeout };
         ::ai::chat::histories::observable<::ai::chat::histories::sqlite> sqlite{ botname };
         auto irc_binding = ::ai::chat::binders::twitch<decltype(sqlite), decltype(irc)>::bind(sqlite, irc);
@@ -94,8 +84,7 @@ int main() {
 
         ::ai::chat::clients::twitch::token_context access_context{ auth.refresh_token(client_id, client_secret, refresh_token) };
         irc.connect(botname, access_context.access_token);
-        g_stop.get_future().wait();
-        irc.disconnect();
+        irc.attach();
     }
     catch(const ::std::exception& e) {
         ::std::cerr << "Error: " << e.what() << ::std::endl;

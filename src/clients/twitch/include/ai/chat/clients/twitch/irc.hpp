@@ -31,12 +31,15 @@ public:
     using message_type = message;
 
     template<typename... Args>
-    irc(const ::std::string& address, ::std::chrono::milliseconds timeout, Args&& ...args);
+    irc(size_t dop,
+        const ::std::string& address, ::std::chrono::milliseconds timeout,
+        Args&& ...args);
 
     void connect(const ::std::string& username, const ::std::string& access_token);
     void disconnect();
     void send(const message_type& message);
 
+    void attach();
 private:
     class connection;
 
