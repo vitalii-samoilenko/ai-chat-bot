@@ -6,6 +6,7 @@ add_executable(ai-chat-hosts-console main.cpp)
 add_executable(AI::Chat::Hosts::Console ALIAS ai-chat-hosts-console)
 target_link_libraries(ai-chat-hosts-console
   PRIVATE
+    Boost::json
     AI::Chat::Clients::Twitch
     AI::Chat::Adapters::OpenAI
     AI::Chat::Histories::SQLite

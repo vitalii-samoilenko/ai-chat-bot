@@ -1,14 +1,27 @@
+moderator
+commands
+delayed client
+delayed adapter
+limited adapter
+
+iterator
+
 traces
 metrics
 logs
 
-configuration
+google free tier host
 
-moderator
-azure free tier host
+http client
+
+sqlite optimizations
+openssl optimizations
+boost optimizations
+opentelemetry optimizations
+json optimizations
+reduce allocations (string_view)?
 
 sll chain validation
 Content-Length
 
-reduce allocations (string_view)?
 websocket ping pong packets?
