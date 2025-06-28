@@ -6,7 +6,7 @@
 #include "boost/scope/scope_fail.hpp"
 #include "boost/scope/scope_success.hpp"
 
-#include "sqlite3.c"
+#include "sqlite3.h"
 
 #include "ai/chat/histories/sqlite.hpp"
 
@@ -27,6 +27,15 @@ public:
     connection& operator=(const connection&) = delete;
     connection& operator=(connection&&) = delete;
 
+    ~connection() {
+        ::sqlite3_finalize(_p_insert_rollback);
+        ::sqlite3_finalize(_p_insert_commit);
+        ::sqlite3_finalize(_p_insert_tag);
+        ::sqlite3_finalize(_p_insert_content);
+        ::sqlite3_finalize(_p_insert_begin);
+        ::sqlite3_close(_p_database);
+    };
+
 private:
     connection()
         : _p_database{ nullptr }
@@ -37,15 +46,6 @@ private:
         , _p_insert_rollback{ nullptr }
         , _filename{} {
 
-    };
-
-    ~connection() {
-        ::sqlite3_finalize(_p_insert_rollback);
-        ::sqlite3_finalize(_p_insert_commit);
-        ::sqlite3_finalize(_p_insert_tag);
-        ::sqlite3_finalize(_p_insert_content);
-        ::sqlite3_finalize(_p_insert_begin);
-        ::sqlite3_close(_p_database);
     };
 
     ::sqlite3* _p_database;

@@ -38,12 +38,13 @@ observable::slot& observable::slot::operator=(slot&& other) {
     _p_observer = other._p_observer;
     other._p_target = nullptr;
     other._p_observer = nullptr;
+    return *this;
 };
 
 template<typename Action>
 void observable::slot::on_message(Action&& callback) {
     _p_target->_subscriptions[_p_observer]
-        .on_message = ::std::forward(callback);
+        .on_message = ::std::forward<Action>(callback);
 };
 
 observable::slot::slot(const ::std::type_info* p_observer, observable* p_target)

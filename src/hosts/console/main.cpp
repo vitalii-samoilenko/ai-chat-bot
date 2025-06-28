@@ -1,17 +1,18 @@
 #include <chrono>
+#include <csignal>
 #include <exception>
+#include <future>
 #include <iostream>
-#include <vector>
+#include <string>
 
-#include "ai/chat/adapters/rate_limited.hpp"
-#include "ai/chat/adapters/tokens_limited.hpp"
+#include "ai/chat/clients/twitch/auth.hpp"
+#include "ai/chat/clients/twitch/irc.hpp"
+#include "ai/chat/clients/twitch/handlers/observable.hpp"
 #include "ai/chat/adapters/openai.hpp"
-#include "ai/chat/adapters/log.hpp"
-#include "ai/chat/adapters/content_length.hpp"
-#include "ai/chat/adapters/total_tokens.hpp"
-#include "ai/chat/adapters/trace.hpp"
-#include "twitch/auth/client.hpp"
-#include "twitch/irc/client.hpp"
+#include "ai/chat/histories/sqlite.hpp"
+#include "ai/chat/histories/observable.hpp"
+#include "ai/chat/binders/twitch.hpp"
+#include "ai/chat/binders/openai.hpp"
 
 #include "opentelemetry/exporters/ostream/metric_exporter_factory.h"
 #include "opentelemetry/sdk/metrics/export/periodic_exporting_metric_reader_factory.h"
@@ -43,11 +44,11 @@ void init_meter() {
     ::opentelemetry::metrics::Provider::SetMeterProvider(api_provider);
 };
 void init_tracer() {
-  auto exporter  = ::opentelemetry::exporter::trace::OStreamSpanExporterFactory::Create();
-  auto processor = ::opentelemetry::sdk::trace::SimpleSpanProcessorFactory::Create(std::move(exporter));
-  auto sdk_provider = ::opentelemetry::sdk::trace::TracerProviderFactory::Create(std::move(processor));
-  ::std::shared_ptr<::opentelemetry::trace::TracerProvider> api_provider{ ::std::move(sdk_provider) };
-  ::opentelemetry::trace::Provider::SetTracerProvider(api_provider);
+    auto exporter  = ::opentelemetry::exporter::trace::OStreamSpanExporterFactory::Create();
+    auto processor = ::opentelemetry::sdk::trace::SimpleSpanProcessorFactory::Create(std::move(exporter));
+    auto sdk_provider = ::opentelemetry::sdk::trace::TracerProviderFactory::Create(std::move(processor));
+    ::std::shared_ptr<::opentelemetry::trace::TracerProvider> api_provider{ ::std::move(sdk_provider) };
+    ::opentelemetry::trace::Provider::SetTracerProvider(api_provider);
 };
 void init_logger() {
     auto exporter = ::opentelemetry::exporter::logs::OStreamLogRecordExporterFactory::Create();
@@ -57,66 +58,44 @@ void init_logger() {
     ::opentelemetry::logs::Provider::SetLoggerProvider(api_provider);
 };
 
+::std::promise<void> g_stop{};
+
+void handler(int) {
+    g_stop.set_value();
+};
+
 int main() {
     try {
+        ::std::signal(SIGTERM, &handler);
+        ::std::signal(SIGINT, &handler);
+
         init_meter();
         init_tracer();
         init_logger();
 
-        ::ai::chat::history history{};
-        ::std::vector<::openai::message> messages{
-            {
-                ::openai::role::system,
-                "Message must not be longer than 200 symbols"
-            }
-        };
-        ::ai::chat::adapters::log<
-        ::ai::chat::adapters::content_length<
-        ::ai::chat::adapters::total_tokens<
-        ::ai::chat::adapters::trace<
-        ::ai::chat::adapters::rate_limited<
-        ::ai::chat::adapters::tokens_limited<
-        ::ai::chat::adapters::openai<::std::vector<::openai::message>>
-        >>>>>> adapter{
-            1,
-            history, 999000, ::std::chrono::nanoseconds{ 24 * 60 * 60 * 1000000000 },
-            "gemini-2.0-flash", messages,
-            "https://generativelanguage.googleapis.com/v1beta/openai/",
-            "api_key",
-            ::std::chrono::milliseconds{ 30 * 1000 }
-        };
+        ::std::chrono::milliseconds timeout{ 30 * 1000 };
+        ::std::string auth_address{ "https://id.twitch.tv/oauth2/" };
+        ::std::string client_id{ "client_id" };
+        ::std::string client_secret{ "client_secret" };
+        ::std::string refresh_token{ "refresh_token" };
+        ::std::string irc_address{ "wss://irc-ws.chat.twitch.tv" };
+        ::std::string botname{ "botname" };
+        ::std::string openai_address{ "https://generativelanguage.googleapis.com/v1beta/openai/" };
+        ::std::string model{ "gemini-2.0-flash" };
+        ::std::string key{ "key" };
 
-        ::twitch::auth::client auth_client {
-            "https://id.twitch.tv/oauth2/",
-            ::std::chrono::milliseconds{ 30 * 1000 }
-        };
-        ::twitch::auth::access_context access_context{
-            "access_token",
-            "refresh_token"
-        };
+        ::ai::chat::clients::twitch::auth auth{ auth_address, timeout };
+        ::ai::chat::clients::twitch::irc<::ai::chat::clients::twitch::handlers::observable> irc{ irc_address, timeout };
+        ::ai::chat::adapters::openai openai{ openai_address, timeout };
+        ::ai::chat::histories::observable<::ai::chat::histories::sqlite> sqlite{ botname };
+        auto irc_binding = ::ai::chat::binders::twitch<decltype(sqlite), decltype(irc)>::bind(sqlite, irc);
+        auto openai_binding = ::ai::chat::binders::openai<decltype(sqlite), decltype(openai)>::bind(sqlite, openai,
+            botname, model, key);
 
-        ::twitch::irc::client irc_client {
-            "wss://irc-ws.chat.twitch.tv",
-            ::std::chrono::milliseconds{ 30 * 1000 }
-        };
-        ::std::vector<::std::string> channels{ "botname" };
-
-        ::twitch::irc::subscription& subscription{ irc_client.subscribe<decltype(adapter)>() };
-        subscription.on_message([&](::twitch::irc::context& context, const ::twitch::irc::message& message)->void {
-            messages.push_back({ ::openai::role::user, message.content });
-            ::std::pair<::std::string, size_t> result{ adapter.complete() };
-            messages.push_back({ ::openai::role::assistant, result.first });
-            context.send({ "", message.channel, result.first });
-        });
-
-        do {
-            if (!auth_client.validate_token(access_context.access_token)) {
-                access_context = auth_client.refresh_token(
-                    "client_id", "client_secret",
-                    access_context.refresh_token);
-            }
-        }
-        while (irc_client.run("botname", access_context.access_token, channels));
+        ::ai::chat::clients::twitch::token_context access_context{ auth.refresh_token(client_id, client_secret, refresh_token) };
+        irc.connect(botname, access_context.access_token);
+        g_stop.get_future().wait();
+        irc.disconnect();
     }
     catch(const ::std::exception& e) {
         ::std::cerr << "Error: " << e.what() << ::std::endl;

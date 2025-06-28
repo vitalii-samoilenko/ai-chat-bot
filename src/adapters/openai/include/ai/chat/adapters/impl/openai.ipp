@@ -9,6 +9,7 @@
 #include "boost/beast.hpp"
 #include "boost/url.hpp"
 
+#include "eboost/beast/ensure_success.hpp"
 #include "eboost/beast/http/json_body.hpp"
 
 #include "ai/chat/adapters/openai.hpp"
@@ -70,48 +71,61 @@ private:
         _stream.set_verify_callback(::boost::asio::ssl::host_name_verification{ _host });
     };
     template<typename Request, typename Response>
-    void on_connect(Request& _request, Response& _response) {
-        _request.target(_target + _request.target());
-        _request.set(::boost::beast::http::field::host, _host);
-        _request.set(::boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+    void on_connect(Request& request, Response& response) {
+        ::std::string target{ _path };
+        request.target(target.append(request.target()));
+        request.set(::boost::beast::http::field::host, _host);
+        request.set(::boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
 
         ::boost::beast::get_lowest_layer(_stream).expires_after(_timeout);
         _resolver.async_resolve(_host, _port,
-            ::boost::beast::bind_front_handler(&on_resolve<Request, Response>, this, _request, _response));
+            [this, &request, &response](::boost::beast::error_code error_code, ::boost::asio::ip::tcp::resolver::results_type results)->void {
+                ::eboost::beast::ensure_success(error_code);
+                on_resolve(request, response, ::std::move(results));
+            });
     };
     template<typename Request, typename Response>
-    void on_resolve(Request& _request, Response& _response, ::boost::asio::ip::tcp::resolver::results_type results) {
+    void on_resolve(Request& request, Response& response, ::boost::asio::ip::tcp::resolver::results_type results) {
         ::boost::beast::get_lowest_layer(_stream).async_connect(results,
-            ::boost::beast::bind_front_handler(&on_transport_connect<Request, Response>, this, _request, _response));
+            [this, &request, &response](::boost::beast::error_code error_code, ::boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint_type)->void {
+                ::eboost::beast::ensure_success(error_code);
+                on_transport_connect(request, response, ::std::move(endpoint_type));
+            });
     };
     template<typename Request, typename Response>
-    void on_transport_connect(Request& _request, Response& _response, ::boost::asio::ip::tcp::resolver::results_type::endpoint_type) {
+    void on_transport_connect(Request& request, Response& response, ::boost::asio::ip::tcp::resolver::results_type::endpoint_type) {
         _stream.async_handshake(::boost::asio::ssl::stream_base::client,
-            ::boost::beast::bind_front_handler(&on_ssl_handshake<Request, Response>, this, _request, _response));
+            [this, &request, &response](::boost::beast::error_code error_code)->void {
+                ::eboost::beast::ensure_success(error_code);
+                on_ssl_handshake(request, response);
+            });
     };
     template<typename Request, typename Response>
-    void on_ssl_handshake(Request& _request, Response& _response) {
-        ::boost::beast::http::async_write(_stream, _request,
-            ::boost::beast::bind_front_handler(&on_write<Response>, this, _response));
+    void on_ssl_handshake(Request& request, Response& response) {
+        ::boost::beast::http::async_write(_stream, request,
+            [this, &response](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
+                ::eboost::beast::ensure_success(error_code);
+                on_write(response, bytes_transferred);
+            });
     };
     template<typename Response>
-    void on_write(Response& _response, size_t bytes_transferred) {
+    void on_write(Response& response, size_t bytes_transferred) {
         ::boost::ignore_unused(bytes_transferred);
-        ::boost::beast::http::async_read(_stream, _buffer, _response,
-            ::boost::beast::bind_front_handler(&on_read, this));
+        ::boost::beast::http::async_read(_stream, _buffer, response,
+            [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
+                ::eboost::beast::ensure_success(error_code);
+                on_read(bytes_transferred);
+            });
     };
     void on_read(size_t bytes_transferred) {
         ::boost::ignore_unused(bytes_transferred);
         _stream.async_shutdown(
-            ::boost::beast::bind_front_handler(&on_shutdown, this));
-    };
-    void on_shutdown(::boost::beast::error_code error_code) {
-        if (error_code) {
-            if (error_code  == ::boost::asio::ssl::error::stream_truncated) {
-                return;
-            }
-            throw ::boost::beast::system_error{ error_code } ;
-        }
+            [this](::boost::beast::error_code error_code)->void {
+                if (error_code == ::boost::asio::ssl::error::stream_truncated) {
+                    return;
+                }
+                ::eboost::beast::ensure_success(error_code);
+            });
     };
 };
 

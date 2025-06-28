@@ -22,7 +22,7 @@ public:
 template<typename History>
 observable<History>::slot::slot(slot&& other) {
     _p_observer = other._p_observer;
-    _p_target = other._p_target
+    _p_target = other._p_target;
     other._p_observer = nullptr;
     other._p_target = nullptr;
 };
@@ -35,11 +35,12 @@ observable<History>::slot::~slot() {
 };
 
 template<typename History>
-observable<History>::slot& observable<History>::slot::operator=(slot&& other) {
+typename observable<History>::slot& observable<History>::slot::operator=(slot&& other) {
     _p_observer = other._p_observer;
-    _p_target = other._p_target
+    _p_target = other._p_target;
     other._p_observer = nullptr;
     other._p_target = nullptr;
+    return *this;
 };
 
 template<typename History>
@@ -53,18 +54,26 @@ template<typename History>
 template<typename Action>
 void observable<History>::slot::on_message(Action&& callback) {
     _p_target->_subscriptions[_p_observer]
-        .on_message = ::std::forward(callback);
+        .on_message = ::std::forward<Action>(callback);
 };
 
 template<typename History>
+template<typename... Args>
+observable<History>::observable(Args&& ...args)
+    : History{ ::std::forward<Args>(args)... }
+    , _subscriptions{} {
+
+}
+
+template<typename History>
 template<typename Observer>
-observable<History>::slot_type observable<History>::subscribe() {
+typename observable<History>::slot_type observable<History>::subscribe() {
     return { &typeid(Observer), this };
 };
 
 template<typename History>
 template<typename Client>
-observable<History>::iterator_type observable<History>::insert(const message_type& message) {
+typename observable<History>::iterator_type observable<History>::insert(const message_type& message) {
     iterator_type iterator{ History::insert(message) };
     for (const auto& p_observer_n_subscription : _subscriptions) {
         const ::std::type_info* p_observer{ p_observer_n_subscription.first };

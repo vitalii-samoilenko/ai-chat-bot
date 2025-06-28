@@ -51,7 +51,6 @@ public:
     template<typename Observer>
     slot_type subscribe();
 
-protected:
     void on_message(const message& message) const;
 
 private:

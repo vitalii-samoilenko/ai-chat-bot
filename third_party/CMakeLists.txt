@@ -124,19 +124,20 @@ if(NOT SQLite_FOUND)
             COMMAND_ERROR_IS_FATAL ANY
         )
     endif()
-    if(NOT EXISTS ${SQLITE_BINARY_DIR}/sqlite3.c)
-        execute_process(COMMAND ${MAKE_COMMAND} sqlite3.c
+    if(NOT EXISTS ${SQLITE_BINARY_DIR}/sqlite3.h)
+        execute_process(COMMAND ${MAKE_COMMAND}
             WORKING_DIRECTORY ${SQLITE_BINARY_DIR}
             COMMAND_ERROR_IS_FATAL ANY
         )
     endif()
     if(NOT EXISTS ${SQLITE_INSTALL_DIR})
-        file(COPY ${SQLITE_BINARY_DIR}/sqlite3.c DESTINATION ${SQLITE_INSTALL_DIR}/include)
         file(COPY ${SQLITE_BINARY_DIR}/sqlite3.h DESTINATION ${SQLITE_INSTALL_DIR}/include)
+        file(COPY ${SQLITE_BINARY_DIR}/sqlite3.lib DESTINATION ${SQLITE_INSTALL_DIR}/lib)
     endif()
     add_library(sqlite INTERFACE)
     add_library(SQLite ALIAS sqlite)
     target_include_directories(sqlite INTERFACE ${SQLITE_INSTALL_DIR}/include)
+    target_link_libraries(sqlite INTERFACE ${SQLITE_INSTALL_DIR}/lib/sqlite3.lib)
 endif()
 
 add_subdirectory(eboost)

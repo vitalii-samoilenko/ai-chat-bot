@@ -5,13 +5,14 @@
 #include <utility>
 
 #include "boost/asio/buffer.hpp"
-#include "boost/asio/buffers_iterator.hpp"
 #include "boost/asio/thread_pool.hpp"
 #include "boost/asio/ssl.hpp"
 #include "boost/beast.hpp"
 #include "boost/beast/ssl.hpp"
 #include "boost/url.hpp"
 #include "boost/xpressive/xpressive.hpp"
+
+#include "eboost/beast/ensure_success.hpp"
 
 #include "ai/chat/clients/twitch/irc.hpp"
 
@@ -84,7 +85,7 @@ private:
     ::boost::xpressive::mark_tag _notice_group;
     ::boost::xpressive::mark_tag _reason_group;
     ::boost::xpressive::mark_tag _reconnect_group;
-    ::boost::xpressive::sregex _command_group;
+    ::boost::xpressive::cregex _command_group;
 
     void on_init() {
         _authority.append(_host);
@@ -92,81 +93,117 @@ private:
         _authority.append(_port);
 
         _ssl_context.set_verify_mode(::boost::asio::ssl::verify_none);
-        if (!::SSL_set_tlsext_host_name(_stream.native_handle(), _host.c_str())) {
+        if (!::SSL_set_tlsext_host_name(_stream.next_layer().native_handle(), _host.c_str())) {
             throw ::boost::beast::system_error{
                 static_cast<int>(::ERR_get_error()),
                 ::boost::asio::error::get_ssl_category()
             };
         }
-        _stream.set_verify_callback(::boost::asio::ssl::host_name_verification{ _host });
+        _stream.next_layer().set_verify_callback(::boost::asio::ssl::host_name_verification{ _host });
     };
     void on_connect() {
         ::boost::beast::get_lowest_layer(_stream).expires_after(_timeout);
         _resolver.async_resolve(_host, _port,
-            ::boost::beast::bind_front_handler(&on_resolve, this));
+            [this](::boost::beast::error_code error_code, ::boost::asio::ip::tcp::resolver::results_type results)->void {
+                ::eboost::beast::ensure_success(error_code);
+                on_resolve(::std::move(results));
+            });
     };
     void on_resolve(::boost::asio::ip::tcp::resolver::results_type results) {
         ::boost::beast::get_lowest_layer(_stream).async_connect(results,
-            ::boost::beast::bind_front_handler(&on_transport_connect, this));
+            [this](::boost::beast::error_code error_code, ::boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint_type)->void {
+                ::eboost::beast::ensure_success(error_code);
+                on_transport_connect(::std::move(endpoint_type));
+            });
     };
     void on_transport_connect(::boost::asio::ip::tcp::resolver::results_type::endpoint_type) {
         _stream.next_layer().async_handshake(::boost::asio::ssl::stream_base::client,
-            ::boost::beast::bind_front_handler(&on_ssl_handshake, this));
+            [this](::boost::beast::error_code error_code)->void {
+                ::eboost::beast::ensure_success(error_code);
+                on_ssl_handshake();
+            });
     };
     void on_ssl_handshake() {
         ::boost::beast::get_lowest_layer(_stream).expires_never();
         _stream.set_option(::boost::beast::websocket::stream_base::timeout::suggested(::boost::beast::role_type::client));
         _stream.async_handshake(_authority, "/",
-            ::boost::beast::bind_front_handler(&on_websocket_handshake, this));
+            [this](::boost::beast::error_code error_code)->void {
+                ::eboost::beast::ensure_success(error_code);
+                on_websocket_handshake();
+            });
     };
     void on_websocket_handshake() {
         const char PASS[]{ "PASS oauth:" };
         ::boost::asio::mutable_buffer request{ _buffer.prepare(::std::size(PASS) - 1 + _access_token.size()) };
-        ::std::memcpy(request.data(), reinterpret_cast<const void*>(PASS), ::std::size(PASS) - 1);
-        ::std::memcpy(request.data() + ::std::size(PASS) - 1, reinterpret_cast<const void*>(_access_token.cdata()), _access_token.size());
+        ::std::memcpy(reinterpret_cast<char*>(request.data()), PASS, ::std::size(PASS) - 1);
+        ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(PASS) - 1, _access_token.data(), _access_token.size());
         _stream.async_write(request,
-            ::boost::beast::bind_front_handler(&on_pass, this));
+            [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
+                ::eboost::beast::ensure_success(error_code);
+                on_pass(bytes_transferred);
+            });
     };
     void on_pass(size_t bytes_transferred) {
         ::boost::ignore_unused(bytes_transferred);
         const char NICK[]{ "NICK " };
         ::boost::asio::mutable_buffer request{ _buffer.prepare(::std::size(NICK) - 1 + _username.size()) };
-        ::std::memcpy(request.data(), reinterpret_cast<const void*>(NICK), ::std::size(NICK) - 1);
-        ::std::memcpy(request.data() + ::std::size(NICK) - 1, reinterpret_cast<const void*>(_username.cdata()), _username.size());
+        ::std::memcpy(reinterpret_cast<char*>(request.data()), NICK, ::std::size(NICK) - 1);
+        ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(NICK) - 1, _username.data(), _username.size());
         _stream.async_write(request,
-            ::boost::beast::bind_front_handler(&on_nick, this));
+            [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
+                ::eboost::beast::ensure_success(error_code);
+                on_nick(bytes_transferred);
+            });
     };
     void on_nick(size_t bytes_transferred) {
         ::boost::ignore_unused(bytes_transferred);
         _stream.async_read(_buffer,
-            ::boost::beast::bind_front_handler(&on_notice, this));
+            [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
+                ::eboost::beast::ensure_success(error_code);
+                on_notice(bytes_transferred);
+            });
     };
     void on_notice(size_t bytes_transferred) {
-        ::boost::xpressive::smatch what{};
-        ::boost::xpressive::regex_match(::boost::asio::buffers_begin(_buffer), ::boost::asio::buffers_end(_buffer), what, _command_group);
+        ::boost::asio::const_buffer response{ _buffer.cdata() };
+        ::boost::xpressive::cmatch what{};
+        ::boost::xpressive::regex_match(reinterpret_cast<const char*>(response.data()), reinterpret_cast<const char*>(response.data()) + bytes_transferred, what, _command_group);
         if (what[_notice_group]) {
             throw ::std::invalid_argument{ what[_reason_group] };
         }
         _buffer.consume(bytes_transferred);
-        _stream.async_write(::boost::asio::buffer(_join),
-            ::boost::beast::bind_front_handler(&on_join, this));
+        const char JOIN[]{ "JOIN #" };
+        ::boost::asio::mutable_buffer request{ _buffer.prepare(::std::size(JOIN) - 1 + _username.size()) };
+        ::std::memcpy(reinterpret_cast<char*>(request.data()), JOIN, ::std::size(JOIN) - 1);
+        ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(JOIN) - 1, _username.data(), _username.size());
+        _stream.async_write(request,
+            [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
+                ::eboost::beast::ensure_success(error_code);
+                on_join(bytes_transferred);
+            });
     };
     void on_join(size_t bytes_transferred) {
         ::boost::ignore_unused(bytes_transferred);
         _stream.async_read(_buffer,
-            ::boost::beast::bind_front_handler(&on_read, this));
+            [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
+                ::eboost::beast::ensure_success(error_code);
+                on_read(bytes_transferred);
+            });
     };
     void on_read(size_t bytes_transferred) {
+        ::boost::asio::const_buffer response{ _buffer.cdata() };
         bool pong{ true };
         bool reconnect{ false };
-        for (::boost::xpressive::sregex_iterator current{ ::boost::asio::buffers_begin(_buffer), ::boost::asio::buffers_end(_buffer), _command_group }, end{}; !(current == end); ++current) {
-            const ::boost::xpressive::smatch& what{ *current };
+        for (::boost::xpressive::cregex_iterator current{ reinterpret_cast<const char*>(response.data()), reinterpret_cast<const char*>(response.data()) + bytes_transferred, _command_group }, end{}; !(current == end); ++current) {
+            const ::boost::xpressive::cmatch& what{ *current };
             if (what[_ping_group] && pong) {
                 const char PONG[]{ "PONG :tmi.twitch.tv" };
                 ::boost::asio::mutable_buffer request{ _buffer.prepare(::std::size(PONG) - 1) };
                 ::std::memcpy(request.data(), reinterpret_cast<const void*>(PONG), ::std::size(PONG) - 1);
                 _stream.async_write(request,
-                    ::boost::beast::bind_front_handler(&on_pong, this));
+                    [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
+                        ::eboost::beast::ensure_success(error_code);
+                        on_pong(bytes_transferred);
+                    });
                 pong = false;
             } else if (what[_privmsg_group]) {
                 _handler.on_message({
@@ -181,10 +218,15 @@ private:
         _buffer.consume(bytes_transferred);
         if (reconnect) {
             ::boost::asio::post(_context,
-                ::boost::beast::bind_front_handler(&on_reconnect, this));
+                [this]()->void {
+                    on_reconnect();
+                });
         } else {
             _stream.async_read(_buffer,
-                ::boost::beast::bind_front_handler(&on_read, this));
+                [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
+                    ::eboost::beast::ensure_success(error_code);
+                    on_read(bytes_transferred);
+                });
         }
     };
     void on_pong(size_t bytes_transferred) {
@@ -192,25 +234,30 @@ private:
     };
     void on_reconnect() {
         _stream.async_close(::boost::beast::websocket::close_code::normal,
-            ::boost::beast::bind_front_handler(&on_connect, this));
+            [this](::boost::beast::error_code error_code)->void {
+                ::eboost::beast::ensure_success(error_code);
+                on_connect();
+            });
     };
     void on_disconnect() {
         _stream.async_close(::boost::beast::websocket::close_code::normal,
-            ::boost::beast::bind_front_handler(&on_close, this));
+            [this](::boost::beast::error_code error_code)->void {
+                ::eboost::beast::ensure_success(error_code);
+            });
     };
-    void on_close() {
-
-    };
-    void on_send(message_type message) {
+    void on_send(const message_type& message) {
         const char PRIVMSG[]{ "PRIVMSG #" };
         const char WHAT[]{ " :" };
         ::boost::asio::mutable_buffer request{ _buffer.prepare(::std::size(PRIVMSG) - 1 + message.channel.size() + ::std::size(WHAT) - 1 + message.content.size()) };
-        ::std::memcpy(message.data(), reinterpret_cast<const void*>(PRIVMSG), ::std::size(PRIVMSG) - 1);
-        ::std::memcpy(message.data() + ::std::size(PRIVMSG) - 1, reinterpret_cast<const void*>(message.channel.cdata()), message.channel.size());
-        ::std::memcpy(message.data() + ::std::size(PRIVMSG) - 1 + message.channel.size(), reinterpret_cast<const void*>(WHAT), ::std::size(WHAT) - 1);
-        ::std::memcpy(message.data() + ::std::size(PRIVMSG) - 1 + message.channel.size() + ::std::size(WHAT) - 1, reinterpret_cast<const void*>(message.content.cdata()), message.content.size());
-        _stream.async_write(message,
-            ::boost::beast::bind_front_handler(&on_write, this));
+        ::std::memcpy(reinterpret_cast<char*>(request.data()), PRIVMSG, ::std::size(PRIVMSG) - 1);
+        ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(PRIVMSG) - 1, message.channel.data(), message.channel.size());
+        ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(PRIVMSG) - 1 + message.channel.size(), WHAT, ::std::size(WHAT) - 1);
+        ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(PRIVMSG) - 1 + message.channel.size() + ::std::size(WHAT) - 1, message.content.data(), message.content.size());
+        _stream.async_write(request,
+            [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
+                ::eboost::beast::ensure_success(error_code);
+                on_write(bytes_transferred);
+            });
     };
     void on_write(size_t bytes_transferred) {
         ::boost::ignore_unused(bytes_transferred);
@@ -234,7 +281,7 @@ irc<Handler>::irc(const ::std::string& address, ::std::chrono::milliseconds time
     _p_channel->_port.append(url.has_port()
         ? url.port()
         : "443");
-    _p_channel->timeout = timeout;
+    _p_channel->_timeout = timeout;
     _p_channel->on_init();
 };
 
@@ -243,18 +290,22 @@ void irc<Handler>::connect(const ::std::string& username, const ::std::string& a
     _p_channel->_username.append(username);
     _p_channel->_access_token.append(access_token);
 
-    ::boost::asio::post(_p_channel->_context,
-        ::boost::beast::bind_front_handler(&channel::on_connect, _p_channel.get()));
+    ::boost::asio::post(_p_channel->_context, [this]()->void {
+        _p_channel->on_connect();
+    });
 };
 template<typename Handler>
 void irc<Handler>::disconnect() {
-    ::boost::asio::post(_p_channel->_context,
-        ::boost::beast::bind_front_handler(&channel::on_disconnect, _p_channel.get()));
+    ::boost::asio::post(_p_channel->_context, [this]()->void {
+        _p_channel->on_disconnect();
+    });
+    _p_channel->_context.wait();
 };
 template<typename Handler>
 void irc<Handler>::send(const message_type& message) {
-    ::boost::asio::post(_p_channel->_context,
-        ::boost::beast::bind_front_handler(&channel::on_send, _p_channel.get(), message));
+    ::boost::asio::post(_p_channel->_context, [this, message]()->void {
+        _p_channel->on_send(message);
+    });
 };
 
 } // twitch

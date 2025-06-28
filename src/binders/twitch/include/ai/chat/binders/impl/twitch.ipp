@@ -10,14 +10,14 @@ namespace chat {
 namespace binders {
 
 template<typename History, typename Client>
-twitch<History, Client>::binding::binding(History::slot_type&& history_slot, Client::slot_type&& client_slot)
+twitch<History, Client>::binding::binding(typename History::slot_type&& history_slot, typename Client::slot_type&& client_slot)
     : _history_slot{ ::std::move(history_slot) }
     , _client_slot{ ::std::move(client_slot) } {
 
 };
 
 template<typename History, typename Client>
-twitch<History, Client>::binding_type twitch<History, Client>::bind(History& history, Client& client) {
+typename twitch<History, Client>::binding_type twitch<History, Client>::bind(History& history, Client& client) {
     History::slot_type history_slot{ history.subscribe<Client>() };
     history_slot.on_message([&client](const History::message_type& history_message)->void {
         const History::tag_type* p_username_tag{ nullptr };
@@ -48,7 +48,7 @@ twitch<History, Client>::binding_type twitch<History, Client>::bind(History& his
         };
         history.insert<Client>(history_message);
     });
-    return { ::std::move(history_slot), ::std::move(client_slot) };
+    return binding{ ::std::move(history_slot), ::std::move(client_slot) };
 };
 
 } // binders

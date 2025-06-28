@@ -33,15 +33,15 @@ public:
         binding& operator=(binding&&) = default;
 
     private:
-        explicit binding(History::slot_type&& history_slot);
+        explicit binding(typename History::slot_type&& history_slot);
 
-        History::slot_type _history_slot;
+        typename History::slot_type _history_slot;
     };
 
     using binding_type = binding;
 
     static binding_type bind(History& history, Adapter& adapter,
-        const ::std::string& botname);
+        const ::std::string& botname, const ::std::string& model, const ::std::string& key);
 
 };
 

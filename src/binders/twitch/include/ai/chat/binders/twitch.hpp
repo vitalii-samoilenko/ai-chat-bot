@@ -1,7 +1,8 @@
 #ifndef AI_CHAT_BINDERS_TWITCH_HPP
 #define AI_CHAT_BINDERS_TWITCH_HPP
 
-#include "ai/chat/clients/twitch.hpp"
+#include "ai/chat/clients/twitch/irc.hpp"
+#include "ai/chat/clients/twitch/handlers/observable.hpp"
 
 namespace ai {
 namespace chat {
@@ -14,7 +15,7 @@ public:
     twitch(const twitch&) = delete;
     twitch(twitch&&) = delete;
 
-    ~twitch() = default;
+    ~twitch() = delete;
 
     twitch& operator=(const twitch&) = delete;
     twitch& operator=(twitch&&) = delete;
@@ -33,10 +34,10 @@ public:
         binding& operator=(binding&&) = default;
 
     private:
-        binding(History::slot_type&& history_slot, Client::slot_type&& client_slot);
+        binding(typename History::slot_type&& history_slot, typename Client::slot_type&& client_slot);
 
-        History::slot_type _history_slot;
-        Client::slot_type _client_slot;
+        typename History::slot_type _history_slot;
+        typename Client::slot_type _client_slot;
     };
 
     using binding_type = binding;
