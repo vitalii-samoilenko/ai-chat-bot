@@ -142,6 +142,7 @@ auth::auth(const ::std::string& address, ::std::chrono::milliseconds timeout)
         ? url.port()
         : "443");
     _p_service->_path.append(url.path());
+    _p_service->_timeout = timeout;
     _p_service->on_init();
 };
 

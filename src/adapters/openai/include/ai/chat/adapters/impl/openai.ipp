@@ -144,6 +144,7 @@ openai::openai(const ::std::string& address, ::std::chrono::milliseconds timeout
         ? url.port()
         : "443");
     _p_context->_path.append(url.path());
+    _p_context->_timeout = timeout;
     _p_context->on_init();
 };
 
