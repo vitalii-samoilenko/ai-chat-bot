@@ -42,8 +42,11 @@ public:
     void attach();
 private:
     class connection;
+    friend connection;
 
     ::std::unique_ptr<connection> _p_channel;
+
+    void on_message(const message& message) const;
 };
 
 } // twitch

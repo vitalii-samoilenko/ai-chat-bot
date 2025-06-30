@@ -37,7 +37,7 @@ public:
     connection& operator=(connection&&) = delete;
 
 private:
-    explicit connection(size_t dop, Handler& handler)
+    explicit connection(size_t dop, irc<Handler>& handler)
         : _context{ dop }
         , _resolver{ _context }
         , _ssl_context{ ::boost::asio::ssl::context::tlsv12_client }
@@ -72,7 +72,7 @@ private:
     ::boost::asio::ssl::context _ssl_context;
     ::boost::beast::websocket::stream<::boost::asio::ssl::stream<::boost::beast::tcp_stream>> _stream;
     ::boost::asio::signal_set _signals;
-    Handler& _handler;
+    irc<Handler>& _handler;
     ::std::string _host;
     ::std::string _port;
     ::std::chrono::milliseconds _timeout;

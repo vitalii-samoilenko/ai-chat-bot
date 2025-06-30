@@ -13,7 +13,7 @@ namespace twitch {
 namespace handlers {
 
 class observable::subscription {
-    friend observable;
+    friend irc<observable>;
     friend slot;
 
 private:
@@ -58,14 +58,16 @@ observable::slot_type observable::subscribe() {
     return { &typeid(Observer), this };
 };
 
-void observable::on_message(const message& message) const {
+} // handlers
+
+template<>
+void irc<handlers::observable>::on_message(const message& message) const {
     for (const auto& p_observer_n_subscription : _subscriptions) {
         const subscription& subscription{ p_observer_n_subscription.second };
         subscription.on_message(message);
     }
 };
 
-} // handlers
 } // twitch
 } // clients
 } // chat

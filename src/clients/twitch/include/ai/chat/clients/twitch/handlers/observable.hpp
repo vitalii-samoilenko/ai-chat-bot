@@ -51,10 +51,9 @@ public:
     template<typename Observer>
     slot_type subscribe();
 
-    void on_message(const message& message) const;
-
 private:
     class subscription;
+    friend irc<observable>;
 
     ::std::unordered_map<const ::std::type_info*, subscription> _subscriptions;
 };
