@@ -1,5 +1,5 @@
-#ifndef AI_CHAT_HISTORIES_SQLITE_IPP
-#define AI_CHAT_HISTORIES_SQLITE_IPP
+#ifndef AI_CHAT_MODERATORS_SQLITE_IPP
+#define AI_CHAT_MODERATORS_SQLITE_IPP
 
 #include <exception>
 #include <limits>
@@ -13,11 +13,11 @@
 #include "ai/chat/moderators/sqlite.hpp"
 
 extern "C" {
-    void sqlite3_regexp(::sqlite3_context* context, int argc, ::sqlite3_value** p_p_value) {
-        const char* pattern_begin{ reinterpret_cast<const char*>(::sqlite3_value_text(p_p_value[0])) };
-        const char* pattern_end{ pattern_begin + ::sqlite3_value_bytes(p_p_value[0]) };
-        const char* value_begin{ reinterpret_cast<const char*>(::sqlite3_value_text(p_p_value[1])) };
-        const char* value_end{ value_begin + ::sqlite3_value_bytes(p_p_value[1]) };
+    void sqlite3_regexp(::sqlite3_context* context, int argc, ::sqlite3_value** p_values) {
+        const char* pattern_begin{ reinterpret_cast<const char*>(::sqlite3_value_text(p_values[0])) };
+        const char* pattern_end{ pattern_begin + ::sqlite3_value_bytes(p_values[0]) };
+        const char* value_begin{ reinterpret_cast<const char*>(::sqlite3_value_text(p_values[1])) };
+        const char* value_end{ value_begin + ::sqlite3_value_bytes(p_values[1]) };
         ::std::regex pattern{ pattern_begin, pattern_end };
         ::sqlite3_result_int(context, ::std::regex_match(value_begin, value_end, pattern));
     };
@@ -241,7 +241,7 @@ private:
                 static_cast<int>(::std::size(DISCARD) - 1),
                 &_p_discard, nullptr));
     };
-    iterator_type on_is_allowed(const ::std::string& username1, role role, ::sqlite3_int64 since) {
+    iterator on_is_allowed(const ::std::string& username1, role role, ::sqlite3_int64 since) {
         ensure_success(
             ::sqlite3_bind_text(_p_is_allowed1,
                 ::sqlite3_bind_parameter_index(_p_is_allowed1, "@USERNAME1"),
@@ -258,12 +258,12 @@ private:
                 since));
         ensure_success(
             ::sqlite3_step(_p_is_allowed1));
-        iterator_type count{ static_cast<iterator_type>(::sqlite3_column_int64(_p_is_allowed1, 0)) };
+        iterator count{ static_cast<iterator>(::sqlite3_column_int64(_p_is_allowed1, 0)) };
         ensure_success(
             ::sqlite3_reset(_p_is_allowed1));
         return count;
     };
-    iterator_type on_is_allowed(const ::std::string& username1, const ::std::string& username2, role role, ::sqlite3_int64 since) {
+    iterator on_is_allowed(const ::std::string& username1, const ::std::string& username2, role role, ::sqlite3_int64 since) {
         ensure_success(
             ::sqlite3_bind_text(_p_is_allowed2,
                 ::sqlite3_bind_parameter_index(_p_is_allowed2, "@USERNAME1"),
@@ -283,15 +283,15 @@ private:
         ensure_success(
             ::sqlite3_bind_int64(_p_is_allowed2,
                 ::sqlite3_bind_parameter_index(_p_is_allowed2, "@SINCE"),
-                since)));
+                since));
         ensure_success(
             ::sqlite3_step(_p_is_allowed2));
-        iterator_type count{ static_cast<iterator_type>(::sqlite3_column_int64(_p_is_allowed2, 0)) };
+        iterator count{ static_cast<iterator>(::sqlite3_column_int64(_p_is_allowed2, 0)) };
         ensure_success(
             ::sqlite3_reset(_p_is_allowed2));
         return count;
     };
-    iterator_type on_is_filtered(const ::std::string& content) {
+    iterator on_is_filtered(const ::std::string& content) {
         ensure_success(
             ::sqlite3_bind_text(_p_is_filtered,
                 ::sqlite3_bind_parameter_index(_p_is_filtered, "@CONTENT"),
@@ -300,12 +300,12 @@ private:
                 SQLITE_STATIC));
         ensure_success(
             ::sqlite3_step(_p_is_filtered));
-        iterator_type count{ static_cast<iterator_type>(::sqlite3_column_int64(_p_is_filtered, 0)) };
+        iterator count{ static_cast<iterator>(::sqlite3_column_int64(_p_is_filtered, 0)) };
         ensure_success(
             ::sqlite3_reset(_p_is_filtered));
         return count;
     };
-    iterator_type on_promote(const ::std::string& username, role role) {
+    iterator on_promote(const ::std::string& username, role role) {
         ensure_success(
             ::sqlite3_bind_text(_p_promote,
                 ::sqlite3_bind_parameter_index(_p_promote, "@USERNAME"),
@@ -322,7 +322,7 @@ private:
             ::sqlite3_reset(_p_promote));
         return 1;
     };
-    iterator_type on_demote(const ::std::string& username, role role) {
+    iterator on_demote(const ::std::string& username, role role) {
         ensure_success(
             ::sqlite3_bind_text(_p_demote,
                 ::sqlite3_bind_parameter_index(_p_demote, "@USERNAME"),
@@ -339,7 +339,7 @@ private:
             ::sqlite3_reset(_p_demote));
         return 1;
     };
-    iterator_type on_timeout(const ::std::string& username, ::sqlite3_int64 since) {
+    iterator on_timeout(const ::std::string& username, ::sqlite3_int64 since) {
         ensure_success(
             ::sqlite3_bind_text(_p_timeout,
                 ::sqlite3_bind_parameter_index(_p_timeout, "@USERNAME"),
@@ -356,7 +356,7 @@ private:
             ::sqlite3_reset(_p_timeout));
         return 1;
     };
-    iterator_type on_filter(const ::std::string& name, const ::std::string& pattern) {
+    iterator on_filter(const ::std::string& name, const ::std::string& pattern) {
         ensure_success(
             ::sqlite3_bind_text(_p_filter,
                 ::sqlite3_bind_parameter_index(_p_filter, "@NAME"),
@@ -375,7 +375,7 @@ private:
             ::sqlite3_reset(_p_filter));
         return 1;
     };
-    iterator_type on_discard(const ::std::string& name) {
+    iterator on_discard(const ::std::string& name) {
         ensure_success(
             ::sqlite3_bind_text(_p_discard,
                 ::sqlite3_bind_parameter_index(_p_discard, "@NAME"),
@@ -392,48 +392,48 @@ private:
 
 sqlite::sqlite(const ::std::string& filename)
     : _p_controller{ new connection{} } {
-    _p_controller->_filename.append(filename);
+    _p_controller->_filename = filename;
     _p_controller->on_init();
 };
 
-sqlite::iterator_type sqlite::is_moderator(const ::std::string& username) {
+sqlite::iterator sqlite::is_moderator(const ::std::string& username) {
     return _p_controller->on_is_allowed(username, connection::role::moderator,
         ::std::numeric_limits<::sqlite3_int64>::max());
 };
-sqlite::iterator_type sqlite::is_allowed(const ::std::string& username1, const ::std::string& username2) {
+sqlite::iterator sqlite::is_allowed(const ::std::string& username1, const ::std::string& username2) {
     ::std::chrono::steady_clock::time_point now{ ::std::chrono::steady_clock::now() };
     return _p_controller->on_is_allowed(username1, username2, connection::role::interlocutor,
         ::std::chrono::duration_cast<::std::chrono::seconds>(now.time_since_epoch()).count());
 };
-sqlite::iterator_type sqlite::is_filtered(const ::std::string& content) {
+sqlite::iterator sqlite::is_filtered(const ::std::string& content) {
     return _p_controller->on_is_filtered(content);
 };
 
-sqlite::iterator_type sqlite::mod(const ::std::string& username) {
+sqlite::iterator sqlite::mod(const ::std::string& username) {
     return _p_controller->on_promote(username, connection::role::moderator);
 };
-sqlite::iterator_type sqlite::unmod(const ::std::string& username) {
+sqlite::iterator sqlite::unmod(const ::std::string& username) {
     return _p_controller->on_demote(username, connection::role::moderator);
 };
-sqlite::iterator_type sqlite::allow(const ::std::string& username) {
+sqlite::iterator sqlite::allow(const ::std::string& username) {
     return _p_controller->on_promote(username, connection::role::interlocutor);
 };
-sqlite::iterator_type sqlite::deny(const ::std::string& username) {
+sqlite::iterator sqlite::deny(const ::std::string& username) {
     return _p_controller->on_demote(username, connection::role::interlocutor);
 };
-sqlite::iterator_type sqlite::timeout(const ::std::string& username, ::std::chrono::seconds until) {
+sqlite::iterator sqlite::timeout(const ::std::string& username, ::std::chrono::seconds until) {
     return _p_controller->on_timeout(username, until.count());
 };
-sqlite::iterator_type sqlite::ban(const ::std::string& username) {
+sqlite::iterator sqlite::ban(const ::std::string& username) {
     return _p_controller->on_timeout(username, ::std::numeric_limits<::sqlite3_int64>::max());
 };
-sqlite::iterator_type sqlite::unban(const ::std::string& username) {
+sqlite::iterator sqlite::unban(const ::std::string& username) {
     return _p_controller->on_timeout(username, 0);
 };
-sqlite::iterator_type sqlite::filter(const ::std::string& name, const ::std::string& pattern) {
+sqlite::iterator sqlite::filter(const ::std::string& name, const ::std::string& pattern) {
     return _p_controller->on_filter(name, pattern);
 };
-sqlite::iterator_type sqlite::discard(const ::std::string& name) {
+sqlite::iterator sqlite::discard(const ::std::string& name) {
     return _p_controller->on_discard(name);
 };
 

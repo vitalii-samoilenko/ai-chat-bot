@@ -1,15 +1,14 @@
-#ifndef AI_CHAT_CLIENTS_TWITCH_HANDLERS_OBSERVABLE_HPP
-#define AI_CHAT_CLIENTS_TWITCH_HANDLERS_OBSERVABLE_HPP
+#ifndef AI_CHAT_CLIENTS_HANDLERS_OBSERVABLE_HPP
+#define AI_CHAT_CLIENTS_HANDLERS_OBSERVABLE_HPP
 
 #include <typeinfo>
 #include <unordered_map>
 
-#include "ai/chat/clients/twitch/irc.hpp"
+#include "ai/chat/clients/twitch.hpp"
 
 namespace ai {
 namespace chat {
 namespace clients {
-namespace twitch {
 namespace handlers {
 
 class observable {
@@ -46,20 +45,17 @@ public:
         observable* _p_target;
     };
 
-    using slot_type = slot;
-
     template<typename Observer>
-    slot_type subscribe();
+    slot subscribe();
 
 private:
     class subscription;
-    friend irc<observable>;
+    friend twitch<observable>;
 
     ::std::unordered_map<const ::std::type_info*, subscription> _subscriptions;
 };
 
 } // handlers
-} // twitch
 } // clients
 } // chat
 } // ai

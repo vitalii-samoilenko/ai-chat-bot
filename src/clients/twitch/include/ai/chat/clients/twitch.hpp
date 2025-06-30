@@ -1,5 +1,5 @@
-#ifndef AI_CHAT_CLIENTS_TWITCH_IRC_HPP
-#define AI_CHAT_CLIENTS_TWITCH_IRC_HPP
+#ifndef AI_CHAT_CLIENTS_TWITCH_HPP
+#define AI_CHAT_CLIENTS_TWITCH_HPP
 
 #include <chrono>
 #include <memory>
@@ -8,7 +8,6 @@
 namespace ai {
 namespace chat {
 namespace clients {
-namespace twitch {
 
 struct message {
     ::std::string username;
@@ -17,28 +16,27 @@ struct message {
 };
 
 template<typename Handler>
-class irc : public Handler {
+class twitch : public Handler {
 public:
-    irc() = delete;
-    irc(const irc&) = delete;
-    irc(irc&&) = delete;
+    twitch() = delete;
+    twitch(const twitch&) = delete;
+    twitch(twitch&&) = delete;
 
-    ~irc() = default;
+    ~twitch() = default;
 
-    irc& operator=(const irc&) = delete;
-    irc& operator=(irc&&) = delete;
-
-    using message_type = message;
+    twitch& operator=(const twitch&) = delete;
+    twitch& operator=(twitch&&) = delete;
 
     template<typename... Args>
-    irc(size_t dop,
+    twitch(size_t dop,
         const ::std::string& address, ::std::chrono::milliseconds timeout,
         Args&& ...args);
 
     void connect(const ::std::string& username, const ::std::string& access_token);
     void disconnect();
-    void send(const message_type& message);
+    void send(const message& message);
 
+    void join(const ::std::string& channel);
     void attach();
 private:
     class connection;
@@ -49,11 +47,10 @@ private:
     void on_message(const message& message) const;
 };
 
-} // twitch
 } // clients
 } // chat
 } // ai
 
-#include "impl/irc.ipp"
+#include "impl/twitch.ipp"
 
 #endif

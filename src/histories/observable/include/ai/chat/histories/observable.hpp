@@ -43,19 +43,16 @@ public:
         observable* _p_target;
     };
 
-    using typename History::iterator_type;
-    using typename History::tag_type;
-    using typename History::message_type;
-    using slot_type = slot;
+    using typename History::iterator;
 
     template<typename... Args>
     explicit observable(Args&& ...args);
 
     template<typename Observer>
-    slot_type subscribe();
+    slot subscribe();
 
     template<typename Client>
-    iterator_type insert(const message_type& message);
+    iterator insert(const message& message);
 
 private:
     class subscription;

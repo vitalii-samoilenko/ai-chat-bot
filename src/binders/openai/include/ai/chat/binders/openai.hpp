@@ -33,14 +33,14 @@ public:
         binding& operator=(binding&&) = default;
 
     private:
-        explicit binding(typename History::slot_type&& history_slot);
+        explicit binding(typename History::slot&& history_slot);
 
-        typename History::slot_type _history_slot;
+        typename History::slot _history_slot;
     };
 
-    using binding_type = binding;
-
-    static binding_type bind(History& history, Adapter& adapter,
+    template<typename Moderator>
+    static binding bind(History& history, Adapter& adapter,
+        Moderator& moderator,
         const ::std::string& botname, const ::std::string& model, const ::std::string& key);
 
 };

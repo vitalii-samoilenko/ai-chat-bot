@@ -10,42 +10,47 @@ namespace chat {
 namespace binders {
 
 template<typename History, typename Adapter>
-openai<History, Adapter>::binding::binding(typename History::slot_type&& history_slot)
+openai<History, Adapter>::binding::binding(typename History::slot&& history_slot)
     : _history_slot{ ::std::move(history_slot) } {
 
 };
 
 template<typename History, typename Adapter>
-typename openai<History, Adapter>::binding_type openai<History, Adapter>::bind(History& history, Adapter& adapter,
+template<typename Moderator>
+typename openai<History, Adapter>::binding openai<History, Adapter>::bind(History& history, Adapter& adapter,
+    Moderator& moderator,
     const ::std::string& botname, const ::std::string& model, const ::std::string& key) {
-    History::slot_type history_slot{ history.subscribe<Adapter>() };
-    history_slot.on_message([&history, &adapter, botname, model, key](const History::message_type& history_message)->void {
-        Adapter::message_type adapter_message{
-            Adapter::role_type::system,
+    auto history_slot = history.subscribe<Adapter>();
+    history_slot.on_message([&history, &adapter, &moderator, botname, model, key](const ::ai::chat::histories::message& history_message)->void {
+        ::ai::chat::adapters::message adapter_message{
+            ::ai::chat::adapters::role::system,
             history_message.content
         };
-        const History::tag_type* p_channel_tag{ nullptr };
-        for (const History::tag_type& tag : history_message.tags) {
+        const ::ai::chat::histories::tag* p_channel_tag{ nullptr };
+        for (const ::ai::chat::histories::tag& tag : history_message.tags) {
             if (tag.name == "user.name") {
                 adapter_message.role = tag.value == botname
-                    ? Adapter::role_type::assistant
-                    : Adapter::role_type::user;
+                    ? ::ai::chat::adapters::role::assistant
+                    : ::ai::chat::adapters::role::user;
             } else if (tag.name == "channel") {
                 p_channel_tag = &tag;
             }
         }
         adapter.insert(adapter_message);
-        Adapter::message_type adapter_completion{ adapter.complete(model, key) };
+        ::ai::chat::adapters::message adapter_completion{ adapter.complete(model, key) };
+        if (moderator.is_filtered(adapter_completion.content)) {
+            return;
+        }
         adapter.insert(adapter_completion);
-        History::message_type history_completion{ 
+        ::ai::chat::histories::message history_completion{ 
             {},
             adapter_completion.content,
             p_channel_tag
-                ? ::std::initializer_list<History::tag_type>{
+                ? ::std::initializer_list<::ai::chat::histories::tag>{
                     {"user.name", botname},
                     *p_channel_tag
                 }
-                : ::std::initializer_list<History::tag_type>{
+                : ::std::initializer_list<::ai::chat::histories::tag>{
                     {"user.name", botname}
                 }
         };

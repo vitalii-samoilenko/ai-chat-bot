@@ -1,5 +1,5 @@
-#ifndef AI_CHAT_CLIENTS_TWITCH_AUTH_IPP
-#define AI_CHAT_CLIENTS_TWITCH_AUTH_IPP
+#ifndef AI_CHAT_CLIENTS_AUTH_IPP
+#define AI_CHAT_CLIENTS_AUTH_IPP
 
 #include <array>
 #include <stdexcept>
@@ -13,12 +13,11 @@
 #include "eboost/beast/http/form_body.hpp"
 #include "eboost/beast/http/json_body.hpp"
 
-#include "ai/chat/clients/twitch/auth.hpp"
+#include "ai/chat/clients/auth.hpp"
 
 namespace ai {
 namespace chat {
 namespace clients {
-namespace twitch {
 
 class auth::connection {
     friend auth;
@@ -136,11 +135,11 @@ auth::auth(const ::std::string& address, ::std::chrono::milliseconds timeout)
     if (!(url.scheme() == "https")) {
         throw ::std::invalid_argument{ "scheme is not supported" };
     }
-    _p_service->_host.append(url.host());
-    _p_service->_port.append(url.has_port()
+    _p_service->_host = url.host();
+    _p_service->_port = url.has_port()
         ? url.port()
-        : "443");
-    _p_service->_path.append(url.path());
+        : "443";
+    _p_service->_path = url.path();
     _p_service->_timeout = timeout;
     _p_service->on_init();
 };
@@ -223,7 +222,6 @@ access_context auth::request_access(const ::std::string& client_id, const ::std:
     return ::boost::json::value_to<access_context>(response.body());
 };
 
-} // twitch
 } // clients
 } // chat
 } // ai

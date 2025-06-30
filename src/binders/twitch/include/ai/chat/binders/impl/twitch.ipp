@@ -10,35 +10,41 @@ namespace chat {
 namespace binders {
 
 template<typename History, typename Client>
-twitch<History, Client>::binding::binding(typename History::slot_type&& history_slot, typename Client::slot_type&& client_slot)
+twitch<History, Client>::binding::binding(typename History::slot&& history_slot, typename Client::slot&& client_slot)
     : _history_slot{ ::std::move(history_slot) }
     , _client_slot{ ::std::move(client_slot) } {
 
 };
 
 template<typename History, typename Client>
-typename twitch<History, Client>::binding_type twitch<History, Client>::bind(History& history, Client& client) {
-    History::slot_type history_slot{ history.subscribe<Client>() };
-    history_slot.on_message([&client](const History::message_type& history_message)->void {
-        const History::tag_type* p_username_tag{ nullptr };
-        const History::tag_type* p_channel_tag{ nullptr };
-        for (const History::tag_type& tag : history_message.tags) {
+template<typename Moderator>
+typename twitch<History, Client>::binding twitch<History, Client>::bind(History& history, Client& client,
+    Moderator& moderator,
+    const ::std::string& botname) {
+    auto history_slot = history.subscribe<Client>();
+    history_slot.on_message([&client](const ::ai::chat::histories::message& history_message)->void {
+        const ::ai::chat::histories::tag* p_username_tag{ nullptr };
+        const ::ai::chat::histories::tag* p_channel_tag{ nullptr };
+        for (const ::ai::chat::histories::tag& tag : history_message.tags) {
             if (tag.name == "user.name") {
                 p_username_tag = &tag;
             } else if (tag.name == "channel") {
                 p_channel_tag = &tag;
             }
         }
-        Client::message_type client_message{
+        ::ai::chat::clients::message client_message{
             p_username_tag->value,
             history_message.content,
             p_channel_tag->value
         };
         client.send(client_message);
     });
-    Client::slot_type client_slot{ client.subscribe<History>() };
-    client_slot.on_message([&history](const Client::message_type& client_message)->void {
-        History::message_type history_message{
+    auto client_slot = client.subscribe<History>();
+    client_slot.on_message([&history, &moderator, botname](const ::ai::chat::clients::message& client_message)->void {
+        if (!moderator.is_allowed(botname, client_message.username)) {
+            return;
+        }
+        ::ai::chat::histories::message history_message{
             {},
             client_message.content,
             {
@@ -48,7 +54,7 @@ typename twitch<History, Client>::binding_type twitch<History, Client>::bind(His
         };
         history.insert<Client>(history_message);
     });
-    return binding{ ::std::move(history_slot), ::std::move(client_slot) };
+    return { ::std::move(history_slot), ::std::move(client_slot) };
 };
 
 } // binders

@@ -11,6 +11,7 @@ target_link_libraries(ai-chat-hosts-console
     AI::Chat::Adapters::OpenAI
     AI::Chat::Histories::SQLite
     AI::Chat::Histories::Observable
+    AI::Chat::Moderators::SQLite
     AI::Chat::Binders::Twitch
     AI::Chat::Binders::OpenAI
     opentelemetry-cpp::ostream_metrics_exporter

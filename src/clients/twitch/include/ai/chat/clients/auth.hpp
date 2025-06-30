@@ -1,5 +1,5 @@
-#ifndef AI_CHAT_CLIENTS_TWITCH_AUTH_HPP
-#define AI_CHAT_CLIENTS_TWITCH_AUTH_HPP
+#ifndef AI_CHAT_CLIENTS_AUTH_HPP
+#define AI_CHAT_CLIENTS_AUTH_HPP
 
 #include <chrono>
 #include <memory>
@@ -8,7 +8,6 @@
 namespace ai {
 namespace chat {
 namespace clients {
-namespace twitch {
 
 struct token_context {
     ::std::string access_token;
@@ -43,7 +42,6 @@ private:
     ::std::unique_ptr<connection> _p_service;
 };
 
-} // twitch
 } // clients
 } // chat
 } // ai

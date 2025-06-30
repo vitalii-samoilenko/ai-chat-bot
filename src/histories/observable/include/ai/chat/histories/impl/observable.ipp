@@ -16,7 +16,7 @@ class observable<History>::subscription {
     friend slot;
 
 public:
-    ::std::function<void(const message_type&)> on_message;
+    ::std::function<void(const message&)> on_message;
 };
 
 template<typename History>
@@ -67,14 +67,14 @@ observable<History>::observable(Args&& ...args)
 
 template<typename History>
 template<typename Observer>
-typename observable<History>::slot_type observable<History>::subscribe() {
+typename observable<History>::slot observable<History>::subscribe() {
     return { &typeid(Observer), this };
 };
 
 template<typename History>
 template<typename Client>
-typename observable<History>::iterator_type observable<History>::insert(const message_type& message) {
-    iterator_type iterator{ History::insert(message) };
+typename observable<History>::iterator observable<History>::insert(const message& message) {
+    iterator iterator{ History::insert(message) };
     for (const auto& p_observer_n_subscription : _subscriptions) {
         const ::std::type_info* p_observer{ p_observer_n_subscription.first };
         const subscription& subscription{ p_observer_n_subscription.second };

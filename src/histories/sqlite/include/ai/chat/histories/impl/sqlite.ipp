@@ -222,7 +222,7 @@ private:
                 static_cast<int>(::std::size(INSERT_ROLLBACK) - 1),
                 &_p_insert_rollback, nullptr));
     };
-    iterator_type on_insert(const message_type& message) {
+    iterator on_insert(const message& message) {
         ::std::chrono::steady_clock::time_point now{ ::std::chrono::steady_clock::now() };
         ensure_success(
             ::sqlite3_step(_p_insert_begin));
@@ -248,7 +248,7 @@ private:
             ::sqlite3_step(_p_insert_content));
         ensure_success(
             ::sqlite3_reset(_p_insert_content));
-        for (const tag_type& tag : message.tags) {
+        for (const tag& tag : message.tags) {
             ensure_success(
                 ::sqlite3_bind_text(_p_insert_tag_name,
                     ::sqlite3_bind_parameter_index(_p_insert_tag_name, "@NAME"),
@@ -296,11 +296,11 @@ private:
 
 sqlite::sqlite(const ::std::string& filename)
     : _p_chat{ new connection{} } {
-    _p_chat->_filename.append(filename);
+    _p_chat->_filename = filename;
     _p_chat->on_init();
 };
 
-sqlite::iterator_type sqlite::insert(const message_type& message) {
+sqlite::iterator sqlite::insert(const message& message) {
     return _p_chat->on_insert(message);
 };
 

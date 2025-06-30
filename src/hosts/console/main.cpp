@@ -3,15 +3,18 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "boost/json.hpp"
 
-#include "ai/chat/clients/twitch/auth.hpp"
-#include "ai/chat/clients/twitch/irc.hpp"
-#include "ai/chat/clients/twitch/handlers/observable.hpp"
+#include "ai/chat/clients/auth.hpp"
+#include "ai/chat/clients/twitch.hpp"
+#include "ai/chat/clients/handlers/observable.hpp"
 #include "ai/chat/adapters/openai.hpp"
 #include "ai/chat/histories/sqlite.hpp"
 #include "ai/chat/histories/observable.hpp"
+#include "ai/chat/moderators/sqlite.hpp"
 #include "ai/chat/binders/twitch.hpp"
 #include "ai/chat/binders/openai.hpp"
 
@@ -58,19 +61,24 @@ void init_logger() {
     ::std::shared_ptr<::opentelemetry::logs::LoggerProvider> api_provider{ ::std::move(sdk_provider) };
     ::opentelemetry::logs::Provider::SetLoggerProvider(api_provider);
 };
-::std::string auth_address{};
+::std::string botname{};
+::std::vector<::std::string> moderators{};
+::std::vector<::std::string> allowed{};
+::std::vector<::std::pair<::std::string, ::std::string>> filters{};
+::std::vector<::ai::chat::histories::message> context{};
 ::std::chrono::milliseconds auth_timeout{};
+::std::string auth_address{};
 ::std::string auth_client_id{};
 ::std::string auth_client_secret{};
 ::std::string auth_refresh_token{};
-::std::string irc_address{};
-::std::chrono::milliseconds irc_timeout{};
-::std::string irc_botname{};
-::std::string openai_address{};
-::std::chrono::milliseconds openai_timeout{};
-::std::string openai_model{};
-::std::string openai_key{};
-::std::string sqlite_filename{};
+::std::chrono::milliseconds client_timeout{};
+::std::string client_address{};
+::std::chrono::milliseconds adapter_timeout{};
+::std::string adapter_address{};
+::std::string adapter_model{};
+::std::string adapter_key{};
+::std::string history_filename{};
+::std::string moderator_filename{};
 void init_config(const ::std::string& filename) {
     ::std::ifstream input{ filename };
     if (!input.is_open()) {
@@ -85,22 +93,54 @@ void init_config(const ::std::string& filename) {
     ::boost::json::value config{ parser.release() };
     ::boost::json::value& client{ config.at("client") };
     ::boost::json::value& auth{ client.at("auth") };
-    ::boost::json::value& irc{ client.at("irc") };
-    ::boost::json::value& sqlite{ config.at("history") };
-    ::boost::json::value& openai{ config.at("adapter") };
-    auth_address.append(auth.at("address").as_string());
+    ::boost::json::value& history{ config.at("history") };
+    ::boost::json::value& adapter{ config.at("adapter") };
+    ::boost::json::value& moderator{ config.at("moderator") };
+    auth_address = auth.at("address").as_string();
     auth_timeout = ::std::chrono::milliseconds{ auth.at("timeout").as_int64() };
-    auth_client_id.append(auth.at("client_id").as_string());
-    auth_client_secret.append(auth.at("client_secret").as_string());
-    auth_refresh_token.append(auth.at("refresh_token").as_string());
-    irc_address.append(irc.at("address").as_string());
-    irc_timeout = ::std::chrono::milliseconds{ irc.at("timeout").as_int64() };
-    irc_botname.append(irc.at("botname").as_string());
-    openai_address.append(openai.at("address").as_string());
-    openai_timeout = ::std::chrono::milliseconds{ openai.at("timeout").as_int64() };
-    openai_model.append(openai.at("model").as_string());
-    openai_key.append(openai.at("key").as_string());
-    sqlite_filename.append(sqlite.at("filename").as_string());
+    auth_client_id = auth.at("client_id").as_string();
+    auth_client_secret = auth.at("client_secret").as_string();
+    auth_refresh_token = auth.at("refresh_token").as_string();
+    client_timeout = ::std::chrono::milliseconds{ client.at("timeout").as_int64() };
+    client_address = client.at("address").as_string();
+    history_filename = history.at("filename").as_string();
+    adapter_timeout = ::std::chrono::milliseconds{ adapter.at("timeout").as_int64() };
+    adapter_address = adapter.at("address").as_string();
+    adapter_model = adapter.at("model").as_string();
+    adapter_key = adapter.at("key").as_string();
+    botname = config.at("botname").as_string();
+    ::std::ifstream history_file{ history_filename };
+    if (!history_file.is_open()) {
+        for (::boost::json::value& config_message : config.at("context").as_array()) {
+            ::ai::chat::histories::message history_message{};
+            for (::boost::json::value& config_tag : config_message.at("tags").as_array()) {
+                ::ai::chat::histories::tag history_tag{};
+                history_tag.name = config_tag.at("name").as_string();
+                history_tag.value = config_tag.at("value").as_string();
+                history_message.tags.push_back(::std::move(history_tag));
+            }
+            history_message.content = config_message.at("content").as_string();
+            context.push_back(::std::move(history_message));
+        }
+    }
+    ::std::ifstream moderator_file{ moderator_filename };
+    if (!moderator_file.is_open()) {
+        for (::boost::json::value& config_username : config.at("moderators").as_array()) {
+            ::std::string moderator_username{ config_username.as_string() };
+            moderators.push_back(::std::move(moderator_username));
+        }
+        for (::boost::json::value& config_username : config.at("allowed").as_array()) {
+            ::std::string moderator_username{ config_username.as_string() };
+            allowed.push_back(::std::move(moderator_username));
+        }
+        for (::boost::json::value& config_filter : config.at("filters").as_array()) {
+            ::std::pair<::std::string, ::std::string> moderator_filter{
+                config_filter.at("name").as_string(),
+                config_filter.at("pattern").as_string()
+            };
+            filters.push_back(::std::move(moderator_filter));
+        }
+    }
 };
 
 int main(int argc, char* argv[]) {
@@ -112,18 +152,48 @@ int main(int argc, char* argv[]) {
             ? argv[0]
             : "config.json");
 
-        ::ai::chat::clients::twitch::auth auth{ auth_address, auth_timeout };
-        ::ai::chat::clients::twitch::irc<::ai::chat::clients::twitch::handlers::observable> irc{ 0, irc_address, irc_timeout };
-        ::ai::chat::adapters::openai openai{ openai_address, openai_timeout };
-        ::ai::chat::histories::observable<::ai::chat::histories::sqlite> sqlite{ sqlite_filename };
-        auto irc_binding = ::ai::chat::binders::twitch<decltype(sqlite), decltype(irc)>::bind(sqlite, irc);
-        auto openai_binding = ::ai::chat::binders::openai<decltype(sqlite), decltype(openai)>::bind(sqlite, openai,
-            irc_botname, openai_model, openai_key);
+        ::ai::chat::clients::auth auth{ auth_address, auth_timeout };
+        ::ai::chat::clients::twitch<::ai::chat::clients::handlers::observable> client{ 0, client_address, client_timeout };
+        ::ai::chat::adapters::openai adapter{ adapter_address, adapter_timeout };
+        ::ai::chat::histories::observable<::ai::chat::histories::sqlite> history{ history_filename };
+        ::ai::chat::moderators::sqlite moderator{ moderator_filename };
 
-        ::ai::chat::clients::twitch::token_context access_context{ auth.refresh_token(auth_client_id, auth_client_secret, auth_refresh_token) };
-        irc.connect(irc_botname, access_context.access_token);
+        for (const ::std::string& username : moderators) {
+            moderator.mod(username);
+        }
+        for (const ::std::string& username : allowed) {
+            moderator.allow(username);
+        }
+        for (const ::std::pair<::std::string, ::std::string>& name_n_pattern : filters) {
+            moderator.filter(name_n_pattern.first, name_n_pattern.second);
+        }
+        for (const ::ai::chat::histories::message& history_message : context) {
+            history.insert<decltype(main)>(history_message);
+            ::ai::chat::adapters::message adapter_message{
+                ::ai::chat::adapters::role::system,
+                history_message.content
+            };
+            for (const ::ai::chat::histories::tag& tag : history_message.tags) {
+                if (tag.name == "user.name") {
+                    adapter_message.role = tag.value == botname
+                        ? ::ai::chat::adapters::role::assistant
+                        : ::ai::chat::adapters::role::user;
+                }
+            }
+            adapter.insert(adapter_message);
+        }
+
+        auto client_binding = ::ai::chat::binders::twitch<decltype(history), decltype(client)>::bind(history, client,
+            moderator,
+            botname);
+        auto adapter_binding = ::ai::chat::binders::openai<decltype(history), decltype(adapter)>::bind(history, adapter,
+            moderator,
+            botname, adapter_model, adapter_key);
+
+        ::ai::chat::clients::token_context access_context{ auth.refresh_token(auth_client_id, auth_client_secret, auth_refresh_token) };
+        client.connect(botname, access_context.access_token);
         ::std::cout << "Waiting for shutdown signal..." << ::std::endl;
-        irc.attach();
+        client.attach();
     }
     catch(const ::std::exception& e) {
         ::std::cerr << "Error: " << e.what() << ::std::endl;

@@ -1,19 +1,18 @@
-#ifndef AI_CHAT_CLIENTS_TWITCH_HANDLERS_OBSERVABLE_IPP
-#define AI_CHAT_CLIENTS_TWITCH_HANDLERS_OBSERVABLE_IPP
+#ifndef AI_CHAT_CLIENTS_HANDLERS_OBSERVABLE_IPP
+#define AI_CHAT_CLIENTS_HANDLERS_OBSERVABLE_IPP
 
 #include <functional>
 #include <utility>
 
-#include "ai/chat/clients/twitch/handlers/observable.hpp"
+#include "ai/chat/clients/handlers/observable.hpp"
 
 namespace ai {
 namespace chat {
 namespace clients {
-namespace twitch {
 namespace handlers {
 
 class observable::subscription {
-    friend irc<observable>;
+    friend twitch<observable>;
     friend slot;
 
 private:
@@ -54,21 +53,20 @@ observable::slot::slot(const ::std::type_info* p_observer, observable* p_target)
 };
 
 template<typename Observer>
-observable::slot_type observable::subscribe() {
+observable::slot observable::subscribe() {
     return { &typeid(Observer), this };
 };
 
 } // handlers
 
 template<>
-void irc<handlers::observable>::on_message(const message& message) const {
+void twitch<handlers::observable>::on_message(const message& message) const {
     for (const auto& p_observer_n_subscription : _subscriptions) {
         const subscription& subscription{ p_observer_n_subscription.second };
         subscription.on_message(message);
     }
 };
 
-} // twitch
 } // clients
 } // chat
 } // ai

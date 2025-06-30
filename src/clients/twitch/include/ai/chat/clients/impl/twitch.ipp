@@ -1,5 +1,5 @@
-#ifndef AI_CHAT_CLIENTS_TWITCH_IRC_IPP
-#define AI_CHAT_CLIENTS_TWITCH_IRC_IPP
+#ifndef AI_CHAT_CLIENTS_TWITCH_IPP
+#define AI_CHAT_CLIENTS_TWITCH_IPP
 
 #include <stdexcept>
 #include <utility>
@@ -15,16 +15,15 @@
 
 #include "eboost/beast/ensure_success.hpp"
 
-#include "ai/chat/clients/twitch/irc.hpp"
+#include "ai/chat/clients/twitch.hpp"
 
 namespace ai {
 namespace chat {
 namespace clients {
-namespace twitch {
 
 template<typename Handler>
-class irc<Handler>::connection {
-    friend irc;
+class twitch<Handler>::connection {
+    friend twitch;
 
 public:
     connection() = delete;
@@ -37,7 +36,7 @@ public:
     connection& operator=(connection&&) = delete;
 
 private:
-    explicit connection(size_t dop, irc<Handler>& handler)
+    explicit connection(size_t dop, twitch<Handler>& handler)
         : _context{ dop }
         , _resolver{ _context }
         , _ssl_context{ ::boost::asio::ssl::context::tlsv12_client }
@@ -48,6 +47,10 @@ private:
         , _port{}
         , _timeout{}
         , _authority{}
+        , _username{}
+        , _access_token{}
+        , _channel{}
+        , _message{}
         , _buffer{}
         , _ping_group{ 1 }
         , _username_group{ 2 }
@@ -72,13 +75,15 @@ private:
     ::boost::asio::ssl::context _ssl_context;
     ::boost::beast::websocket::stream<::boost::asio::ssl::stream<::boost::beast::tcp_stream>> _stream;
     ::boost::asio::signal_set _signals;
-    irc<Handler>& _handler;
+    twitch<Handler>& _handler;
     ::std::string _host;
     ::std::string _port;
     ::std::chrono::milliseconds _timeout;
     ::std::string _authority;
     ::std::string _username;
     ::std::string _access_token;
+    ::std::string _channel;
+    message _message;
     ::boost::beast::flat_buffer _buffer;
     ::boost::xpressive::mark_tag _ping_group;
     ::boost::xpressive::mark_tag _username_group;
@@ -204,9 +209,14 @@ private:
         }
         _buffer.consume(bytes_transferred);
         const char JOIN[]{ "JOIN #" };
-        ::boost::asio::mutable_buffer request{ _buffer.prepare(::std::size(JOIN) - 1 + _username.size()) };
+        const char AND[]{ ",#" };
+        ::boost::asio::mutable_buffer request{ _buffer.prepare(::std::size(JOIN) - 1 + _username.size() + (!_channel.empty() ? ::std::size(AND) - 1 + _channel.size() : 0)) };
         ::std::memcpy(reinterpret_cast<char*>(request.data()), JOIN, ::std::size(JOIN) - 1);
         ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(JOIN) - 1, _username.data(), _username.size());
+        if (!_channel.empty()) {
+            ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(JOIN) - 1 + _username.size(), AND, ::std::size(AND) - 1);
+            ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(JOIN) - 1 + _username.size() + ::std::size(AND) - 1, _channel.data(), _channel.size());
+        }
         _stream.async_write(request,
             [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
                 if (error_code == ::boost::beast::errc::operation_canceled) {
@@ -292,14 +302,28 @@ private:
                 _context.stop();
             });
     };
-    void on_send(const message_type& message) {
+    void on_send() {
         const char PRIVMSG[]{ "PRIVMSG #" };
         const char WHAT[]{ " :" };
-        ::boost::asio::mutable_buffer request{ _buffer.prepare(::std::size(PRIVMSG) - 1 + message.channel.size() + ::std::size(WHAT) - 1 + message.content.size()) };
+        ::boost::asio::mutable_buffer request{ _buffer.prepare(::std::size(PRIVMSG) - 1 + _message.channel.size() + ::std::size(WHAT) - 1 + _message.content.size()) };
         ::std::memcpy(reinterpret_cast<char*>(request.data()), PRIVMSG, ::std::size(PRIVMSG) - 1);
-        ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(PRIVMSG) - 1, message.channel.data(), message.channel.size());
-        ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(PRIVMSG) - 1 + message.channel.size(), WHAT, ::std::size(WHAT) - 1);
-        ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(PRIVMSG) - 1 + message.channel.size() + ::std::size(WHAT) - 1, message.content.data(), message.content.size());
+        ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(PRIVMSG) - 1, _message.channel.data(), _message.channel.size());
+        ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(PRIVMSG) - 1 + _message.channel.size(), WHAT, ::std::size(WHAT) - 1);
+        ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(PRIVMSG) - 1 + _message.channel.size() + ::std::size(WHAT) - 1, _message.content.data(), _message.content.size());
+        _stream.async_write(request,
+            [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
+                if (error_code == ::boost::beast::errc::operation_canceled) {
+                    return;
+                }
+                ::eboost::beast::ensure_success(error_code);
+                on_write(bytes_transferred);
+            });
+    };
+    void on_join() {
+        const char JOIN[]{ "JOIN #" };
+        ::boost::asio::mutable_buffer request{ _buffer.prepare(::std::size(JOIN) - 1 + _channel.size()) };
+        ::std::memcpy(reinterpret_cast<char*>(request.data()), JOIN, ::std::size(JOIN) - 1);
+        ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(JOIN) - 1, _channel.data(), _channel.size());
         _stream.async_write(request,
             [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
                 if (error_code == ::boost::beast::errc::operation_canceled) {
@@ -316,7 +340,7 @@ private:
 
 template<typename Handler>
 template<typename... Args>
-irc<Handler>::irc(size_t dop,
+twitch<Handler>::twitch(size_t dop,
     const ::std::string& address, ::std::chrono::milliseconds timeout,
     Args&& ...args)
     : Handler{ ::std::forward<Args>(args)... }
@@ -329,43 +353,49 @@ irc<Handler>::irc(size_t dop,
     if (!(url.scheme() == "wss")) {
         throw ::std::invalid_argument{ "scheme is not supported" };
     }
-    _p_channel->_host.append(url.host());
-    _p_channel->_port.append(url.has_port()
+    _p_channel->_host = url.host();
+    _p_channel->_port = url.has_port()
         ? url.port()
-        : "443");
+        : "443";
     _p_channel->_timeout = timeout;
     _p_channel->on_init();
 };
 
 template<typename Handler>
-void irc<Handler>::connect(const ::std::string& username, const ::std::string& access_token) {
-    _p_channel->_username.append(username);
-    _p_channel->_access_token.append(access_token);
-
-    ::boost::asio::post(_p_channel->_context, [this]()->void {
+void twitch<Handler>::connect(const ::std::string& username, const ::std::string& access_token) {
+    ::boost::asio::post(_p_channel->_context, [this, username, access_token]()->void {
+        _p_channel->_username = ::std::move(username);
+        _p_channel->_access_token = ::std::move(access_token);
         _p_channel->on_connect();
     });
 };
 template<typename Handler>
-void irc<Handler>::disconnect() {
+void twitch<Handler>::disconnect() {
     ::boost::asio::post(_p_channel->_context, [this]()->void {
         _p_channel->on_disconnect();
     });
     _p_channel->_context.wait();
 };
 template<typename Handler>
-void irc<Handler>::send(const message_type& message) {
+void twitch<Handler>::send(const message& message) {
     ::boost::asio::post(_p_channel->_context, [this, message]()->void {
-        _p_channel->on_send(message);
+        _p_channel->_message = ::std::move(message);
+        _p_channel->on_send();
     });
 };
 
 template<typename Handler>
-void irc<Handler>::attach() {
+void twitch<Handler>::attach() {
     _p_channel->_context.attach();
 };
+template<typename Handler>
+void twitch<Handler>::join(const ::std::string& channel) {
+    ::boost::asio::post(_p_channel->_context, [this, channel]()->void {
+        _p_channel->_channel = ::std::move(channel);
+        _p_channel->on_join();
+    });
+};
 
-} // twitch
 } // clients
 } // chat
 } // ai
