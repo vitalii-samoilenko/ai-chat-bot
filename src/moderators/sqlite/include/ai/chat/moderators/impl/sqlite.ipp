@@ -12,10 +12,6 @@
 
 #include "ai/chat/moderators/sqlite.hpp"
 
-namespace ai {
-namespace chat {
-namespace moderators {
-
 extern "C" {
     void sqlite3_regexp(::sqlite3_context* context, int argc, ::sqlite3_value** p_p_value) {
         const char* pattern_begin{ reinterpret_cast<const char*>(::sqlite3_value_text(p_p_value[0])) };
@@ -26,6 +22,10 @@ extern "C" {
         ::sqlite3_result_int(context, ::std::regex_match(value_begin, value_end, pattern));
     };
 };
+
+namespace ai {
+namespace chat {
+namespace moderators {
 
 class sqlite::connection {
     friend sqlite;
@@ -102,7 +102,7 @@ private:
         ensure_success(
             ::sqlite3_create_function(_p_database, "regexp", 2,
                 SQLITE_UTF8 | SQLITE_DETERMINISTIC | SQLITE_DIRECTONLY | SQLITE_INNOCUOUS,
-                nullptr, &sqlite3_regexp, nullptr, nullptr));
+                nullptr, &::sqlite3_regexp, nullptr, nullptr));
         ::sqlite3_stmt* _p_init_user{ nullptr };
         ::sqlite3_stmt* _p_init_filter{ nullptr };
         auto on_exit = ::boost::scope::make_scope_exit([=]()->void {
@@ -318,6 +318,8 @@ private:
                 role));
         ensure_success(
             ::sqlite3_step(_p_promote));
+        ensure_success(
+            ::sqlite3_reset(_p_promote));
         return 1;
     };
     iterator_type on_demote(const ::std::string& username, role role) {
@@ -333,6 +335,8 @@ private:
                 role));
         ensure_success(
             ::sqlite3_step(_p_demote));
+        ensure_success(
+            ::sqlite3_reset(_p_demote));
         return 1;
     };
     iterator_type on_timeout(const ::std::string& username, ::sqlite3_int64 since) {
@@ -348,6 +352,8 @@ private:
                 since));
         ensure_success(
             ::sqlite3_step(_p_timeout));
+        ensure_success(
+            ::sqlite3_reset(_p_timeout));
         return 1;
     };
     iterator_type on_filter(const ::std::string& name, const ::std::string& pattern) {
@@ -365,6 +371,8 @@ private:
                 SQLITE_STATIC));
         ensure_success(
             ::sqlite3_step(_p_filter));
+        ensure_success(
+            ::sqlite3_reset(_p_filter));
         return 1;
     };
     iterator_type on_discard(const ::std::string& name) {
@@ -376,6 +384,8 @@ private:
                 SQLITE_STATIC));
         ensure_success(
             ::sqlite3_step(_p_discard));
+        ensure_success(
+            ::sqlite3_reset(_p_discard));
         return 1;
     };
 };
