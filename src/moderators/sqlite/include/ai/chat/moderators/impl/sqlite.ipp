@@ -13,11 +13,11 @@
 #include "ai/chat/moderators/sqlite.hpp"
 
 extern "C" {
-    void sqlite3_regexp(::sqlite3_context* context, int argc, ::sqlite3_value** p_values) {
-        const char* pattern_begin{ reinterpret_cast<const char*>(::sqlite3_value_text(p_values[0])) };
-        const char* pattern_end{ pattern_begin + ::sqlite3_value_bytes(p_values[0]) };
-        const char* value_begin{ reinterpret_cast<const char*>(::sqlite3_value_text(p_values[1])) };
-        const char* value_end{ value_begin + ::sqlite3_value_bytes(p_values[1]) };
+    void sqlite3_regexp(::sqlite3_context* context, int argc, ::sqlite3_value* argv[]) {
+        const char* pattern_begin{ reinterpret_cast<const char*>(::sqlite3_value_text(argv[0])) };
+        const char* pattern_end{ pattern_begin + ::sqlite3_value_bytes(argv[0]) };
+        const char* value_begin{ reinterpret_cast<const char*>(::sqlite3_value_text(argv[1])) };
+        const char* value_end{ value_begin + ::sqlite3_value_bytes(argv[1]) };
         ::std::regex pattern{ pattern_begin, pattern_end };
         ::sqlite3_result_int(context, ::std::regex_match(value_begin, value_end, pattern));
     };
@@ -154,7 +154,11 @@ private:
             "SELECT COUNT(*) FROM user"
             " WHERE name IN (@USERNAME1, @USERNAME2)"
             " AND 0 < role & @ROLE"
-            " AND NOT @SINCE < MAX(since)"
+            " AND NOT @SINCE < "
+            "("
+                "SELECT MAX(since) FROM user"
+                " WHERE name IN (@USERNAME1, @USERNAME2)"
+            ")"
         };
         ensure_success(
             ::sqlite3_prepare_v2(_p_database, IS_ALLOWED2,
@@ -210,7 +214,7 @@ private:
                 "@USERNAME, @SINCE"
             ")"
             " ON CONFLICT DO UPDATE SET"
-             " seince = @SINCE"
+             " since = @SINCE"
         };
         ensure_success(
             ::sqlite3_prepare_v2(_p_database, TIMEOUT,
@@ -234,7 +238,7 @@ private:
                 &_p_filter, nullptr));
         const char DISCARD[]{
             "DELETE FROM filter"
-            "WHERE name = @NAME"
+            " WHERE name = @NAME"
         };
         ensure_success(
             ::sqlite3_prepare_v2(_p_database, DISCARD,

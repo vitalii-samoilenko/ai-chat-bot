@@ -41,6 +41,9 @@ typename twitch<History, Client>::binding twitch<History, Client>::bind(History&
     });
     auto client_slot = client.subscribe<History>();
     client_slot.on_message([&history, &moderator, botname](const ::ai::chat::clients::message& client_message)->void {
+        if (client_message.content.find("@" + botname) == ::std::string::npos) {
+            return;
+        }
         if (!moderator.is_allowed(botname, client_message.username)) {
             return;
         }

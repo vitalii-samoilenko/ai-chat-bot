@@ -65,6 +65,9 @@ void init_logger() {
 ::std::vector<::std::string> moderators{};
 ::std::vector<::std::string> allowed{};
 ::std::vector<::std::pair<::std::string, ::std::string>> filters{};
+size_t retries{ 0 };
+::std::string apology{};
+::std::string pattern{};
 ::std::vector<::ai::chat::histories::message> context{};
 ::std::chrono::milliseconds auth_timeout{};
 ::std::string auth_address{};
@@ -108,7 +111,11 @@ void init_config(const ::std::string& filename) {
     adapter_address = adapter.at("address").as_string();
     adapter_model = adapter.at("model").as_string();
     adapter_key = adapter.at("key").as_string();
+    moderator_filename = moderator.at("filename").as_string();
     botname = config.at("botname").as_string();
+    retries = static_cast<size_t>(config.at("retries").as_int64());
+    apology = config.at("apology").as_string();
+    pattern = config.at("pattern").as_string();
     ::std::ifstream history_file{ history_filename };
     if (!history_file.is_open()) {
         for (::boost::json::value& config_message : config.at("context").as_array()) {
@@ -148,8 +155,8 @@ int main(int argc, char* argv[]) {
         init_meter();
         init_tracer();
         init_logger();
-        init_config(argc
-            ? argv[0]
+        init_config(argc == 2
+            ? argv[1]
             : "config.json");
 
         ::ai::chat::clients::auth auth{ auth_address, auth_timeout };
@@ -188,7 +195,9 @@ int main(int argc, char* argv[]) {
             botname);
         auto adapter_binding = ::ai::chat::binders::openai<decltype(history), decltype(adapter)>::bind(history, adapter,
             moderator,
-            botname, adapter_model, adapter_key);
+            adapter_model, adapter_key,
+            pattern, retries, apology,
+            botname);
 
         ::ai::chat::clients::token_context access_context{ auth.refresh_token(auth_client_id, auth_client_secret, auth_refresh_token) };
         client.connect(botname, access_context.access_token);

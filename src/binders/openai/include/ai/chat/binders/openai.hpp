@@ -41,7 +41,9 @@ public:
     template<typename Moderator>
     static binding bind(History& history, Adapter& adapter,
         Moderator& moderator,
-        const ::std::string& botname, const ::std::string& model, const ::std::string& key);
+        const ::std::string& model, const ::std::string& key,
+        const ::std::string& pattern, size_t retires, const ::std::string& apology,
+        const ::std::string& botname);
 
 };
 
