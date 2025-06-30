@@ -101,7 +101,7 @@ void init_config(const ::std::string& filename) {
     openai_model.append(openai.at("model").as_string());
     openai_key.append(openai.at("key").as_string());
     sqlite_filename.append(sqlite.at("filename").as_string());
-}
+};
 
 int main(int argc, char* argv[]) {
     try {
@@ -130,4 +130,4 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
-}
+};

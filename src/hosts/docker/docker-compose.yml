@@ -7,7 +7,7 @@ services:
     image: ai.chat.hosts.console
     build:
       context: ../..
-      dockerfile: src/AI.Chat.Hosts.Console/Dockerfile
+      dockerfile: src/hosts/console/Dockerfile
     networks:
       - ai-chat-hosts-docker
 

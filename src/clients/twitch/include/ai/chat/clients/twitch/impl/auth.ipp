@@ -34,7 +34,6 @@ public:
     connection& operator=(connection&&) = delete;
 
 private:
-
     connection()
         : _context{}
         , _resolver{ _context }

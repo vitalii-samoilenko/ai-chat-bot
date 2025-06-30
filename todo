@@ -3,8 +3,9 @@ commands
 delayed client
 delayed adapter
 limited adapter
+init context
 
-iterator
+iterators
 
 traces
 metrics
