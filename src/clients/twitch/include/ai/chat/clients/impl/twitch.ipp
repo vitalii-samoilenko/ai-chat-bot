@@ -40,7 +40,7 @@ private:
         : _context{ dop }
         , _resolver{ _context }
         , _ssl_context{ ::boost::asio::ssl::context::tlsv12_client }
-        , _p_stream{ nullptr }
+        , _stream{ _context, _ssl_context }
         , _signals{ _context }
         , _handler{ handler }
         , _host{}
@@ -73,7 +73,7 @@ private:
     ::boost::asio::thread_pool _context;
     ::boost::asio::ip::tcp::resolver _resolver;
     ::boost::asio::ssl::context _ssl_context;
-    ::std::unique_ptr<::boost::beast::websocket::stream<::boost::asio::ssl::stream<::boost::beast::tcp_stream>>> _p_stream;
+    ::boost::beast::websocket::stream<::boost::asio::ssl::stream<::boost::beast::tcp_stream>> _stream;
     ::boost::asio::signal_set _signals;
     twitch<Handler>& _handler;
     ::std::string _host;
@@ -111,16 +111,15 @@ private:
             });
     };
     void on_connect() {
-        _p_stream = ::std::make_unique<::boost::beast::websocket::stream<::boost::asio::ssl::stream<::boost::beast::tcp_stream>>>(_context, _ssl_context);
-        if (!::SSL_set_tlsext_host_name(_p_stream->next_layer().native_handle(), _host.c_str())) {
+        if (!::SSL_set_tlsext_host_name(_stream.next_layer().native_handle(), _host.c_str())) {
             throw ::boost::beast::system_error{
                 static_cast<int>(::ERR_get_error()),
                 ::boost::asio::error::get_ssl_category()
             };
         }
-        _p_stream->next_layer().set_verify_callback(::boost::asio::ssl::host_name_verification{ _host });
+        _stream.next_layer().set_verify_callback(::boost::asio::ssl::host_name_verification{ _host });
 
-        ::boost::beast::get_lowest_layer(*_p_stream).expires_after(_timeout);
+        ::boost::beast::get_lowest_layer(_stream).expires_after(_timeout);
         _resolver.async_resolve(_host, _port,
             [this](::boost::beast::error_code error_code, ::boost::asio::ip::tcp::resolver::results_type results)->void {
                 if (error_code == ::boost::beast::errc::operation_canceled) {
@@ -131,7 +130,7 @@ private:
             });
     };
     void on_resolve(::boost::asio::ip::tcp::resolver::results_type results) {
-        ::boost::beast::get_lowest_layer(*_p_stream).async_connect(results,
+        ::boost::beast::get_lowest_layer(_stream).async_connect(results,
             [this](::boost::beast::error_code error_code, ::boost::asio::ip::tcp::resolver::results_type::endpoint_type endpoint_type)->void {
                 if (error_code == ::boost::beast::errc::operation_canceled) {
                     return;
@@ -141,7 +140,7 @@ private:
             });
     };
     void on_transport_connect(::boost::asio::ip::tcp::resolver::results_type::endpoint_type) {
-        _p_stream->next_layer().async_handshake(::boost::asio::ssl::stream_base::client,
+        _stream.next_layer().async_handshake(::boost::asio::ssl::stream_base::client,
             [this](::boost::beast::error_code error_code)->void {
                 if (error_code == ::boost::beast::errc::operation_canceled) {
                     return;
@@ -151,9 +150,9 @@ private:
             });
     };
     void on_ssl_handshake() {
-        ::boost::beast::get_lowest_layer(*_p_stream).expires_never();
-        _p_stream->set_option(::boost::beast::websocket::stream_base::timeout::suggested(::boost::beast::role_type::client));
-        _p_stream->async_handshake(_authority, "/",
+        ::boost::beast::get_lowest_layer(_stream).expires_never();
+        _stream.set_option(::boost::beast::websocket::stream_base::timeout::suggested(::boost::beast::role_type::client));
+        _stream.async_handshake(_authority, "/",
             [this](::boost::beast::error_code error_code)->void {
                 if (error_code == ::boost::beast::errc::operation_canceled) {
                     return;
@@ -167,7 +166,7 @@ private:
         ::boost::asio::mutable_buffer request{ _buffer.prepare(::std::size(PASS) - 1 + _access_token.size()) };
         ::std::memcpy(reinterpret_cast<char*>(request.data()), PASS, ::std::size(PASS) - 1);
         ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(PASS) - 1, _access_token.data(), _access_token.size());
-        _p_stream->async_write(request,
+        _stream.async_write(request,
             [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
                 if (error_code == ::boost::beast::errc::operation_canceled) {
                     return;
@@ -182,7 +181,7 @@ private:
         ::boost::asio::mutable_buffer request{ _buffer.prepare(::std::size(NICK) - 1 + _username.size()) };
         ::std::memcpy(reinterpret_cast<char*>(request.data()), NICK, ::std::size(NICK) - 1);
         ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(NICK) - 1, _username.data(), _username.size());
-        _p_stream->async_write(request,
+        _stream.async_write(request,
             [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
                 if (error_code == ::boost::beast::errc::operation_canceled) {
                     return;
@@ -193,7 +192,7 @@ private:
     };
     void on_nick(size_t bytes_transferred) {
         ::boost::ignore_unused(bytes_transferred);
-        _p_stream->async_read(_buffer,
+        _stream.async_read(_buffer,
             [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
                 if (error_code == ::boost::beast::errc::operation_canceled) {
                     return;
@@ -219,7 +218,7 @@ private:
             ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(JOIN) - 1 + _username.size(), AND, ::std::size(AND) - 1);
             ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(JOIN) - 1 + _username.size() + ::std::size(AND) - 1, _channel.data(), _channel.size());
         }
-        _p_stream->async_write(request,
+        _stream.async_write(request,
             [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
                 if (error_code == ::boost::beast::errc::operation_canceled) {
                     return;
@@ -230,7 +229,7 @@ private:
     };
     void on_join(size_t bytes_transferred) {
         ::boost::ignore_unused(bytes_transferred);
-        _p_stream->async_read(_buffer,
+        _stream.async_read(_buffer,
             [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
                 if (error_code == ::boost::beast::errc::operation_canceled) {
                     return;
@@ -249,7 +248,7 @@ private:
                 const char PONG[]{ "PONG :tmi.twitch.tv" };
                 ::boost::asio::mutable_buffer request{ _buffer.prepare(::std::size(PONG) - 1) };
                 ::std::memcpy(request.data(), reinterpret_cast<const void*>(PONG), ::std::size(PONG) - 1);
-                _p_stream->async_write(request,
+                _stream.async_write(request,
                     [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
                         if (error_code == ::boost::beast::errc::operation_canceled) {
                             return;
@@ -275,7 +274,7 @@ private:
                     on_reconnect();
                 });
         } else {
-            _p_stream->async_read(_buffer,
+            _stream.async_read(_buffer,
                 [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
                     if (error_code == ::boost::beast::errc::operation_canceled) {
                         return;
@@ -289,8 +288,11 @@ private:
         ::boost::ignore_unused(bytes_transferred);
     };
     void on_reconnect() {
-        _p_stream->async_close(::boost::beast::websocket::close_code::normal,
+        _stream.async_close(::boost::beast::websocket::close_code::normal,
             [this](::boost::beast::error_code error_code)->void {
+                _stream.~stream();
+                new(&_stream) ::boost::beast::websocket::stream<::boost::asio::ssl::stream<::boost::beast::tcp_stream>>{ _context, _ssl_context };
+
                 if (error_code == ::boost::beast::errc::operation_canceled) {
                     return;
                 }
@@ -299,7 +301,7 @@ private:
             });
     };
     void on_disconnect() {
-        _p_stream->async_close(::boost::beast::websocket::close_code::normal,
+        _stream.async_close(::boost::beast::websocket::close_code::normal,
             [this](::boost::beast::error_code error_code)->void {
                 _context.stop();
             });
@@ -312,7 +314,7 @@ private:
         ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(PRIVMSG) - 1, _message.channel.data(), _message.channel.size());
         ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(PRIVMSG) - 1 + _message.channel.size(), WHAT, ::std::size(WHAT) - 1);
         ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(PRIVMSG) - 1 + _message.channel.size() + ::std::size(WHAT) - 1, _message.content.data(), _message.content.size());
-        _p_stream->async_write(request,
+        _stream.async_write(request,
             [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
                 if (error_code == ::boost::beast::errc::operation_canceled) {
                     return;
@@ -326,7 +328,21 @@ private:
         ::boost::asio::mutable_buffer request{ _buffer.prepare(::std::size(JOIN) - 1 + _channel.size()) };
         ::std::memcpy(reinterpret_cast<char*>(request.data()), JOIN, ::std::size(JOIN) - 1);
         ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(JOIN) - 1, _channel.data(), _channel.size());
-        _p_stream->async_write(request,
+        _stream.async_write(request,
+            [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
+                if (error_code == ::boost::beast::errc::operation_canceled) {
+                    return;
+                }
+                ::eboost::beast::ensure_success(error_code);
+                on_write(bytes_transferred);
+            });
+    };
+    void on_leave() {
+        const char PART[]{ "PART #" };
+        ::boost::asio::mutable_buffer request{ _buffer.prepare(::std::size(PART) - 1 + _channel.size()) };
+        ::std::memcpy(reinterpret_cast<char*>(request.data()), PART, ::std::size(PART) - 1);
+        ::std::memcpy(reinterpret_cast<char*>(request.data()) + ::std::size(PART) - 1, _channel.data(), _channel.size());
+        _stream.async_write(request,
             [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
                 if (error_code == ::boost::beast::errc::operation_canceled) {
                     return;
@@ -395,6 +411,13 @@ void twitch<Handler>::join(const ::std::string& channel) {
     ::boost::asio::post(_p_channel->_context, [this, channel]()->void {
         _p_channel->_channel = ::std::move(channel);
         _p_channel->on_join();
+    });
+};
+template<typename Handler>
+void twitch<Handler>::leave() {
+    ::boost::asio::post(_p_channel->_context, [this, channel]()->void {
+        _p_channel->on_leave();
+        _p_channel->_channel.clear();
     });
 };
 

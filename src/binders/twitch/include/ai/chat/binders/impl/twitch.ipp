@@ -57,7 +57,7 @@ typename twitch<History, Client>::binding twitch<History, Client>::bind(History&
         };
         history.insert<Client>(history_message);
     });
-    return { ::std::move(history_slot), ::std::move(client_slot) };
+    return binding{ ::std::move(history_slot), ::std::move(client_slot) };
 };
 
 } // binders

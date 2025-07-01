@@ -37,6 +37,7 @@ public:
     void send(const message& message);
 
     void join(const ::std::string& channel);
+    void leave();
     void attach();
 private:
     class connection;
