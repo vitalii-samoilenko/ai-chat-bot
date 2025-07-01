@@ -1,19 +1,17 @@
-#ifndef AI_CHAT_CLIENTS_HANDLERS_OBSERVABLE_HPP
-#define AI_CHAT_CLIENTS_HANDLERS_OBSERVABLE_HPP
+#ifndef AI_CHAT_CLIENTS_OBSERVABLE_HPP
+#define AI_CHAT_CLIENTS_OBSERVABLE_HPP
 
 #include <typeinfo>
 #include <unordered_map>
 
-#include "ai/chat/clients/twitch.hpp"
-
 namespace ai {
 namespace chat {
 namespace clients {
-namespace handlers {
 
-class observable {
+template<template <typename> class Client>
+class observable : public Client<observable<Client>> {
 public:
-    observable() = default;
+    observable() = delete;
     observable(const observable&) = delete;
     observable(observable&&) = delete;
 
@@ -45,17 +43,22 @@ public:
         observable* _p_target;
     };
 
+    template<typename... Args>
+    explicit observable(Args&& ...args);
+
     template<typename Observer>
     slot subscribe();
 
 private:
     class subscription;
-    friend twitch<observable>;
+
+    friend Client<observable>;
 
     ::std::unordered_map<const ::std::type_info*, subscription> _subscriptions;
+
+    void on_message(const message& message) const;
 };
 
-} // handlers
 } // clients
 } // chat
 } // ai

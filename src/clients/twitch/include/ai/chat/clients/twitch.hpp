@@ -16,7 +16,7 @@ struct message {
 };
 
 template<typename Handler>
-class twitch : public Handler {
+class twitch {
 public:
     twitch() = delete;
     twitch(const twitch&) = delete;
@@ -27,10 +27,8 @@ public:
     twitch& operator=(const twitch&) = delete;
     twitch& operator=(twitch&&) = delete;
 
-    template<typename... Args>
     twitch(size_t dop,
-        const ::std::string& address, ::std::chrono::milliseconds timeout,
-        Args&& ...args);
+        const ::std::string& address, ::std::chrono::milliseconds timeout);
 
     void connect(const ::std::string& username, const ::std::string& access_token);
     void disconnect();

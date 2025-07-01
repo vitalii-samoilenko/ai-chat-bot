@@ -2,7 +2,7 @@
 #define AI_CHAT_BINDERS_TWITCH_HPP
 
 #include "ai/chat/clients/twitch.hpp"
-#include "ai/chat/clients/handlers/observable.hpp"
+#include "ai/chat/clients/observable.hpp"
 
 namespace ai {
 namespace chat {

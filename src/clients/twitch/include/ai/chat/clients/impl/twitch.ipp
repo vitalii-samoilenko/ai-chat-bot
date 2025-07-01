@@ -357,12 +357,9 @@ private:
 };
 
 template<typename Handler>
-template<typename... Args>
 twitch<Handler>::twitch(size_t dop,
-    const ::std::string& address, ::std::chrono::milliseconds timeout,
-    Args&& ...args)
-    : Handler{ ::std::forward<Args>(args)... }
-    , _p_channel{ new connection{ dop, *this } } {
+    const ::std::string& address, ::std::chrono::milliseconds timeout)
+    : _p_channel{ new connection{ dop, *this } } {
     ::boost::system::result<::boost::urls::url_view> result{ ::boost::urls::parse_uri(address) };
     if (!result.has_value()) {
         throw ::std::invalid_argument{ "invalid uri" };
@@ -419,6 +416,11 @@ void twitch<Handler>::leave() {
         _p_channel->on_leave();
         _p_channel->_channel.clear();
     });
+};
+
+template<typename Handler>
+void twitch<Handler>::on_message(const message& message) const {
+    static_cast<const Handler*>(this)->on_message(message);
 };
 
 } // clients

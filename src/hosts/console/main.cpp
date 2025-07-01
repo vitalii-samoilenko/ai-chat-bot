@@ -10,7 +10,7 @@
 
 #include "ai/chat/clients/auth.hpp"
 #include "ai/chat/clients/twitch.hpp"
-#include "ai/chat/clients/handlers/observable.hpp"
+#include "ai/chat/clients/observable.hpp"
 #include "ai/chat/adapters/openai.hpp"
 #include "ai/chat/histories/sqlite.hpp"
 #include "ai/chat/histories/observable.hpp"
@@ -162,7 +162,7 @@ int main(int argc, char* argv[]) {
             : "config.json");
 
         ::ai::chat::clients::auth auth{ auth_address, auth_timeout };
-        ::ai::chat::clients::twitch<::ai::chat::clients::handlers::observable> client{ 0, client_address, client_timeout };
+        ::ai::chat::clients::observable<::ai::chat::clients::twitch> client{ 0, client_address, client_timeout };
         ::ai::chat::adapters::openai adapter{ adapter_address, adapter_timeout };
         ::ai::chat::histories::observable<::ai::chat::histories::sqlite> history{ history_filename };
         ::ai::chat::moderators::sqlite moderator{ moderator_filename, moderator_length };

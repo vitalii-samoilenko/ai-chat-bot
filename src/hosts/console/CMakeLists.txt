@@ -8,6 +8,7 @@ target_link_libraries(ai-chat-hosts-console
   PRIVATE
     Boost::json
     AI::Chat::Clients::Twitch
+    AI::Chat::Clients::Observable
     AI::Chat::Adapters::OpenAI
     AI::Chat::Histories::SQLite
     AI::Chat::Histories::Observable

@@ -15,4 +15,4 @@ target_link_libraries(ai_chat_clients_twitch
     Boost::xpressive
     EBoost
 )
-target_compile_features(ai_chat_clients_twitch INTERFACE cxx_std_11)
+target_compile_features(ai_chat_clients_twitch INTERFACE cxx_std_17)
