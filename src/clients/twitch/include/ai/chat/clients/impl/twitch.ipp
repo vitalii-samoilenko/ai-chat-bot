@@ -290,13 +290,14 @@ private:
     void on_reconnect() {
         _stream.async_close(::boost::beast::websocket::close_code::normal,
             [this](::boost::beast::error_code error_code)->void {
-                _stream.~stream();
-                new(&_stream) ::boost::beast::websocket::stream<::boost::asio::ssl::stream<::boost::beast::tcp_stream>>{ _context, _ssl_context };
-
                 if (error_code == ::boost::beast::errc::operation_canceled) {
                     return;
                 }
                 ::eboost::beast::ensure_success(error_code);
+
+                _stream.~stream();
+                new(&_stream) ::boost::beast::websocket::stream<::boost::asio::ssl::stream<::boost::beast::tcp_stream>>{ _context, _ssl_context };
+
                 on_connect();
             });
     };

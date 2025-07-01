@@ -84,7 +84,7 @@ private:
     ::sqlite3_stmt* _p_filter;
     ::sqlite3_stmt* _p_discard;
     ::std::string _filename;
-    size_t _length;
+    ::sqlite3_int64 _length;
 
     void ensure_success(int error_code) {
         switch (error_code) {
@@ -167,13 +167,24 @@ private:
                 static_cast<int>(::std::size(IS_ALLOWED2) - 1),
                 &_p_is_allowed2, nullptr));
         const char IS_FILTERED[]{
-            "SELECT COUNT(*) FROM filter"
-            " WHERE @CONTENT REGEXP pattern"
+            "SELECT "
+            "("
+                "SELECT COUNT(*) FROM filter"
+                " WHERE @CONTENT REGEXP pattern"
+            ")"
+            " + "
+            "("
+                "SELECT IIF(@LENGTH < LENGTH(@CONTENT), 1, 0)"
+            ")"
         };
         ensure_success(
             ::sqlite3_prepare_v2(_p_database, IS_FILTERED,
                 static_cast<int>(::std::size(IS_FILTERED) - 1),
                 &_p_is_filtered, nullptr));
+        ensure_success(
+            ::sqlite3_bind_int64(_p_is_filtered,
+                ::sqlite3_bind_parameter_index(_p_is_filtered, "@LENGTH"),
+                _length));
         const char PROMOTE[]{
             "INSERT INTO user"
             "("
@@ -309,7 +320,7 @@ private:
         iterator count{ static_cast<iterator>(::sqlite3_column_int64(_p_is_filtered, 0)) };
         ensure_success(
             ::sqlite3_reset(_p_is_filtered));
-        return count + (_length < content.size());
+        return count;
     };
     iterator on_promote(const ::std::string& username, role role) {
         ensure_success(
@@ -399,7 +410,7 @@ private:
 sqlite::sqlite(const ::std::string& filename, size_t length)
     : _p_controller{ new connection{} } {
     _p_controller->_filename = filename;
-    _p_controller->_length = length;
+    _p_controller->_length = static_cast<::sqlite3_int64>(length);
     _p_controller->on_init();
 };
 
