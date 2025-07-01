@@ -65,7 +65,7 @@ void init_logger() {
 ::std::vector<::std::string> moderators{};
 ::std::vector<::std::string> allowed{};
 ::std::vector<::std::pair<::std::string, ::std::string>> filters{};
-size_t retries{ 0 };
+size_t retries{};
 ::std::string apology{};
 ::std::string pattern{};
 ::std::vector<::ai::chat::histories::message> context{};
@@ -82,6 +82,7 @@ size_t retries{ 0 };
 ::std::string adapter_key{};
 ::std::string history_filename{};
 ::std::string moderator_filename{};
+size_t moderator_length{};
 void init_config(const ::std::string& filename) {
     ::std::ifstream input{ filename };
     if (!input.is_open()) {
@@ -112,6 +113,7 @@ void init_config(const ::std::string& filename) {
     adapter_model = adapter.at("model").as_string();
     adapter_key = adapter.at("key").as_string();
     moderator_filename = moderator.at("filename").as_string();
+    moderator_length = static_cast<size_t>(moderator.at("length").as_int64());
     botname = config.at("botname").as_string();
     retries = static_cast<size_t>(config.at("retries").as_int64());
     apology = config.at("apology").as_string();
@@ -163,7 +165,7 @@ int main(int argc, char* argv[]) {
         ::ai::chat::clients::twitch<::ai::chat::clients::handlers::observable> client{ 0, client_address, client_timeout };
         ::ai::chat::adapters::openai adapter{ adapter_address, adapter_timeout };
         ::ai::chat::histories::observable<::ai::chat::histories::sqlite> history{ history_filename };
-        ::ai::chat::moderators::sqlite moderator{ moderator_filename };
+        ::ai::chat::moderators::sqlite moderator{ moderator_filename, moderator_length };
 
         for (const ::std::string& username : moderators) {
             moderator.mod(username);

@@ -22,7 +22,7 @@ public:
 
     using iterator = size_t;
 
-    explicit sqlite(const ::std::string& filename);
+    sqlite(const ::std::string& filename, size_t length);
 
     iterator is_moderator(const ::std::string& username);
     iterator is_allowed(const ::std::string& username1, const ::std::string& username2);

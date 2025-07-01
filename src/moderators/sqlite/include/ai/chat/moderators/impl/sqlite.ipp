@@ -69,7 +69,8 @@ private:
         , _p_timeout{ nullptr }
         , _p_filter{ nullptr }
         , _p_discard{ nullptr }
-        , _filename{} {
+        , _filename{}
+        , _length{} {
 
     };
 
@@ -83,6 +84,7 @@ private:
     ::sqlite3_stmt* _p_filter;
     ::sqlite3_stmt* _p_discard;
     ::std::string _filename;
+    size_t _length;
 
     void ensure_success(int error_code) {
         switch (error_code) {
@@ -307,7 +309,7 @@ private:
         iterator count{ static_cast<iterator>(::sqlite3_column_int64(_p_is_filtered, 0)) };
         ensure_success(
             ::sqlite3_reset(_p_is_filtered));
-        return count;
+        return count + (_length < content.size());
     };
     iterator on_promote(const ::std::string& username, role role) {
         ensure_success(
@@ -394,9 +396,10 @@ private:
     };
 };
 
-sqlite::sqlite(const ::std::string& filename)
+sqlite::sqlite(const ::std::string& filename, size_t length)
     : _p_controller{ new connection{} } {
     _p_controller->_filename = filename;
+    _p_controller->_length = length;
     _p_controller->on_init();
 };
 
