@@ -56,14 +56,18 @@ private:
         , _username_group{ 2 }
         , _privmsg_group{ 3 }
         , _channel_group{ 4 }
-        , _message_group{ 5 }
-        , _notice_group{ 6 }
-        , _reason_group{ 7 }
-        , _reconnect_group{ 8 }
-        , _command_group{
+        , _command_group{ 5 }
+        , _args_group{ 6 }
+        , _message_group{ 7 }
+        , _notice_group{ 8 }
+        , _reason_group{ 9 }
+        , _reconnect_group{ 10 }
+        , _command_pattern{
             ((_ping_group = "PING") >> " :tmi.twitch.tv" >> ::boost::xpressive::_ln)
             | (':' >> (_username_group = +::boost::xpressive::range('a', 'z')) >> '!' >> _username_group >> '@' >> _username_group >> ".tmi.twitch.tv "
-                >> (_privmsg_group = "PRIVMSG") >> " #" >> (_channel_group = +::boost::xpressive::range('a', 'z')) >> " :" >> (_message_group = +~::boost::xpressive::_ln) >> ::boost::xpressive::_ln)
+                >> (_privmsg_group = "PRIVMSG") >> " #" >> (_channel_group = +::boost::xpressive::range('a', 'z')) >> " :" >> (
+                    ('!' >> (_command_group = +::boost::xpressive::range('a', 'z')) >> *(' ' >> (_args_group = +~::boost::xpressive::_ln)))
+                    | (_message_group = +~::boost::xpressive::_ln)) >> ::boost::xpressive::_ln)
             | (":tmi.twitch.tv " >> (_notice_group = "NOTICE") >> " * :" >> (_reason_group = +~::boost::xpressive::_ln) >> ::boost::xpressive::_ln)
             | (":tmi.twitch.tv " >> (_reconnect_group = "RECONNECT"))
         } {
@@ -89,11 +93,13 @@ private:
     ::boost::xpressive::mark_tag _username_group;
     ::boost::xpressive::mark_tag _privmsg_group;
     ::boost::xpressive::mark_tag _channel_group;
+    ::boost::xpressive::mark_tag _command_group;
+    ::boost::xpressive::mark_tag _args_group;
     ::boost::xpressive::mark_tag _message_group;
     ::boost::xpressive::mark_tag _notice_group;
     ::boost::xpressive::mark_tag _reason_group;
     ::boost::xpressive::mark_tag _reconnect_group;
-    ::boost::xpressive::cregex _command_group;
+    ::boost::xpressive::cregex _command_pattern;
 
     void on_init() {
         _authority.append(_host);
@@ -204,7 +210,7 @@ private:
     void on_notice(size_t bytes_transferred) {
         ::boost::asio::const_buffer response{ _buffer.cdata() };
         ::boost::xpressive::cmatch what{};
-        ::boost::xpressive::regex_match(reinterpret_cast<const char*>(response.data()), reinterpret_cast<const char*>(response.data()) + bytes_transferred, what, _command_group);
+        ::boost::xpressive::regex_match(reinterpret_cast<const char*>(response.data()), reinterpret_cast<const char*>(response.data()) + bytes_transferred, what, _command_pattern);
         if (what[_notice_group]) {
             throw ::std::invalid_argument{ what[_reason_group] };
         }
@@ -242,7 +248,7 @@ private:
         ::boost::asio::const_buffer response{ _buffer.cdata() };
         bool pong{ true };
         bool reconnect{ false };
-        for (::boost::xpressive::cregex_iterator current{ reinterpret_cast<const char*>(response.data()), reinterpret_cast<const char*>(response.data()) + bytes_transferred, _command_group }, end{}; !(current == end); ++current) {
+        for (::boost::xpressive::cregex_iterator current{ reinterpret_cast<const char*>(response.data()), reinterpret_cast<const char*>(response.data()) + bytes_transferred, _command_pattern }, end{}; !(current == end); ++current) {
             const ::boost::xpressive::cmatch& what{ *current };
             if (what[_ping_group] && pong) {
                 const char PONG[]{ "PONG :tmi.twitch.tv" };
@@ -258,11 +264,20 @@ private:
                     });
                 pong = false;
             } else if (what[_privmsg_group]) {
-                _handler.on_message({
-                    what[_username_group],
-                    what[_message_group],
-                    what[_channel_group]
-                });
+                if (what[_command_group]) {
+                    _handler.on_command({
+                        what[_username_group],
+                        what[_command_group],
+                        what[_args_group],
+                        what[_channel_group]
+                    });
+                } else {
+                    _handler.on_message({
+                        what[_username_group],
+                        what[_message_group],
+                        what[_channel_group]
+                    });
+                }
             } else if (what[_reconnect_group]) {
                 reconnect = true;
             }
@@ -422,6 +437,10 @@ void twitch<Handler>::leave() {
 template<typename Handler>
 void twitch<Handler>::on_message(const message& message) const {
     static_cast<const Handler*>(this)->on_message(message);
+};
+template<typename Handler>
+void twitch<Handler>::on_command(const command& command) const {
+    static_cast<const Handler*>(this)->on_command(command);
 };
 
 } // clients

@@ -17,6 +17,7 @@ class observable<Client>::subscription {
 
 private:
     ::std::function<void(const message&)> on_message;
+    ::std::function<void(const command&)> on_command;
 };
 
 template<template <typename> class Client>
@@ -49,6 +50,12 @@ void observable<Client>::slot::on_message(Action&& callback) {
     _p_target->_subscriptions[_p_observer]
         .on_message = ::std::forward<Action>(callback);
 };
+template<template <typename> class Client>
+template<typename Action>
+void observable<Client>::slot::on_command(Action&& callback) {
+    _p_target->_subscriptions[_p_observer]
+        .on_command = ::std::forward<Action>(callback);
+};
 
 template<template <typename> class Client>
 observable<Client>::slot::slot(const ::std::type_info* p_observer, observable* p_target)
@@ -76,6 +83,13 @@ void observable<Client>::on_message(const message& message) const {
     for (const auto& p_observer_n_subscription : _subscriptions) {
         const subscription& subscription{ p_observer_n_subscription.second };
         subscription.on_message(message);
+    }
+};
+template<template <typename> class Client>
+void observable<Client>::on_command(const command& command) const {
+    for (const auto& p_observer_n_subscription : _subscriptions) {
+        const subscription& subscription{ p_observer_n_subscription.second };
+        subscription.on_command(command);
     }
 };
 

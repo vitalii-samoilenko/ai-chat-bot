@@ -17,6 +17,8 @@
 #include "ai/chat/moderators/sqlite.hpp"
 #include "ai/chat/binders/twitch.hpp"
 #include "ai/chat/binders/openai.hpp"
+#include "ai/chat/commands/join.hpp"
+#include "ai/chat/commands/executor.hpp"
 
 #include "opentelemetry/exporters/ostream/metric_exporter_factory.h"
 #include "opentelemetry/sdk/metrics/export/periodic_exporting_metric_reader_factory.h"
@@ -166,6 +168,9 @@ int main(int argc, char* argv[]) {
         ::ai::chat::adapters::openai adapter{ adapter_address, adapter_timeout };
         ::ai::chat::histories::observable<::ai::chat::histories::sqlite> history{ history_filename };
         ::ai::chat::moderators::sqlite moderator{ moderator_filename, moderator_length };
+        ::ai::chat::commands::executor<
+        ::ai::chat::commands::join<decltype(client)>
+        > executor{ client };
 
         for (const ::std::string& username : moderators) {
             moderator.mod(username);
@@ -193,7 +198,7 @@ int main(int argc, char* argv[]) {
         }
 
         auto client_binding = ::ai::chat::binders::twitch<decltype(history), decltype(client)>::bind(history, client,
-            moderator,
+            moderator, executor,
             botname);
         auto adapter_binding = ::ai::chat::binders::openai<decltype(history), decltype(adapter)>::bind(history, adapter,
             moderator,

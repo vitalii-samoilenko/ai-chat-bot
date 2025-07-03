@@ -35,6 +35,8 @@ public:
 
         template<typename Action>
         void on_message(Action&& callback);
+        template<typename Action>
+        void on_command(Action&& callback);
 
     private:
         slot(const ::std::type_info* p_observer, observable* p_target);
@@ -57,6 +59,7 @@ private:
     ::std::unordered_map<const ::std::type_info*, subscription> _subscriptions;
 
     void on_message(const message& message) const;
+    void on_command(const command& command) const;
 };
 
 } // clients

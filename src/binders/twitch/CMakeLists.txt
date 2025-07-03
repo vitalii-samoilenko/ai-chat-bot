@@ -9,6 +9,7 @@ target_include_directories(ai_chat_binders_twitch INTERFACE include)
 target_link_libraries(ai_chat_binders_twitch
   INTERFACE
     AI::Chat::Clients::Twitch
+    AI::Chat::Clients::Observable
     AI::Chat::Histories::Observable
 )
 target_compile_features(ai_chat_binders_twitch INTERFACE cxx_std_11)

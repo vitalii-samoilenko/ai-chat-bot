@@ -14,6 +14,12 @@ struct message {
     ::std::string content;
     ::std::string channel;
 };
+struct command {
+    ::std::string username;
+    ::std::string name;
+    ::std::string args;
+    ::std::string channel;
+};
 
 template<typename Handler>
 class twitch {
@@ -44,6 +50,7 @@ private:
     ::std::unique_ptr<connection> _p_channel;
 
     void on_message(const message& message) const;
+    void on_command(const command& command) const;
 };
 
 } // clients

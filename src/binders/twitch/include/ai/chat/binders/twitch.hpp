@@ -40,9 +40,9 @@ public:
         typename Client::slot _client_slot;
     };
 
-    template<typename Moderator>
+    template<typename Moderator, typename Executor>
     static binding bind(History& history, Client& client,
-        Moderator& moderator,
+        Moderator& moderator, Executor& executor,
         const ::std::string& botname);
 };
 
