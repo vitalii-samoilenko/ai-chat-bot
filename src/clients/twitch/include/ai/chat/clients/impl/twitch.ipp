@@ -201,11 +201,7 @@ private:
         for (::boost::xpressive::cregex_iterator current{ reinterpret_cast<const char*>(response.data()), reinterpret_cast<const char*>(response.data()) + bytes_transferred, _command_pattern }, end{}; !(current == end); ++current) {
             const ::boost::xpressive::cmatch& what{ *current };
             if (what[_ping_group]) {
-                _q_write.push("PONG :tmi.twitch.tv");
-                if (1 < _q_write.size()) {
-                    continue;
-                }
-                on_write();
+                on_push("PONG :tmi.twitch.tv");
             } else if (what[_privmsg_group]) {
                 if (what[_command_group]) {
                     _handler.on_command({
@@ -242,6 +238,13 @@ private:
 
         }); // read
     };
+    void on_push(::std::string&& request) {
+        _q_write.push(::std::move(request));
+        if (1 < _q_write.size()) {
+            return;
+        }
+        on_write();
+    };
     void on_write() {
         _stream.async_write(::boost::asio::buffer(_q_write.front()), [this](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
         GUARD(error_code);
@@ -261,33 +264,13 @@ private:
         }); // close
     };
     void on_send() {
-        ::std::string request{ "PRIVMSG #" };
-        request.append(_message.channel);
-        request.append(" :");
-        request.append(_message.content);
-        _q_write.push(::std::move(request));
-        if (1 < _q_write.size()) {
-            return;
-        }
-        on_write();
+        on_push("PRIVMSG #" + _message.channel + " :" + _message.content);
     };
     void on_join() {
-        ::std::string request{ "JOIN #" };
-        request.append(_channel);
-        _q_write.push(::std::move(request));
-        if (1 < _q_write.size()) {
-            return;
-        }
-        on_write();
+        on_push("JOIN #" + _channel);
     };
     void on_leave() {
-        ::std::string request{ "PART #" };
-        request.append(_channel);
-        _q_write.push(::std::move(request));
-        if (1 < _q_write.size()) {
-            return;
-        }
-        on_write();
+        on_push("PART #" + _channel);
     };
 };
 
