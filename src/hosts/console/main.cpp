@@ -78,8 +78,9 @@ size_t retries{};
 ::std::string auth_refresh_token{};
 ::std::chrono::milliseconds client_timeout{};
 ::std::string client_address{};
-::std::chrono::milliseconds adapter_timeout{};
 ::std::string adapter_address{};
+::std::chrono::milliseconds adapter_timeout{};
+::std::chrono::milliseconds adapter_delay{};
 ::std::string adapter_model{};
 ::std::string adapter_key{};
 ::std::string history_filename{};
@@ -110,8 +111,9 @@ void init_config(const ::std::string& filename) {
     client_timeout = ::std::chrono::milliseconds{ client.at("timeout").as_int64() };
     client_address = client.at("address").as_string();
     history_filename = history.at("filename").as_string();
-    adapter_timeout = ::std::chrono::milliseconds{ adapter.at("timeout").as_int64() };
     adapter_address = adapter.at("address").as_string();
+    adapter_timeout = ::std::chrono::milliseconds{ adapter.at("timeout").as_int64() };
+    adapter_delay = ::std::chrono::milliseconds{ adapter.at("delay").as_int64() };
     adapter_model = adapter.at("model").as_string();
     adapter_key = adapter.at("key").as_string();
     moderator_filename = moderator.at("filename").as_string();
@@ -165,7 +167,7 @@ int main(int argc, char* argv[]) {
 
         ::ai::chat::clients::auth auth{ auth_address, auth_timeout };
         ::ai::chat::clients::observable<::ai::chat::clients::twitch> client{ 0, client_address, client_timeout };
-        ::ai::chat::adapters::openai adapter{ adapter_address, adapter_timeout };
+        ::ai::chat::adapters::openai adapter{ adapter_address, adapter_timeout, adapter_delay };
         ::ai::chat::histories::observable<::ai::chat::histories::sqlite> history{ history_filename };
         ::ai::chat::moderators::sqlite moderator{ moderator_filename, moderator_length };
         ::ai::chat::commands::executor<

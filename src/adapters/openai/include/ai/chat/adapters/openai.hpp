@@ -32,7 +32,8 @@ public:
 
     using iterator = size_t;
 
-    openai(const ::std::string& address, ::std::chrono::milliseconds timeout);
+    openai(const ::std::string& address, ::std::chrono::milliseconds timeout,
+        ::std::chrono::milliseconds delay);
 
     iterator insert(const message& message);
     message complete(const ::std::string& model, const ::std::string& key);
