@@ -13,5 +13,6 @@ target_link_libraries(ai_chat_adapters_openai
     OpenSSL::SSL
     Boost::url
     EBoost
+    opentelemetry-cpp::api
 )
-target_compile_features(ai_chat_adapters_openai INTERFACE cxx_std_11)
+target_compile_features(ai_chat_adapters_openai INTERFACE cxx_std_17)
