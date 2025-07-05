@@ -33,8 +33,8 @@ public:
     twitch& operator=(const twitch&) = delete;
     twitch& operator=(twitch&&) = delete;
 
-    twitch(size_t dop,
-        const ::std::string& address, ::std::chrono::milliseconds timeout);
+    twitch(const ::std::string& address, ::std::chrono::milliseconds timeout,
+        ::std::chrono::milliseconds delay, size_t dop);
 
     void connect(const ::std::string& username, const ::std::string& access_token);
     void disconnect();

@@ -14,5 +14,6 @@ target_link_libraries(ai_chat_clients_twitch
     Boost::url
     Boost::xpressive
     EBoost
+    opentelemetry-cpp::api
 )
 target_compile_features(ai_chat_clients_twitch INTERFACE cxx_std_17)

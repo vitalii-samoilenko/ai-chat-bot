@@ -10,11 +10,11 @@
 #include "boost/beast.hpp"
 #include "boost/url.hpp"
 
-#include "eboost/beast/ensure_success.hpp"
-#include "eboost/beast/http/json_body.hpp"
-
 #include "opentelemetry/metrics/provider.h"
 #include "opentelemetry/trace/provider.h"
+
+#include "eboost/beast/ensure_success.hpp"
+#include "eboost/beast/http/json_body.hpp"
 
 #include "ai/chat/adapters/openai.hpp"
 
@@ -132,9 +132,9 @@ private:
         _ssl_context.set_verify_mode(::boost::asio::ssl::verify_none);
     };
     template<typename Request, typename Response>
-    void on_connect(Request& request, Response& response) {
+    void on_send(Request& request, Response& response) {
         ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Scope> p_scope{
-            new ::opentelemetry::trace::Scope{ _p_tracer->StartSpan("send") }
+            new ::opentelemetry::trace::Scope{ _p_tracer->StartSpan("on_send") }
         };
         ::std::string target{ _path };
         request.target(target.append(request.target()));
@@ -320,7 +320,7 @@ message openai::complete(const ::std::string& model, const ::std::string& key) {
 
     ::boost::beast::http::response<::eboost::beast::http::json_body> response{};
 
-    _p_context->on_connect(request, response);
+    _p_context->on_send(request, response);
     _p_context->_context.run();
     _p_context->_context.restart();
     
