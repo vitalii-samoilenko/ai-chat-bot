@@ -7,6 +7,7 @@ if(NOT OpenSSL_FOUND)
     set(OPENSSL_SOURCE_DIR ${PROJECT_SOURCE_DIR}/openssl)
     set(OPENSSL_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/openssl)
     set(OPENSSL_INSTALL_DIR ${CMAKE_SOURCE_DIR}/install/OpenSSL)
+
     if(WIN32)
         set(CONFIGURE_COMMAND perl ${OPENSSL_SOURCE_DIR}/Configure -static)
         if(MSVC)
@@ -68,6 +69,50 @@ if(NOT Boost_FOUND)
     add_subdirectory(boost)
 endif()
 
+find_package(gRPC CONFIG)
+if(NOT gRPC_FOUND)
+    set(GRPC_SOURCE_DIR ${PROJECT_SOURCE_DIR}/grpc)
+    set(GRPC_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/grpc)
+    set(GRPC_INSTALL_DIR ${CMAKE_SOURCE_DIR}/install/gRPC)
+
+    if(NOT EXISTS ${GRPC_SOURCE_DIR}/CMakeLists.txt)
+        execute_process(COMMAND git submodule update
+                --init --recursive third_party/grpc
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMAND_ERROR_IS_FATAL ANY
+        )
+    endif()
+    if(NOT EXISTS ${GRPC_BINARY_DIR})
+        make_directory(${GRPC_BINARY_DIR})
+        execute_process(COMMAND cmake
+                -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+                -DCMAKE_INSTALL_PREFIX=${GRPC_INSTALL_DIR}
+                -Dprotobuf_BUILD_TESTS=OFF
+                -B . -S ${GRPC_SOURCE_DIR}
+            WORKING_DIRECTORY ${GRPC_BINARY_DIR}
+            COMMAND_ERROR_IS_FATAL ANY
+        )
+    endif()
+    if(NOT EXISTS ${GRPC_BINARY_DIR}/Release)
+        execute_process(COMMAND cmake
+                --build . --config Release
+            WORKING_DIRECTORY ${GRPC_BINARY_DIR}
+            COMMAND_ERROR_IS_FATAL ANY
+        )
+    endif()
+    if(NOT EXISTS ${GRPC_INSTALL_DIR})
+        execute_process(COMMAND cmake
+                --install . --config Release
+            WORKING_DIRECTORY ${GRPC_BINARY_DIR}
+            COMMAND_ERROR_IS_FATAL ANY
+        )
+    endif()
+    set(gRPC_DIR ${GRPC_INSTALL_DIR}/lib/cmake/grpc)
+    set(absl_DIR ${GRPC_INSTALL_DIR}/lib/cmake/absl)
+    set(utf8_range_DIR ${GRPC_INSTALL_DIR}/lib/cmake/utf8_range)
+    set(Protobuf_DIR ${GRPC_INSTALL_DIR}/lib/cmake/protobuf)
+endif()
+
 find_package(opentelemetry-cpp CONFIG)
 if(NOT opentelemetry-cpp_FOUND)
     if(NOT EXISTS ${PROJECT_SOURCE_DIR}/opentelemetry-cpp/CMakeLists.txt)
@@ -84,6 +129,7 @@ if(NOT opentelemetry-cpp_FOUND)
     set(WITH_ETW OFF)
     set(WITH_ABI_VERSION_1 OFF)
     set(WITH_ABI_VERSION_2 ON)
+    set(WITH_OTLP_GRPC ON)
     add_subdirectory(opentelemetry-cpp)
 endif()
 
