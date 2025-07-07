@@ -20,49 +20,23 @@
 #include "ai/chat/commands/join.hpp"
 #include "ai/chat/commands/executor.hpp"
 
-#include "opentelemetry/exporters/ostream/metric_exporter_factory.h"
+#include "opentelemetry/exporters/otlp/otlp_grpc_metric_exporter_factory.h"
 #include "opentelemetry/sdk/metrics/export/periodic_exporting_metric_reader_factory.h"
 #include "opentelemetry/sdk/metrics/meter_context_factory.h"
 #include "opentelemetry/sdk/metrics/meter_provider_factory.h"
 #include "opentelemetry/metrics/provider.h"
 
-#include "opentelemetry/exporters/ostream/span_exporter_factory.h"
+#include "opentelemetry/exporters/otlp/otlp_grpc_exporter_factory.h"
 #include "opentelemetry/sdk/trace/simple_processor_factory.h"
 #include "opentelemetry/sdk/trace/tracer_provider_factory.h"
 #include "opentelemetry/trace/provider.h"
 
-#include "opentelemetry/exporters/ostream/log_record_exporter_factory.h"
+#include "opentelemetry/exporters/otlp/otlp_grpc_log_record_exporter_factory.h"
 #include "opentelemetry/sdk/logs/simple_log_record_processor_factory.h"
 #include "opentelemetry/sdk/logs/logger_provider_factory.h"
 #include "opentelemetry/logs/provider.h"
 
-void init_meter() {
-    auto exporter = ::opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create();
-    auto reader = ::opentelemetry::sdk::metrics::PeriodicExportingMetricReaderFactory::Create(::std::move(exporter),
-        ::opentelemetry::sdk::metrics::PeriodicExportingMetricReaderOptions{
-            ::std::chrono::milliseconds{ 1000 },
-            ::std::chrono::milliseconds{ 500 }
-        });
-    auto context = ::opentelemetry::sdk::metrics::MeterContextFactory::Create();
-    context->AddMetricReader(::std::move(reader));
-    auto sdk_provider = ::opentelemetry::sdk::metrics::MeterProviderFactory::Create(::std::move(context));
-    ::std::shared_ptr<::opentelemetry::metrics::MeterProvider> api_provider{ ::std::move(sdk_provider) };
-    ::opentelemetry::metrics::Provider::SetMeterProvider(api_provider);
-};
-void init_tracer() {
-    auto exporter  = ::opentelemetry::exporter::trace::OStreamSpanExporterFactory::Create();
-    auto processor = ::opentelemetry::sdk::trace::SimpleSpanProcessorFactory::Create(std::move(exporter));
-    auto sdk_provider = ::opentelemetry::sdk::trace::TracerProviderFactory::Create(std::move(processor));
-    ::std::shared_ptr<::opentelemetry::trace::TracerProvider> api_provider{ ::std::move(sdk_provider) };
-    ::opentelemetry::trace::Provider::SetTracerProvider(api_provider);
-};
-void init_logger() {
-    auto exporter = ::opentelemetry::exporter::logs::OStreamLogRecordExporterFactory::Create();
-    auto processor = ::opentelemetry::sdk::logs::SimpleLogRecordProcessorFactory::Create(::std::move(exporter));
-    auto sdk_provider = ::opentelemetry::sdk::logs::LoggerProviderFactory::Create(::std::move(processor));
-    ::std::shared_ptr<::opentelemetry::logs::LoggerProvider> api_provider{ ::std::move(sdk_provider) };
-    ::opentelemetry::logs::Provider::SetLoggerProvider(api_provider);
-};
+::std::string telemetry_endpoint{};
 ::std::string botname{};
 ::std::vector<::std::string> moderators{};
 ::std::vector<::std::string> allowed{};
@@ -99,11 +73,13 @@ void init_config(const ::std::string& filename) {
         parser.write_some(line);
     }
     ::boost::json::value config{ parser.release() };
+    ::boost::json::value& telemetry{ config.at("telemetry") };
     ::boost::json::value& client{ config.at("client") };
     ::boost::json::value& auth{ client.at("auth") };
     ::boost::json::value& history{ config.at("history") };
     ::boost::json::value& adapter{ config.at("adapter") };
     ::boost::json::value& moderator{ config.at("moderator") };
+    telemetry_endpoint = telemetry.at("endpoint").as_string();
     auth_address = auth.at("address").as_string();
     auth_timeout = ::std::chrono::milliseconds{ auth.at("timeout").as_int64() };
     auth_client_id = auth.at("client_id").as_string();
@@ -158,14 +134,49 @@ void init_config(const ::std::string& filename) {
     }
 };
 
+void init_meter() {
+    ::opentelemetry::exporter::otlp::OtlpGrpcMetricExporterOptions options{};
+    options.endpoint = telemetry_endpoint;
+    auto exporter = ::opentelemetry::exporter::otlp::OtlpGrpcMetricExporterFactory::Create(options);
+    auto reader = ::opentelemetry::sdk::metrics::PeriodicExportingMetricReaderFactory::Create(::std::move(exporter),
+        ::opentelemetry::sdk::metrics::PeriodicExportingMetricReaderOptions{
+            ::std::chrono::milliseconds{ 1000 },
+            ::std::chrono::milliseconds{ 500 }
+        });
+    auto context = ::opentelemetry::sdk::metrics::MeterContextFactory::Create();
+    context->AddMetricReader(::std::move(reader));
+    auto sdk_provider = ::opentelemetry::sdk::metrics::MeterProviderFactory::Create(::std::move(context));
+    ::std::shared_ptr<::opentelemetry::metrics::MeterProvider> api_provider{ ::std::move(sdk_provider) };
+    ::opentelemetry::metrics::Provider::SetMeterProvider(api_provider);
+};
+void init_tracer() {
+    ::opentelemetry::exporter::otlp::OtlpGrpcExporterOptions options{};
+    options.endpoint = telemetry_endpoint;
+    auto exporter  = ::opentelemetry::exporter::otlp::OtlpGrpcExporterFactory::Create(options);
+    auto processor = ::opentelemetry::sdk::trace::SimpleSpanProcessorFactory::Create(std::move(exporter));
+    auto sdk_provider = ::opentelemetry::sdk::trace::TracerProviderFactory::Create(std::move(processor));
+    ::std::shared_ptr<::opentelemetry::trace::TracerProvider> api_provider{ ::std::move(sdk_provider) };
+    ::opentelemetry::trace::Provider::SetTracerProvider(api_provider);
+};
+void init_logger() {
+    ::opentelemetry::exporter::otlp::OtlpGrpcLogRecordExporterOptions options{};
+    options.endpoint = telemetry_endpoint;
+    auto exporter = ::opentelemetry::exporter::otlp::OtlpGrpcLogRecordExporterFactory::Create(options);
+    auto processor = ::opentelemetry::sdk::logs::SimpleLogRecordProcessorFactory::Create(::std::move(exporter));
+    auto sdk_provider = ::opentelemetry::sdk::logs::LoggerProviderFactory::Create(::std::move(processor));
+    ::std::shared_ptr<::opentelemetry::logs::LoggerProvider> api_provider{ ::std::move(sdk_provider) };
+    ::opentelemetry::logs::Provider::SetLoggerProvider(api_provider);
+};
+
 int main(int argc, char* argv[]) {
     try {
-        init_meter();
-        init_tracer();
-        init_logger();
         init_config(argc == 2
             ? argv[1]
             : "config.json");
+
+        init_meter();
+        init_tracer();
+        init_logger();
 
         ::ai::chat::clients::auth auth{ auth_address, auth_timeout };
         ::ai::chat::clients::observable<::ai::chat::clients::twitch> client{ client_address, client_timeout, client_delay, 0 };

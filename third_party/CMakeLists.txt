@@ -88,21 +88,24 @@ if(NOT gRPC_FOUND)
                 -DCMAKE_POLICY_VERSION_MINIMUM=3.5
                 -DCMAKE_INSTALL_PREFIX=${GRPC_INSTALL_DIR}
                 -Dprotobuf_BUILD_TESTS=OFF
+				-DgRPC_SSL_PROVIDER=package
+				-DOPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR}
+                -DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
                 -B . -S ${GRPC_SOURCE_DIR}
             WORKING_DIRECTORY ${GRPC_BINARY_DIR}
             COMMAND_ERROR_IS_FATAL ANY
         )
     endif()
-    if(NOT EXISTS ${GRPC_BINARY_DIR}/Release)
+    if(NOT EXISTS ${GRPC_BINARY_DIR}/${CMAKE_BUILD_TYPE})
         execute_process(COMMAND cmake
-                --build . --config Release
+                --build . --config ${CMAKE_BUILD_TYPE}
             WORKING_DIRECTORY ${GRPC_BINARY_DIR}
             COMMAND_ERROR_IS_FATAL ANY
         )
     endif()
     if(NOT EXISTS ${GRPC_INSTALL_DIR})
         execute_process(COMMAND cmake
-                --install . --config Release
+                --install . --config ${CMAKE_BUILD_TYPE}
             WORKING_DIRECTORY ${GRPC_BINARY_DIR}
             COMMAND_ERROR_IS_FATAL ANY
         )
