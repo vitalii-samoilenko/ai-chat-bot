@@ -10,8 +10,8 @@ namespace chat {
 namespace binders {
 
 template<typename History, typename Adapter>
-openai<History, Adapter>::binding::binding(typename History::slot&& history_slot)
-    : _history_slot{ ::std::move(history_slot) } {
+openai<History, Adapter>::binding::binding(typename History::slot&& s_history)
+    : _s_history{ ::std::move(s_history) } {
 
 };
 
@@ -22,8 +22,8 @@ typename openai<History, Adapter>::binding openai<History, Adapter>::bind(Histor
     const ::std::string& model, const ::std::string& key,
     const ::std::string& pattern, size_t retries, const ::std::string& apology,
     const ::std::string& botname) {
-    auto history_slot = history.subscribe<Adapter>();
-    history_slot.on_message([&history, &adapter, &moderator, model, key, pattern, retries, apology, botname](const ::ai::chat::histories::message& history_message)->void {
+    auto s_history = history.subscribe<Adapter>();
+    s_history.on_message([&history, &adapter, &moderator, model, key, pattern, retries, apology, botname](const ::ai::chat::histories::message& history_message)->void {
         const ::ai::chat::histories::tag* p_username_tag{ nullptr };
         const ::ai::chat::histories::tag* p_channel_tag{ nullptr };
         for (const ::ai::chat::histories::tag& tag : history_message.tags) {
@@ -85,7 +85,7 @@ typename openai<History, Adapter>::binding openai<History, Adapter>::bind(Histor
         };
         history.insert<Adapter>(history_completion);
     });
-    return binding{ ::std::move(history_slot) };
+    return binding{ ::std::move(s_history) };
 };
 
 } // binders

@@ -21,8 +21,6 @@ public:
     observable& operator=(observable&&) = delete;
 
     class slot {
-        friend observable;
-
     public:
         slot() = delete;
         slot(const slot&) = delete;
@@ -37,10 +35,12 @@ public:
         void on_message(Action&& callback);
 
     private:
-        slot(const ::std::type_info* p_observer, observable* p_target);
+        friend observable;
 
-        const ::std::type_info* _p_observer;
-        observable* _p_target;
+        slot(const ::std::type_info* observer, observable* target);
+
+        const ::std::type_info* _observer;
+        observable* _target;
     };
 
     using typename History::iterator;

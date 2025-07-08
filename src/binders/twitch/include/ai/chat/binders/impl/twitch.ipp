@@ -10,9 +10,9 @@ namespace chat {
 namespace binders {
 
 template<typename History, typename Client>
-twitch<History, Client>::binding::binding(typename History::slot&& history_slot, typename Client::slot&& client_slot)
-    : _history_slot{ ::std::move(history_slot) }
-    , _client_slot{ ::std::move(client_slot) } {
+twitch<History, Client>::binding::binding(typename History::slot&& s_history, typename Client::slot&& s_client)
+    : _s_history{ ::std::move(s_history) }
+    , _s_client{ ::std::move(s_client) } {
 
 };
 
@@ -21,8 +21,8 @@ template<typename Moderator, typename Executor>
 typename twitch<History, Client>::binding twitch<History, Client>::bind(History& history, Client& client,
     Moderator& moderator, Executor& executor,
     const ::std::string& botname) {
-    auto history_slot = history.subscribe<Client>();
-    history_slot.on_message([&client](const ::ai::chat::histories::message& history_message)->void {
+    auto s_history = history.subscribe<Client>();
+    s_history.on_message([&client](const ::ai::chat::histories::message& history_message)->void {
         const ::ai::chat::histories::tag* p_username_tag{ nullptr };
         const ::ai::chat::histories::tag* p_channel_tag{ nullptr };
         for (const ::ai::chat::histories::tag& tag : history_message.tags) {
@@ -39,8 +39,8 @@ typename twitch<History, Client>::binding twitch<History, Client>::bind(History&
         };
         client.send(client_message);
     });
-    auto client_slot = client.subscribe<History>();
-    client_slot.on_message([&history, &moderator, botname](const ::ai::chat::clients::message& client_message)->void {
+    auto s_client = client.subscribe<History>();
+    s_client.on_message([&history, &moderator, botname](const ::ai::chat::clients::message& client_message)->void {
         if (client_message.content.find("@" + botname) == ::std::string::npos) {
             return;
         }
@@ -57,7 +57,7 @@ typename twitch<History, Client>::binding twitch<History, Client>::bind(History&
         };
         history.insert<Client>(history_message);
     });
-    client_slot.on_command([&client, &moderator, &executor, botname](const ::ai::chat::clients::command& client_command)->void {
+    s_client.on_command([&client, &moderator, &executor, botname](const ::ai::chat::clients::command& client_command)->void {
         if (!(client_command.channel == botname)) {
             return;
         }
@@ -71,7 +71,7 @@ typename twitch<History, Client>::binding twitch<History, Client>::bind(History&
         };
         client.send(client_message);
     });
-    return binding{ ::std::move(history_slot), ::std::move(client_slot) };
+    return binding{ ::std::move(s_history), ::std::move(s_client) };
 };
 
 } // binders

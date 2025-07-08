@@ -20,13 +20,14 @@ public:
     metered_rate_policy& operator=(const metered_rate_policy&) = delete;
     metered_rate_policy& operator=(metered_rate_policy&&) = delete;
 
+private:
+    friend ::boost::beast::rate_policy_access;
+    friend Connection;
+
     explicit metered_rate_policy(Connection& connection)
         : _connection{ connection } {
 
     };
-
-private:
-    friend ::boost::beast::rate_policy_access;
 
     Connection& _connection;
 

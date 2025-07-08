@@ -3,6 +3,7 @@
 
 #include <limits>
 #include <stdexcept>
+#include <thread>
 #include <vector>
 
 #include "boost/asio/buffer.hpp"
@@ -15,6 +16,7 @@
 
 #include "eboost/beast/ensure_success.hpp"
 #include "eboost/beast/http/json_body.hpp"
+#include "eboost/beast/metered_rate_policy.hpp"
 
 #include "ai/chat/adapters/openai.hpp"
 
@@ -34,68 +36,24 @@ public:
     connection& operator=(connection&&) = delete;
 
 private:
-    class rate_policy {
-    public:
-        rate_policy() = delete;
-        rate_policy(const rate_policy&) = delete;
-        rate_policy(rate_policy&&) = default;
-
-        ~rate_policy() = default;
-
-        rate_policy& operator=(const rate_policy&) = delete;
-        rate_policy& operator=(rate_policy&&) = delete;
-
-    private:
-        friend ::boost::beast::rate_policy_access;
-        friend connection;
-
-        explicit rate_policy(connection& connection)
-            : _connection{ connection } {
-
-        };
-
-        connection& _connection;
-
-        size_t available_read_bytes() const {
-            return ::std::numeric_limits<size_t>::max();
-        };
-        size_t available_write_bytes() const {
-            auto now = ::std::chrono::steady_clock::now();
-            return now.time_since_epoch() < _connection._next
-                ? 0
-                : ::std::numeric_limits<size_t>::max();
-        };
-        void transfer_read_bytes(size_t n) {
-            _connection._p_bytes_rx->Add(n);
-        };
-        void transfer_write_bytes(size_t n) {
-            _connection._p_bytes_tx->Add(n);
-        };
-        void on_timer() const {
-
-        };
-    };
-    using limited_tcp_stream = ::boost::beast::basic_stream<::boost::asio::ip::tcp, ::boost::asio::any_io_executor, rate_policy>;
-
+    friend ::eboost::beast::metered_rate_policy<connection>;
     friend openai;
-    friend rate_policy;
 
     connection()
-        : _context{}
-        , _resolver{ _context }
+        : _io_context{}
+        , _resolver{ _io_context }
         , _ssl_context{ ::boost::asio::ssl::context::tlsv12_client }
-        , _stream{ limited_tcp_stream{ rate_policy{ *this }, _context }, _ssl_context }
-        , _p_tracer{
+        , _stream{ ::eboost::beast::metered_tcp_stream<connection>{ ::eboost::beast::metered_rate_policy<connection>{ *this }, _io_context }, _ssl_context }
+        , _tracer{
             ::opentelemetry::trace::Provider::GetTracerProvider()
                 ->GetTracer("ai_chat_adapters_openai")
         }
-        , _p_meter{
+        , _meter{
             ::opentelemetry::metrics::Provider::GetMeterProvider()
                 ->GetMeter("ai_chat_adapters_openai")
         }
-        , _p_tokens{ _p_meter->CreateInt64Gauge("ai_chat_adapters_openai_tokens") }
-        , _p_bytes_tx{ _p_meter->CreateUInt64Counter("ai_chat_adapters_openai_bytes_tx") }
-        , _p_bytes_rx{ _p_meter->CreateUInt64Counter("ai_chat_adapters_openai_bytes_rx") }
+        , _m_context{ _meter->CreateInt64Gauge("ai_chat_adapters_openai_context_total") }
+        , _m_network{ _meter->CreateUInt64Counter("ai_chat_adapters_openai_network") }
         , _host{}
         , _port{}
         , _path{}
@@ -110,15 +68,14 @@ private:
 
     };
 
-    ::boost::asio::io_context _context;
+    ::boost::asio::io_context _io_context;
     ::boost::asio::ip::tcp::resolver _resolver;
     ::boost::asio::ssl::context _ssl_context;
-    ::boost::asio::ssl::stream<limited_tcp_stream> _stream;
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Tracer> _p_tracer;
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::metrics::Meter> _p_meter;
-    ::opentelemetry::nostd::unique_ptr<::opentelemetry::metrics::Gauge<int64_t>> _p_tokens;
-    ::opentelemetry::nostd::unique_ptr<::opentelemetry::metrics::Counter<uint64_t>> _p_bytes_tx;
-    ::opentelemetry::nostd::unique_ptr<::opentelemetry::metrics::Counter<uint64_t>> _p_bytes_rx;
+    ::boost::asio::ssl::stream<::eboost::beast::metered_tcp_stream<connection>> _stream;
+    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Tracer> _tracer;
+    ::opentelemetry::nostd::shared_ptr<::opentelemetry::metrics::Meter> _meter;
+    ::opentelemetry::nostd::unique_ptr<::opentelemetry::metrics::Gauge<int64_t>> _m_context;
+    ::opentelemetry::nostd::unique_ptr<::opentelemetry::metrics::Counter<uint64_t>> _m_network;
     ::std::string _host;
     ::std::string _port;
     ::std::string _path;
@@ -128,19 +85,36 @@ private:
     ::std::chrono::nanoseconds _next;
     ::boost::json::value _completion;
 
+    void bytes_rx(size_t n) {
+        _m_network->Add(n,
+        {
+            {"type", "rx"}
+        });
+    };
+    void bytes_tx(size_t n) {
+        _m_network->Add(n,
+        {
+            {"type", "tx"}
+        });
+    };
+
     void on_init() {
         _ssl_context.set_verify_mode(::boost::asio::ssl::verify_none);
     };
     template<typename Request, typename Response>
-    void on_send(Request& request, Response& response) {
-        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Scope> p_scope{
-            new ::opentelemetry::trace::Scope{ _p_tracer->StartSpan("on_send") }
+    void on_send(Request& request, Response& response,
+        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root) {
+        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
+            _tracer->StartSpan("on_send", ::opentelemetry::trace::StartSpanOptions
+            {
+                {}, {},
+                root->GetContext()
+            })
         };
         ::std::string target{ _path };
         request.target(target.append(request.target()));
         request.set(::boost::beast::http::field::host, _host);
         request.set(::boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-
         if (!::SSL_set_tlsext_host_name(_stream.native_handle(), _host.c_str())) {
             throw ::boost::beast::system_error{
                 static_cast<int>(::ERR_get_error()),
@@ -148,25 +122,65 @@ private:
             };
         }
         _stream.set_verify_callback(::boost::asio::ssl::host_name_verification{ _host });
-
+        auto now = ::std::chrono::steady_clock::now();
+        if (now.time_since_epoch() < _next) {
+            ::std::this_thread::sleep_for(_next - now.time_since_epoch());
+        }
         ::boost::beast::get_lowest_layer(_stream).expires_after(_timeout);
-        _resolver.async_resolve(_host, _port, [this, &request, &response, p_scope](::boost::beast::error_code error_code, ::boost::asio::ip::tcp::resolver::results_type results)->void {
+        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> operation{
+            _tracer->StartSpan("on_dns_resolve", ::opentelemetry::trace::StartSpanOptions
+            {
+                {}, {},
+                span->GetContext()
+            })
+        };
+        _resolver.async_resolve(_host, _port, [this, &request, &response, span, operation](::boost::beast::error_code error_code, ::boost::asio::ip::tcp::resolver::results_type results) mutable ->void {
         ::eboost::beast::ensure_success(error_code);
-        ::boost::beast::get_lowest_layer(_stream).async_connect(results, [this, &request, &response, p_scope](::boost::beast::error_code error_code, ::boost::asio::ip::tcp::resolver::results_type::endpoint_type)->void {
+        operation = _tracer->StartSpan("on_tcp_connect", ::opentelemetry::trace::StartSpanOptions
+        {
+            {}, {},
+            span->GetContext()
+        });
+        ::boost::beast::get_lowest_layer(_stream).async_connect(results, [this, &request, &response, span, operation](::boost::beast::error_code error_code, ::boost::asio::ip::tcp::resolver::results_type::endpoint_type) mutable ->void {
         ::eboost::beast::ensure_success(error_code);
-        _stream.async_handshake(::boost::asio::ssl::stream_base::client, [this, &request, &response, p_scope](::boost::beast::error_code error_code)->void {
+        operation = _tracer->StartSpan("on_ssl_handshake", ::opentelemetry::trace::StartSpanOptions
+        {
+            {}, {},
+            span->GetContext()
+        });
+        _stream.async_handshake(::boost::asio::ssl::stream_base::client, [this, &request, &response, span, operation](::boost::beast::error_code error_code) mutable ->void {
         ::eboost::beast::ensure_success(error_code);
-        ::boost::beast::http::async_write(_stream, request, [this, &response, p_scope](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
+        operation = _tracer->StartSpan("on_write", ::opentelemetry::trace::StartSpanOptions
+        {
+            {}, {},
+            span->GetContext()
+        });
+        ::boost::beast::http::async_write(_stream, request, [this, &response, span, operation](::boost::beast::error_code error_code, size_t bytes_transferred) mutable ->void {
         ::eboost::beast::ensure_success(error_code);
         ::boost::ignore_unused(bytes_transferred);
-        ::boost::beast::http::async_read(_stream, _buffer, response, [this, p_scope](::boost::beast::error_code error_code, size_t bytes_transferred)->void {
+        operation = _tracer->StartSpan("on_read", ::opentelemetry::trace::StartSpanOptions
+        {
+            {}, {},
+            span->GetContext()
+        });
+        ::boost::beast::http::async_read(_stream, _buffer, response, [this, span, operation](::boost::beast::error_code error_code, size_t bytes_transferred) mutable ->void {
         ::eboost::beast::ensure_success(error_code);
         ::boost::ignore_unused(bytes_transferred);
+        operation = nullptr;
         auto now = ::std::chrono::steady_clock::now();
         _next = now.time_since_epoch() + _delay;
-        _stream.async_shutdown([this, p_scope](::boost::beast::error_code error_code)->void {
+        operation = _tracer->StartSpan("on_shutdown", ::opentelemetry::trace::StartSpanOptions
+        {
+            {}, {},
+            span->GetContext()
+        });
+        _stream.async_shutdown([this, span, operation](::boost::beast::error_code error_code) mutable ->void {
+        operation = nullptr;
         _stream.~stream();
-        new(&_stream) ::boost::asio::ssl::stream<limited_tcp_stream>{ limited_tcp_stream{ rate_policy{ *this }, _context }, _ssl_context };
+        new(&_stream) ::boost::asio::ssl::stream<::eboost::beast::metered_tcp_stream<connection>>{
+            ::eboost::beast::metered_tcp_stream<connection>{ ::eboost::beast::metered_rate_policy<connection>{ *this }, _io_context },
+            _ssl_context
+        };
         if (error_code == ::boost::asio::ssl::error::stream_truncated) {
             return;
         }
@@ -183,7 +197,7 @@ private:
 
 openai::openai(const ::std::string& address, ::std::chrono::milliseconds timeout,
     ::std::chrono::milliseconds delay)
-    : _p_context{ new connection{} } {
+    : _context{ new connection{} } {
     ::boost::system::result<::boost::urls::url_view> result{ ::boost::urls::parse_uri(address) };
     if (!result.has_value()) {
         throw ::std::invalid_argument{ "invalid uri" };
@@ -192,14 +206,14 @@ openai::openai(const ::std::string& address, ::std::chrono::milliseconds timeout
     if (!(url.scheme() == "https")) {
         throw ::std::invalid_argument{ "scheme is not supported" };
     }
-    _p_context->_host = url.host();
-    _p_context->_port = url.has_port()
+    _context->_host = url.host();
+    _context->_port = url.has_port()
         ? url.port()
         : "443";
-    _p_context->_path = url.path();
-    _p_context->_timeout = timeout;
-    _p_context->_delay = delay;
-    _p_context->on_init();
+    _context->_path = url.path();
+    _context->_timeout = timeout;
+    _context->_delay = delay;
+    _context->on_init();
 };
 
 enum class finish_reason {
@@ -302,31 +316,39 @@ completion_result tag_invoke(::boost::json::value_to_tag<completion_result>, con
 };
 
 openai::iterator openai::insert(const message& message) {
-    ::opentelemetry::trace::Scope scope{ _p_context->_p_tracer->StartSpan("insert") };
-    ::boost::json::array& messages{ _p_context->_completion.at("messages").as_array() };
+    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
+        _context->_tracer->StartSpan("insert")
+    };
+    ::boost::json::array& messages{ _context->_completion.at("messages").as_array() };
     messages.push_back(::boost::json::value_from(message));
     return messages.size() - 1;
 };
 message openai::complete(const ::std::string& model, const ::std::string& key) {
-    ::opentelemetry::trace::Scope scope{ _p_context->_p_tracer->StartSpan("complete") };
-    _p_context->_completion.at("model") = model;
+    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
+        _context->_tracer->StartSpan("complete")
+    };
+    _context->_completion.at("model") = model;
     ::boost::beast::http::request<::eboost::beast::http::json_body> request{
         ::boost::beast::http::verb::post, "chat/completions", 11,
-        _p_context->_completion
+        _context->_completion
     };
     request.prepare_payload();
     request.set(::boost::beast::http::field::content_type, "application/json");
     request.set(::boost::beast::http::field::authorization, "Bearer " + key);
-
     ::boost::beast::http::response<::eboost::beast::http::json_body> response{};
-
-    _p_context->on_send(request, response);
-    _p_context->_context.run();
-    _p_context->_context.restart();
-    
+    _context->on_send(request, response,
+        span);
+    _context->_io_context.run();
+    _context->_io_context.restart();
     completion_result result{ ::boost::json::value_to<completion_result>(response.body()) };
-    _p_context->_p_tokens->Record(static_cast<int64_t>(result.usage.total_tokens));
-
+    _context->_m_context->Record(static_cast<int64_t>(result.usage.completion_tokens),
+    {
+        {"type", "completion"}
+    });
+    _context->_m_context->Record(static_cast<int64_t>(result.usage.prompt_tokens),
+    {
+        {"type", "prompt"}
+    });
     return result.choices[0].message;
 };
 

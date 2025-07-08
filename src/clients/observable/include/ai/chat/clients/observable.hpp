@@ -39,10 +39,10 @@ public:
     private:
         friend observable;
 
-        slot(const ::std::type_info* p_observer, observable* p_target);
+        slot(const ::std::type_info* observer, observable* target);
 
-        const ::std::type_info* _p_observer;
-        observable* _p_target;
+        const ::std::type_info* _observer;
+        observable* _target;
     };
 
     template<typename... Args>

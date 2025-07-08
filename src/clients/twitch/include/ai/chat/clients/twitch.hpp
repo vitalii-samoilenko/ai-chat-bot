@@ -47,7 +47,7 @@ private:
     class connection;
     friend connection;
 
-    ::std::unique_ptr<connection> _p_channel;
+    ::std::unique_ptr<connection> _channel;
 
     void on_message(const message& message) const;
     void on_command(const command& command) const;

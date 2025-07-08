@@ -6,7 +6,6 @@
 #include <utility>
 #include <vector>
 
-#include "boost/chrono.hpp"
 #include "boost/json.hpp"
 
 #include "ai/chat/clients/auth.hpp"
@@ -38,6 +37,7 @@
 #include "opentelemetry/sdk/logs/logger_provider_factory.h"
 #include "opentelemetry/logs/provider.h"
 
+#include "eboost/system/cpu.hpp"
 #include "eboost/system/memory.hpp"
 
 ::std::string telemetry_endpoint{};
@@ -185,28 +185,28 @@ void init_logger() {
     ::opentelemetry::logs::Provider::SetLoggerProvider(api_provider);
 };
 
-void on_cpu_time(::opentelemetry::metrics::ObserverResult observer_result, void* state) {
-    auto now = ::boost::chrono::process_cpu_clock::now();
+void on_cpu_total(::opentelemetry::metrics::ObserverResult observer_result, void* state) {
+    auto usage = ::eboost::system::cpu::get_usage();
     auto gauge = ::opentelemetry::nostd::get<
         ::opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(
         observer_result);
-    gauge->Observe(now.time_since_epoch().count().system,
+    gauge->Observe(usage.system,
         {
             {"mode", "system"}
         });
-    gauge->Observe(now.time_since_epoch().count().user,
+    gauge->Observe(usage.user,
         {
             {"mode", "user"}
         });
 };
-void on_memory_usage(::opentelemetry::metrics::ObserverResult observer_result, void* state) {
+void on_memory_total(::opentelemetry::metrics::ObserverResult observer_result, void* state) {
     auto usage = ::eboost::system::memory::get_usage();
     auto gauge = ::opentelemetry::nostd::get<
         ::opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(
         observer_result);
-    gauge->Observe(usage.total,
+    gauge->Observe(usage.anonymous,
         {
-            {"type", "total"}
+            {"type", "anonymous"}
         });
     gauge->Observe(usage.shared,
         {
@@ -226,10 +226,10 @@ int main(int argc, char* argv[]) {
 
         auto meter = ::opentelemetry::metrics::Provider::GetMeterProvider()
             ->GetMeter("ai_chat_hosts_console");
-        auto cpu_time = meter->CreateInt64ObservableGauge("ai_chat_hosts_console_cpu_time");
-        cpu_time->AddCallback(on_cpu_time, nullptr);
-        auto memory_usage = meter->CreateInt64ObservableGauge("ai_chat_hosts_console_memory_usage");
-        memory_usage->AddCallback(on_memory_usage, nullptr);
+        auto m_cpu_total = meter->CreateInt64ObservableGauge("ai_chat_hosts_console_cpu_total");
+        m_cpu_total->AddCallback(on_cpu_total, nullptr);
+        auto m_memory_total = meter->CreateInt64ObservableGauge("ai_chat_hosts_console_memory_total");
+        m_memory_total->AddCallback(on_memory_total, nullptr);
 
         ::ai::chat::clients::auth auth{ auth_address, auth_timeout };
         ::ai::chat::clients::observable<::ai::chat::clients::twitch> client{ client_address, client_timeout, client_delay, 0 };

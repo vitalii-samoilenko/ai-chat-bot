@@ -8,10 +8,25 @@
 #include <fstream>
 #include <string>
 
+#include <sys/times.h>
 #include <unistd.h>
 
 namespace eboost {
 namespace system {
+namespace cpu {
+
+usage get_usage() {
+    usage usage{};
+    long ticks{ ::sysconf( _SC_CLK_TCK ) };
+    ::tms times{};
+    if (!(ticks == -1) && !(::times(&times) == (time_t)-1)) {
+        usage.system = static_cast<size_t>(times.tms_stime + times.tms_cstime) * ticks;
+        usage.user = static_cast<size_t>(times.tms_utime + times.tms_cutime) * ticks;
+    }
+    return usage;
+};
+
+} // cpu
 namespace memory {
 
 usage get_usage() {
@@ -22,10 +37,10 @@ usage get_usage() {
     size_t page{ static_cast<size_t>(::getpagesize()) };
     usage usage{};
     if (statm.is_open()) {
-        size_t _{};
-        statm >> _;
-        statm >> usage.total;
-        statm >> usage.shared;
+        statm >> usage.anonymous;   // virtual
+        statm >> usage.anonymous;   // resident
+        statm >> usage.shared;      // shared
+        usage.anonymous -= usage.shared;
         usage.total *= page;
         usage.shared *= page;
     }

@@ -41,7 +41,7 @@ public:
 private:
     class connection;
 
-    ::std::unique_ptr<connection> _p_controller;
+    ::std::unique_ptr<connection> _controller;
 };
 
 } // moderators

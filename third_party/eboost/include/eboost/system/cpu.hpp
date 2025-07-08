@@ -1,18 +1,18 @@
-#ifndef EBOOST_SYSTEM_MEMORY_HPP
-#define EBOOST_SYSTEM_MEMORY_HPP
+#ifndef EBOOST_SYSTEM_CPU_HPP
+#define EBOOST_SYSTEM_CPU_HPP
 
 namespace eboost {
 namespace system {
-namespace memory {
+namespace cpu {
 
 struct usage {
-    size_t anonymous;
-    size_t shared;
+    size_t system;
+    size_t user;
 };
 
 usage get_usage();
 
-} // memory
+} // cpu
 } // system
 } // eboost
 

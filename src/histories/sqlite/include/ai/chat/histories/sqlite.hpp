@@ -40,7 +40,7 @@ public:
 private:
     class connection;
 
-    ::std::unique_ptr<connection> _p_chat;
+    ::std::unique_ptr<connection> _chat;
 };
 
 } // histories

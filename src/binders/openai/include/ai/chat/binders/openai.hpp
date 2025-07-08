@@ -20,8 +20,6 @@ public:
     openai& operator=(openai&&) = delete;
 
     class binding {
-        friend openai;
-
     public:
         binding() = delete;
         binding(const binding&) = delete;
@@ -33,9 +31,11 @@ public:
         binding& operator=(binding&&) = default;
 
     private:
-        explicit binding(typename History::slot&& history_slot);
+        friend openai;
 
-        typename History::slot _history_slot;
+        explicit binding(typename History::slot&& s_history);
+
+        typename History::slot _s_history;
     };
 
     template<typename Moderator>

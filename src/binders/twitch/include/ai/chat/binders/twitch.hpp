@@ -21,8 +21,6 @@ public:
     twitch& operator=(twitch&&) = delete;
 
     class binding {
-        friend twitch;
-
     public:
         binding() = delete;
         binding(const binding&) = delete;
@@ -34,10 +32,12 @@ public:
         binding& operator=(binding&&) = default;
 
     private:
-        binding(typename History::slot&& history_slot, typename Client::slot&& client_slot);
+        friend twitch;
 
-        typename History::slot _history_slot;
-        typename Client::slot _client_slot;
+        binding(typename History::slot&& s_history, typename Client::slot&& s_client);
+
+        typename History::slot _s_history;
+        typename Client::slot _s_client;
     };
 
     template<typename Moderator, typename Executor>
