@@ -21,8 +21,6 @@ public:
     observable& operator=(observable&&) = delete;
 
     class slot {
-        friend observable;
-
     public:
         slot() = delete;
         slot(const slot&) = delete;
@@ -39,6 +37,8 @@ public:
         void on_command(Action&& callback);
 
     private:
+        friend observable;
+
         slot(const ::std::type_info* p_observer, observable* p_target);
 
         const ::std::type_info* _p_observer;
@@ -53,7 +53,6 @@ public:
 
 private:
     class subscription;
-
     friend Client<observable>;
 
     ::std::unordered_map<const ::std::type_info*, subscription> _subscriptions;

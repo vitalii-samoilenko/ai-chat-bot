@@ -5,6 +5,7 @@ project(AI VERSION 0.1)
 if(MSVC)
     add_compile_options(/bigobj)
     #add_compile_options(/GR-)
+    add_definitions(-D_WIN32_WINNT=0x0A00)
 endif()
 
 add_subdirectory(third_party)

@@ -1,11 +1,12 @@
 #include <chrono>
-#include <stdexcept>
 #include <fstream>
 #include <iostream>
+#include <exception>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "boost/chrono.hpp"
 #include "boost/json.hpp"
 
 #include "ai/chat/clients/auth.hpp"
@@ -22,6 +23,7 @@
 
 #include "opentelemetry/exporters/otlp/otlp_grpc_metric_exporter_factory.h"
 #include "opentelemetry/sdk/metrics/export/periodic_exporting_metric_reader_factory.h"
+#include "opentelemetry/sdk/metrics/view/view_registry_factory.h"
 #include "opentelemetry/sdk/metrics/meter_context_factory.h"
 #include "opentelemetry/sdk/metrics/meter_provider_factory.h"
 #include "opentelemetry/metrics/provider.h"
@@ -35,6 +37,8 @@
 #include "opentelemetry/sdk/logs/simple_log_record_processor_factory.h"
 #include "opentelemetry/sdk/logs/logger_provider_factory.h"
 #include "opentelemetry/logs/provider.h"
+
+#include "eboost/system/memory.hpp"
 
 ::std::string telemetry_endpoint{};
 ::std::string botname{};
@@ -143,7 +147,12 @@ void init_meter() {
             ::std::chrono::milliseconds{ 1000 },
             ::std::chrono::milliseconds{ 500 }
         });
-    auto context = ::opentelemetry::sdk::metrics::MeterContextFactory::Create();
+    auto views = ::opentelemetry::sdk::metrics::ViewRegistryFactory::Create();
+    auto resource = ::opentelemetry::sdk::resource::Resource::Create(
+        {
+            {"service.name", "ai_chat_hosts_console"}
+        });
+    auto context = ::opentelemetry::sdk::metrics::MeterContextFactory::Create(::std::move(views), resource);
     context->AddMetricReader(::std::move(reader));
     auto sdk_provider = ::opentelemetry::sdk::metrics::MeterProviderFactory::Create(::std::move(context));
     ::std::shared_ptr<::opentelemetry::metrics::MeterProvider> api_provider{ ::std::move(sdk_provider) };
@@ -154,7 +163,11 @@ void init_tracer() {
     options.endpoint = telemetry_endpoint;
     auto exporter  = ::opentelemetry::exporter::otlp::OtlpGrpcExporterFactory::Create(options);
     auto processor = ::opentelemetry::sdk::trace::SimpleSpanProcessorFactory::Create(std::move(exporter));
-    auto sdk_provider = ::opentelemetry::sdk::trace::TracerProviderFactory::Create(std::move(processor));
+    auto resource = ::opentelemetry::sdk::resource::Resource::Create(
+        {
+            {"service.name", "ai_chat_hosts_console"}
+        });
+    auto sdk_provider = ::opentelemetry::sdk::trace::TracerProviderFactory::Create(std::move(processor), resource);
     ::std::shared_ptr<::opentelemetry::trace::TracerProvider> api_provider{ ::std::move(sdk_provider) };
     ::opentelemetry::trace::Provider::SetTracerProvider(api_provider);
 };
@@ -163,9 +176,42 @@ void init_logger() {
     options.endpoint = telemetry_endpoint;
     auto exporter = ::opentelemetry::exporter::otlp::OtlpGrpcLogRecordExporterFactory::Create(options);
     auto processor = ::opentelemetry::sdk::logs::SimpleLogRecordProcessorFactory::Create(::std::move(exporter));
-    auto sdk_provider = ::opentelemetry::sdk::logs::LoggerProviderFactory::Create(::std::move(processor));
+    auto resource = ::opentelemetry::sdk::resource::Resource::Create(
+        {
+            {"service.name", "ai_chat_hosts_console"}
+        });
+    auto sdk_provider = ::opentelemetry::sdk::logs::LoggerProviderFactory::Create(::std::move(processor), resource);
     ::std::shared_ptr<::opentelemetry::logs::LoggerProvider> api_provider{ ::std::move(sdk_provider) };
     ::opentelemetry::logs::Provider::SetLoggerProvider(api_provider);
+};
+
+void on_cpu_time(::opentelemetry::metrics::ObserverResult observer_result, void* state) {
+    auto now = ::boost::chrono::process_cpu_clock::now();
+    auto gauge = ::opentelemetry::nostd::get<
+        ::opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(
+        observer_result);
+    gauge->Observe(now.time_since_epoch().count().system,
+        {
+            {"mode", "system"}
+        });
+    gauge->Observe(now.time_since_epoch().count().user,
+        {
+            {"mode", "user"}
+        });
+};
+void on_memory_usage(::opentelemetry::metrics::ObserverResult observer_result, void* state) {
+    auto usage = ::eboost::system::memory::get_usage();
+    auto gauge = ::opentelemetry::nostd::get<
+        ::opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(
+        observer_result);
+    gauge->Observe(usage.total,
+        {
+            {"type", "total"}
+        });
+    gauge->Observe(usage.shared,
+        {
+            {"type", "shared"}
+        });
 };
 
 int main(int argc, char* argv[]) {
@@ -177,6 +223,13 @@ int main(int argc, char* argv[]) {
         init_meter();
         init_tracer();
         init_logger();
+
+        auto meter = ::opentelemetry::metrics::Provider::GetMeterProvider()
+            ->GetMeter("ai_chat_hosts_console");
+        auto cpu_time = meter->CreateInt64ObservableGauge("ai_chat_hosts_console_cpu_time");
+        cpu_time->AddCallback(on_cpu_time, nullptr);
+        auto memory_usage = meter->CreateInt64ObservableGauge("ai_chat_hosts_console_memory_usage");
+        memory_usage->AddCallback(on_memory_usage, nullptr);
 
         ::ai::chat::clients::auth auth{ auth_address, auth_timeout };
         ::ai::chat::clients::observable<::ai::chat::clients::twitch> client{ client_address, client_timeout, client_delay, 0 };

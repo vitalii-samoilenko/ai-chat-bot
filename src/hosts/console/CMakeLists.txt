@@ -7,6 +7,8 @@ add_executable(AI::Chat::Hosts::Console ALIAS ai-chat-hosts-console)
 target_link_libraries(ai-chat-hosts-console
   PRIVATE
     Boost::json
+    Boost::chrono
+    EBoost
     AI::Chat::Clients::Twitch
     AI::Chat::Clients::Observable
     AI::Chat::Adapters::OpenAI
