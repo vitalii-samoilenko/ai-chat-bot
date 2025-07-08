@@ -265,10 +265,10 @@ int main(int argc, char* argv[]) {
             adapter.insert(adapter_message);
         }
 
-        auto client_binding = ::ai::chat::binders::twitch<decltype(history), decltype(client)>::bind(history, client,
+        auto client_binding = ::ai::chat::binders::twitch<::ai::chat::histories::sqlite>::bind(history, client,
             moderator, executor,
             botname);
-        auto adapter_binding = ::ai::chat::binders::openai<decltype(history), decltype(adapter)>::bind(history, adapter,
+        auto adapter_binding = ::ai::chat::binders::openai<::ai::chat::histories::sqlite>::bind(history, adapter,
             moderator,
             adapter_model, adapter_key,
             pattern, retries, apology,

@@ -41,7 +41,7 @@ usage get_usage() {
         statm >> usage.anonymous;   // resident
         statm >> usage.shared;      // shared
         usage.anonymous -= usage.shared;
-        usage.total *= page;
+        usage.anonymous *= page;
         usage.shared *= page;
     }
     return usage;

@@ -2,12 +2,13 @@
 #define AI_CHAT_BINDERS_OPENAI_HPP
 
 #include "ai/chat/adapters/openai.hpp"
+#include "ai/chat/histories/observable.hpp"
 
 namespace ai {
 namespace chat {
 namespace binders {
 
-template<typename History, typename Adapter>
+template<typename History>
 class openai {
 public:
     openai() = delete;
@@ -33,13 +34,13 @@ public:
     private:
         friend openai;
 
-        explicit binding(typename History::slot&& s_history);
+        explicit binding(typename ::ai::chat::histories::observable<History>::slot&& s_history);
 
-        typename History::slot _s_history;
+        typename ::ai::chat::histories::observable<History>::slot _s_history;
     };
 
     template<typename Moderator>
-    static binding bind(History& history, Adapter& adapter,
+    static binding bind(::ai::chat::histories::observable<History>& history, ::ai::chat::adapters::openai& adapter,
         Moderator& moderator,
         const ::std::string& model, const ::std::string& key,
         const ::std::string& pattern, size_t retires, const ::std::string& apology,

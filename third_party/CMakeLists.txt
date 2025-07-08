@@ -7,7 +7,6 @@ if(NOT OpenSSL_FOUND)
     set(OPENSSL_SOURCE_DIR ${PROJECT_SOURCE_DIR}/openssl)
     set(OPENSSL_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/openssl)
     set(OPENSSL_INSTALL_DIR ${CMAKE_SOURCE_DIR}/install/OpenSSL)
-
     if(WIN32)
         set(CONFIGURE_COMMAND perl ${OPENSSL_SOURCE_DIR}/Configure -static)
         if(MSVC)
@@ -26,7 +25,6 @@ if(NOT OpenSSL_FOUND)
         set(CONFIGURE_COMMAND ${OPENSSL_SOURCE_DIR}/Configure)
         set(MAKE_COMMAND make)
     endif()
-
     if(NOT EXISTS ${OPENSSL_SOURCE_DIR}/Configure)
         execute_process(COMMAND git submodule update
                 --init --recursive third_party/openssl
@@ -74,7 +72,6 @@ if(NOT gRPC_FOUND)
     set(GRPC_SOURCE_DIR ${PROJECT_SOURCE_DIR}/grpc)
     set(GRPC_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/grpc)
     set(GRPC_INSTALL_DIR ${CMAKE_SOURCE_DIR}/install/gRPC)
-
     if(NOT EXISTS ${GRPC_SOURCE_DIR}/CMakeLists.txt)
         execute_process(COMMAND git submodule update
                 --init --recursive third_party/grpc
@@ -158,7 +155,6 @@ if(NOT SQLite_FOUND)
         set(CONFIGURE_COMMAND ${SQLITE_SOURCE_DIR}/configure)
         set(MAKE_COMMAND make)
     endif()
-
     if(NOT EXISTS ${SQLITE_SOURCE_DIR}/configure)
         execute_process(COMMAND git submodule update
                 --init --recursive third_party/sqlite

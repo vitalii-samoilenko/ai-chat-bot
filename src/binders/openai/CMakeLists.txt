@@ -9,6 +9,7 @@ target_include_directories(ai_chat_binders_openai INTERFACE include)
 target_link_libraries(ai_chat_binders_openai
   INTERFACE
     AI::Chat::Adapters::OpenAI
-    AI::Chat::Histories::Observable
+    AI::Chat::Histories
+    AI::Chat::Moderators
 )
 target_compile_features(ai_chat_binders_openai INTERFACE cxx_std_11)
