@@ -22,6 +22,3 @@
 [submodule "third_party/opentelemetry"]
 	path = third_party/opentelemetry
 	url = https://github.com/open-telemetry/opentelemetry-cpp
-[submodule "third_party/boost/config"]
-	path = third_party/boost/config
-	url = https://github.com/boostorg/config
