@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.25.1)
 project(AI.Chat.Adapters.OpenAI VERSION 0.1 LANGUAGES CXX)
 
 find_package(OpenSSL REQUIRED)
+find_package(Boost CONFIG REQUIRED COMPONENTS url)
+find_package(opentelemetry-cpp REQUIRED)
 
 add_library(ai_chat_adapters_openai INTERFACE)
 add_library(AI::Chat::Adapters::OpenAI ALIAS ai_chat_adapters_openai)

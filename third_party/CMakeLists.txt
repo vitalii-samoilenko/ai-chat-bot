@@ -36,7 +36,7 @@ block()
       COMMAND_ERROR_IS_FATAL ANY
     )
   endif()
-  if(NOT EXISTS ${ZLIB_BINARY_DIR}/${CMAKE_BUILD_TYPE})
+  if(NOT EXISTS ${ZLIB_BINARY_DIR}/${PLATFORM_PREFIX}/${CMAKE_BUILD_TYPE})
     execute_process(COMMAND cmake
         --build . --config ${CMAKE_BUILD_TYPE}
       WORKING_DIRECTORY ${ZLIB_BINARY_DIR}
@@ -124,7 +124,7 @@ block()
       COMMAND_ERROR_IS_FATAL ANY
     )
   endif()
-  if(NOT EXISTS ${PROTOBUF_BINARY_DIR}/${CMAKE_BUILD_TYPE})
+  if(NOT EXISTS ${PROTOBUF_BINARY_DIR}/${PLATFORM_PREFIX}/${CMAKE_BUILD_TYPE})
     execute_process(COMMAND cmake
         --build . --config ${CMAKE_BUILD_TYPE}
       WORKING_DIRECTORY ${PROTOBUF_BINARY_DIR}
@@ -211,7 +211,7 @@ block()
       COMMAND_ERROR_IS_FATAL ANY
     )
   endif()
-  if(NOT EXISTS ${RE2_BINARY_DIR}/${CMAKE_BUILD_TYPE})
+  if(NOT EXISTS ${RE2_BINARY_DIR}/${PLATFORM_PREFIX}/${CMAKE_BUILD_TYPE})
     execute_process(COMMAND cmake
         --build . --config ${CMAKE_BUILD_TYPE}
       WORKING_DIRECTORY ${RE2_BINARY_DIR}
@@ -332,7 +332,7 @@ block()
       COMMAND_ERROR_IS_FATAL ANY
     )
   endif()
-  if(NOT EXISTS ${GRPC_BINARY_DIR}/${CMAKE_BUILD_TYPE})
+  if(NOT EXISTS ${GRPC_BINARY_DIR}/${PLATFORM_PREFIX}/${CMAKE_BUILD_TYPE})
     execute_process(COMMAND cmake
         --build . --config ${CMAKE_BUILD_TYPE}
       WORKING_DIRECTORY ${GRPC_BINARY_DIR}
@@ -385,7 +385,7 @@ block()
       COMMAND_ERROR_IS_FATAL ANY
     )
   endif()
-  if(NOT EXISTS ${OPENTELEMETRY_BINARY_DIR}/${CMAKE_BUILD_TYPE})
+  if(NOT EXISTS ${OPENTELEMETRY_BINARY_DIR}/${PLATFORM_PREFIX}/${CMAKE_BUILD_TYPE})
     execute_process(COMMAND cmake
         --build . --config ${CMAKE_BUILD_TYPE}
       WORKING_DIRECTORY ${OPENTELEMETRY_BINARY_DIR}
@@ -401,19 +401,46 @@ block()
   endif()
 endblock()
 
-add_subdirectory(boost)
-
-#find_package(Boost CONFIG REQUIRED)
-# if(NOT Boost_FOUND)
-#     if(NOT EXISTS ${PROJECT_SOURCE_DIR}/boost/CMakeLists.txt)
-#         execute_process(COMMAND git submodule update
-#                 --init --recursive third_party/boost
-#             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-#             COMMAND_ERROR_IS_FATAL ANY
-#         )
-#     endif()
-#     add_subdirectory(boost)
-# endif()
+block()
+  set(BOOST_SOURCE_DIR ${PROJECT_SOURCE_DIR}/boost)
+  set(BOOST_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/boost)
+  set(BOOST_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib/cmake/Boost-1.89.0)
+  if(NOT EXISTS ${BOOST_SOURCE_DIR}/CMakeLists.txt)
+    execute_process(COMMAND git submodule update
+        --init --recursive third_party/boost
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+      COMMAND_ERROR_IS_FATAL ANY
+    )
+  endif()
+  if(NOT EXISTS ${BOOST_BINARY_DIR})
+    make_directory(${BOOST_BINARY_DIR})
+    execute_process(COMMAND cmake
+        -DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+        -DOPENSSL_USE_STATIC_LIBS=${OPENSSL_USE_STATIC_LIBS}
+        -DOPENSSL_MSVC_STATIC_RT=${OPENSSL_MSVC_STATIC_RT}
+        -DZLIB_USE_STATIC_LIBS=${ZLIB_USE_STATIC_LIBS}
+        -B . -S ${BOOST_SOURCE_DIR}
+      WORKING_DIRECTORY ${BOOST_BINARY_DIR}
+      COMMAND_ERROR_IS_FATAL ANY
+    )
+  endif()
+  if(NOT EXISTS ${BOOST_BINARY_DIR}/${PLATFORM_PREFIX}/${CMAKE_BUILD_TYPE})
+    execute_process(COMMAND cmake
+        --build . --config ${CMAKE_BUILD_TYPE}
+      WORKING_DIRECTORY ${BOOST_BINARY_DIR}
+      COMMAND_ERROR_IS_FATAL ANY
+    )
+  endif()
+  if(NOT EXISTS ${BOOST_INSTALL_DIR})
+    execute_process(COMMAND cmake
+        --install . --config ${CMAKE_BUILD_TYPE} --prefix ${CMAKE_INSTALL_PREFIX}
+      WORKING_DIRECTORY ${BOOST_BINARY_DIR}
+      COMMAND_ERROR_IS_FATAL ANY
+    )
+  endif()
+endblock()
 
 # find_package(SQLite)
 # if(NOT SQLite_FOUND)

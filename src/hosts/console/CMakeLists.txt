@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.25.1)
 
 project(AI.Chat.Hosts.Console VERSION 0.1 LANGUAGES CXX)
 
+find_package(Boost CONFIG REQUIRED COMPONENTS json)
+find_package(opentelemetry-cpp REQUIRED)
+
 add_executable(ai-chat-hosts-console main.cpp)
 add_executable(AI::Chat::Hosts::Console ALIAS ai-chat-hosts-console)
 target_link_libraries(ai-chat-hosts-console

@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.25.1)
 project(AI.Chat.Clients.Twitch VERSION 0.1 LANGUAGES CXX)
 
 find_package(OpenSSL REQUIRED)
+find_package(Boost CONFIG REQUIRED COMPONENTS url xpressive)
+find_package(opentelemetry-cpp REQUIRED)
 
 add_library(ai_chat_clients_twitch INTERFACE)
 add_library(AI::Chat::Clients::Twitch ALIAS ai_chat_clients_twitch)
