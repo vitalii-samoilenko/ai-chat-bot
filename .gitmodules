@@ -1,15 +1,21 @@
+[submodule "third_party/protobuf"]
+	path = third_party/protobuf
+	url = https://github.com/protocolbuffers/protobuf
+[submodule "third_party/zlib"]
+	path = third_party/zlib
+	url = https://github.com/madler/zlib
+[submodule "third_party/abseil"]
+	path = third_party/abseil
+	url = https://github.com/abseil/abseil-cpp
+[submodule "third_party/cares"]
+	path = third_party/cares
+	url = https://github.com/c-ares/c-ares
+[submodule "third_party/re2"]
+	path = third_party/re2
+	url = https://github.com/google/re2
 [submodule "third_party/openssl"]
-	path = third_party/openssl
+	path = third_party/libssl
 	url = https://github.com/openssl/openssl
-[submodule "third_party/boost"]
-	path = third_party/boost
-	url = https://github.com/boostorg/boost
-[submodule "third_party/opentelemetry-cpp"]
-	path = third_party/opentelemetry-cpp
-	url = https://github.com/open-telemetry/opentelemetry-cpp
-[submodule "third_party/sqlite"]
-	path = third_party/sqlite
-	url = https://github.com/sqlite/sqlite
 [submodule "third_party/grpc"]
 	path = third_party/grpc
 	url = https://github.com/grpc/grpc

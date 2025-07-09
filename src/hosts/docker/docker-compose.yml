@@ -1,16 +1,30 @@
 name:
   ai-chat-hosts-docker
 
+include:
+  - docker-compose.infrastructure.yml
+
 services:
   ai-chat-hosts-console:
     container_name: ai-chat-hosts-console
+    depends_on:
+      - alloy
     image: ai.chat.hosts.console
     build:
-      context: ../..
+      context: ../../..
       dockerfile: src/hosts/console/Dockerfile
+    volumes:
+      - data.ai.chat.hosts.console:/data
+    command:
+      - /data/console/config.json
     networks:
       - ai-chat-hosts-docker
 
 networks:
   ai-chat-hosts-docker:
     external: true
+
+volumes:
+  data.ai.chat.hosts.console:
+    external: true
+  
