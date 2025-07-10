@@ -1,50 +1,30 @@
 [submodule "third_party/protobuf"]
 	path = third_party/protobuf
 	url = https://github.com/protocolbuffers/protobuf
-	active = false
-	fetchRecurseSubmodules = false
 [submodule "third_party/zlib"]
 	path = third_party/zlib
 	url = https://github.com/madler/zlib
-	active = false
-	fetchRecurseSubmodules = false
 [submodule "third_party/abseil"]
 	path = third_party/abseil
 	url = https://github.com/abseil/abseil-cpp
-	active = false
-	fetchRecurseSubmodules = false
 [submodule "third_party/cares"]
 	path = third_party/cares
 	url = https://github.com/c-ares/c-ares
-	active = false
-	fetchRecurseSubmodules = false
 [submodule "third_party/re2"]
 	path = third_party/re2
 	url = https://github.com/google/re2
-	active = false
-	fetchRecurseSubmodules = false
 [submodule "third_party/openssl"]
 	path = third_party/openssl
 	url = https://github.com/openssl/openssl
-	active = false
-	fetchRecurseSubmodules = false
 [submodule "third_party/grpc"]
 	path = third_party/grpc
 	url = https://github.com/grpc/grpc
-	active = false
-	fetchRecurseSubmodules = false
 [submodule "third_party/opentelemetry"]
 	path = third_party/opentelemetry
 	url = https://github.com/open-telemetry/opentelemetry-cpp
-	active = false
-	fetchRecurseSubmodules = false
 [submodule "third_party/boost"]
 	path = third_party/boost
 	url = https://github.com/boostorg/boost
-	active = false
-	fetchRecurseSubmodules = false
 [submodule "third_party/sqlite"]
 	path = third_party/sqlite
 	url = https://github.com/sqlite/sqlite
-	active = false
-	fetchRecurseSubmodules = false
