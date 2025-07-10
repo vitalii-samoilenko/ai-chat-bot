@@ -93,7 +93,6 @@ endblock()
 #   endif()
 # endblock()
 
-<<<<<<< HEAD
 # block()
 #   set(PROTOBUF_SOURCE_DIR ${PROJECT_SOURCE_DIR}/protobuf)
 #   set(PROTOBUF_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/protobuf)
@@ -141,55 +140,6 @@ endblock()
 #     )
 #   endif()
 # endblock()
-=======
-block()
-  set(PROTOBUF_SOURCE_DIR ${PROJECT_SOURCE_DIR}/protobuf)
-  set(PROTOBUF_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/protobuf)
-  set(PROTOBUF_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib/cmake/protobuf)
-  if(NOT EXISTS ${PROTOBUF_SOURCE_DIR}/CMakeLists.txt)
-    execute_process(COMMAND git submodule update
-        --init third_party/protobuf
-      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-      COMMAND_ERROR_IS_FATAL ANY
-    )
-  endif()
-  if(NOT EXISTS ${PROTOBUF_BINARY_DIR})
-    make_directory(${PROTOBUF_BINARY_DIR})
-    execute_process(COMMAND cmake
-        -DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
-        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-        -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-        -Dprotobuf_INSTALL=ON
-        -Dprotobuf_BUILD_TESTS=OFF
-        -Dprotobuf_BUILD_PROTOBUF_BINARIES=ON
-        -Dprotobuf_BUILD_PROTOC_BINARIES=ON
-        -Dprotobuf_BUILD_LIBUPB=ON
-        -Dprotobuf_DISABLE_RTTI=ON
-        -Dprotobuf_BUILD_SHARED_LIBS=OFF
-        -Dprotobuf_MSVC_STATIC_RUNTIME=ON
-        -Dprotobuf_WITH_ZLIB=ON
-        -DZLIB_USE_STATIC_LIBS=${ZLIB_USE_STATIC_LIBS}
-        -B . -S ${PROTOBUF_SOURCE_DIR}
-      WORKING_DIRECTORY ${PROTOBUF_BINARY_DIR}
-      COMMAND_ERROR_IS_FATAL ANY
-    )
-  endif()
-  if(NOT EXISTS ${PROTOBUF_BINARY_DIR}/${PLATFORM_PREFIX}/${CMAKE_BUILD_TYPE})
-    execute_process(COMMAND cmake
-        --build . --config ${CMAKE_BUILD_TYPE}
-      WORKING_DIRECTORY ${PROTOBUF_BINARY_DIR}
-      COMMAND_ERROR_IS_FATAL ANY
-    )
-  endif()
-  if(NOT EXISTS ${PROTOBUF_INSTALL_DIR})
-    execute_process(COMMAND cmake
-        --install . --config ${CMAKE_BUILD_TYPE} --prefix ${CMAKE_INSTALL_PREFIX}
-      WORKING_DIRECTORY ${PROTOBUF_BINARY_DIR}
-      COMMAND_ERROR_IS_FATAL ANY
-    )
-  endif()
-endblock()
->>>>>>> d43df738c145f0b08357e3bbca86aa4a830adf9b
 
 # block()
 #   set(CARES_SOURCE_DIR ${PROJECT_SOURCE_DIR}/cares)
