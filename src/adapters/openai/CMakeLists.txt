@@ -2,8 +2,9 @@ cmake_minimum_required(VERSION 3.25.1)
 
 project(AI.Chat.Adapters.OpenAI VERSION 0.1 LANGUAGES CXX)
 
+find_package(Boost CONFIG REQUIRED COMPONENTS asio beast url)
+find_package(EBoost CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
-find_package(Boost CONFIG REQUIRED COMPONENTS url)
 find_package(opentelemetry-cpp REQUIRED)
 
 add_library(ai_chat_adapters_openai INTERFACE)
@@ -13,8 +14,10 @@ target_link_libraries(ai_chat_adapters_openai
   INTERFACE
     OpenSSL::Crypto
     OpenSSL::SSL
+    Boost::asio
+    Boost::beast
     Boost::url
-    EBoost
+    EBoost::eboost
     opentelemetry-cpp::api
 )
 target_compile_features(ai_chat_adapters_openai INTERFACE cxx_std_17)

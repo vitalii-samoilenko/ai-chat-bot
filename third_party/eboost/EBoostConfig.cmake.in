@@ -1,0 +1,9 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+find_dependency(Boost CONFIG REQUIRED COMPONENTS asio beast json)
+
+check_required_components(EBoost)
+
+include(${CMAKE_CURRENT_LIST_DIR}/eboostTargets.cmake)

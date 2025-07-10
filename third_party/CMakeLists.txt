@@ -50,7 +50,7 @@ block()
       COMMAND_ERROR_IS_FATAL ANY
     )
   endif()
-  set(ZLIB_USE_STATIC_LIBS ON  CACHE INTERNAL "zlib use static libraries")
+  set(ZLIB_USE_STATIC_LIBS ON CACHE INTERNAL "zlib use static libraries")
 endblock()
 
 block()
@@ -442,58 +442,102 @@ block()
   endif()
 endblock()
 
-# find_package(SQLite)
-# if(NOT SQLite_FOUND)
-#     set(SQLITE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/sqlite)
-#     set(SQLITE_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/sqlite)
-#     set(SQLITE_INSTALL_DIR ${CMAKE_SOURCE_DIR}/install/SQLite)
-#     if(WIN32)
-#         set(CONFIGURE_COMMAND cmake -E touch config.log)
-#         if(MSVC)
-#             execute_process(COMMAND "C:/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe"
-#                 -format value -property installationPath
-#                 OUTPUT_VARIABLE VS_INSTALLATION_PATH
-#                 OUTPUT_STRIP_TRAILING_WHITESPACE
-#                 COMMAND_ERROR_IS_FATAL ANY
-#             )
-#             set(MAKE_COMMAND ${VS_INSTALLATION_PATH}/VC/Auxiliary/Build/vcvarsall.bat x64 && nmake /F Makefile.msc)
-#         else()
-#             message(FATAL_ERROR "Compiler not supported")
-#         endif()
-#         set(SQLITE_LIB libsqlite3.lib)
-#     else()
-#         set(CONFIGURE_COMMAND ${SQLITE_SOURCE_DIR}/configure)
-#         set(MAKE_COMMAND make)
-#         set(SQLITE_LIB libsqlite3.a)
-#     endif()
-#     if(NOT EXISTS ${SQLITE_SOURCE_DIR}/configure)
-#         execute_process(COMMAND git submodule update
-#                 --init third_party/sqlite
-#             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-#             COMMAND_ERROR_IS_FATAL ANY
-#         )
-#     endif()
-#     if(NOT EXISTS ${SQLITE_BINARY_DIR}/config.log)
-#         file(COPY ${SQLITE_SOURCE_DIR} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-#         execute_process(COMMAND ${CONFIGURE_COMMAND}
-#             WORKING_DIRECTORY ${SQLITE_BINARY_DIR}
-#             COMMAND_ERROR_IS_FATAL ANY
-#         )
-#     endif()
-#     if(NOT EXISTS ${SQLITE_BINARY_DIR}/sqlite3.h)
-#         execute_process(COMMAND ${MAKE_COMMAND}
-#             WORKING_DIRECTORY ${SQLITE_BINARY_DIR}
-#             COMMAND_ERROR_IS_FATAL ANY
-#         )
-#     endif()
-#     if(NOT EXISTS ${SQLITE_INSTALL_DIR})
-#         file(COPY ${SQLITE_BINARY_DIR}/sqlite3.h DESTINATION ${SQLITE_INSTALL_DIR}/include)
-#         file(COPY ${SQLITE_BINARY_DIR}/${SQLITE_LIB} DESTINATION ${SQLITE_INSTALL_DIR}/lib)
-#     endif()
-#     add_library(sqlite INTERFACE)
-#     add_library(SQLite ALIAS sqlite)
-#     target_include_directories(sqlite INTERFACE ${SQLITE_INSTALL_DIR}/include)
-#     target_link_libraries(sqlite INTERFACE ${SQLITE_INSTALL_DIR}/lib/${SQLITE_LIB})
-# endif()
+block()
+  set(EBOOST_SOURCE_DIR ${PROJECT_SOURCE_DIR}/eboost)
+  set(EBOOST_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/eboost)
+  set(EBOOST_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib/cmake/eboost)
+  if(NOT EXISTS ${EBOOST_BINARY_DIR})
+    make_directory(${EBOOST_BINARY_DIR})
+    execute_process(COMMAND cmake
+        -DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+        -B . -S ${EBOOST_SOURCE_DIR}
+      WORKING_DIRECTORY ${EBOOST_BINARY_DIR}
+      COMMAND_ERROR_IS_FATAL ANY
+    )
+  endif()
+  if(NOT EXISTS ${EBOOST_BINARY_DIR}/${PLATFORM_PREFIX}/${CMAKE_BUILD_TYPE})
+    execute_process(COMMAND cmake
+        --build . --config ${CMAKE_BUILD_TYPE}
+      WORKING_DIRECTORY ${EBOOST_BINARY_DIR}
+      COMMAND_ERROR_IS_FATAL ANY
+    )
+  endif()
+  if(NOT EXISTS ${EBOOST_INSTALL_DIR})
+    execute_process(COMMAND cmake
+        --install . --config ${CMAKE_BUILD_TYPE} --prefix ${CMAKE_INSTALL_PREFIX}
+      WORKING_DIRECTORY ${EBOOST_BINARY_DIR}
+      COMMAND_ERROR_IS_FATAL ANY
+    )
+  endif()
+endblock()
 
-#add_subdirectory(eboost)
+block()
+  set(SQLITE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/sqlite)
+  set(SQLITE_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/sqlite)
+  set(SQLITE_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include)
+  set(SQLITE_LIBRARY_DIR ${CMAKE_INSTALL_PREFIX}/lib)
+  if(WIN32)
+    set(CONFIGURE_COMMAND cmake -E touch config.log)
+    if(MSVC)
+      execute_process(COMMAND "C:/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe"
+          -format value -property installationPath
+        OUTPUT_VARIABLE VS_INSTALLATION_PATH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        COMMAND_ERROR_IS_FATAL ANY
+      )
+      set(MAKE_COMMAND ${VS_INSTALLATION_PATH}/VC/Auxiliary/Build/vcvarsall.bat x64 && nmake /F Makefile.msc)
+    else()
+      message(FATAL_ERROR "Compiler not supported")
+    endif()
+  else()
+    set(CONFIGURE_COMMAND ${SQLITE_SOURCE_DIR}/configure)
+    set(MAKE_COMMAND make)
+  endif()
+  if(NOT EXISTS ${SQLITE_SOURCE_DIR}/configure)
+    execute_process(COMMAND git submodule update
+        --init third_party/sqlite
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+      COMMAND_ERROR_IS_FATAL ANY
+    )
+  endif()
+  if(NOT EXISTS ${SQLITE_BINARY_DIR}/config.log)
+    file(COPY ${SQLITE_SOURCE_DIR} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+    execute_process(COMMAND ${CONFIGURE_COMMAND}
+      WORKING_DIRECTORY ${SQLITE_BINARY_DIR}
+      COMMAND_ERROR_IS_FATAL ANY
+    )
+  endif()
+  if(NOT EXISTS ${SQLITE_BINARY_DIR}/sqlite3.h)
+    execute_process(COMMAND ${MAKE_COMMAND}
+        "OPTIONS=-DSQLITE_DQS=0 -DSQLITE_THREADSAFE=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1 -DSQLITE_LIKE_DOESNT_MATCH_BLOBS -DSQLITE_MAX_EXPR_DEPTH=0 -DSQLITE_OMIT_DEPRECATED -DSQLITE_OMIT_PROGRESS_CALLBACK -DSQLITE_OMIT_SHARED_CACHE -DSQLITE_USE_ALLOCA -DSQLITE_OMIT_AUTOINIT -DSQLITE_STRICT_SUBTYPE=1"
+      WORKING_DIRECTORY ${SQLITE_BINARY_DIR}
+      COMMAND_ERROR_IS_FATAL ANY
+    )
+  endif()
+  if(NOT EXISTS ${SQLITE_INCLUDE_DIR}/sqlite3.h)
+    if (WIN32)
+      execute_process(COMMAND cmake
+        -E copy libsqlite3.lib sqlite3.lib
+        WORKING_DIRECTORY ${SQLITE_BINARY_DIR}
+        COMMAND_ERROR_IS_FATAL ANY
+      )
+    endif()
+    find_library(_SQLite3_LIBRARY
+      REQUIRED
+      NAMES sqlite3 sqlite
+      PATHS ${SQLITE_BINARY_DIR}
+      NO_DEFAULT_PATH
+      NO_CACHE
+    )
+    file(COPY ${_SQLite3_LIBRARY}
+      DESTINATION ${SQLITE_LIBRARY_DIR}
+    )
+    file(COPY ${SQLITE_BINARY_DIR}/sqlite3.h
+      DESTINATION ${SQLITE_INCLUDE_DIR}
+    )
+  endif()
+  set(PC_SQLite3_INCLUDE_DIRS ${SQLITE_INCLUDE_DIR} CACHE INTERNAL "SQLite include directory")
+  set(PC_SQLite3_LIBRARY_DIRS ${SQLITE_LIBRARY_DIR} CACHE INTERNAL "SQLite library directory")
+endblock()

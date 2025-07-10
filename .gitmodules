@@ -25,3 +25,6 @@
 [submodule "third_party/boost"]
 	path = third_party/boost
 	url = https://github.com/boostorg/boost
+[submodule "third_party/sqlite"]
+	path = third_party/sqlite
+	url = https://github.com/sqlite/sqlite
