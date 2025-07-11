@@ -24,7 +24,7 @@ FROM prepare AS configure
 ARG BUILD_CONFIGURATION=Release
 RUN --mount=type=cache,id=build,target=build \
     --mount=type=cache,id=install,target=install \
-    && cmake -B build -S . \
+    cmake -B build -S . \
         -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION \
         -DCMAKE_INSTALL_PREFIX=install
 
