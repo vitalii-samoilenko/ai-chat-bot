@@ -727,20 +727,11 @@ block()
   endif()
   if(NOT EXISTS ${SQLITE_BINARY_DIR}/install.done)
     if (WIN32)
-      execute_process(COMMAND cmake
-        -E copy libsqlite3.lib sqlite3.lib
-        WORKING_DIRECTORY ${SQLITE_BINARY_DIR}
-        COMMAND_ERROR_IS_FATAL ANY
-      )
+      set(_SQLITE_LIBRARY libsqlite3.lib)
+    elseif(LINUX)
+      set(_SQLITE_LIBRARY libsqlite3.a)
     endif()
-    find_library(_SQLite3_LIBRARY
-      REQUIRED
-      NAMES sqlite3 sqlite
-      PATHS ${SQLITE_BINARY_DIR}
-      NO_DEFAULT_PATH
-      NO_CACHE
-    )
-    file(COPY ${_SQLite3_LIBRARY}
+    file(COPY ${SQLITE_BINARY_DIR}/${_SQLITE_LIBRARY}
       DESTINATION ${SQLITE_LIBRARY_DIR}
     )
     file(COPY ${SQLITE_BINARY_DIR}/sqlite3.h
