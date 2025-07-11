@@ -177,6 +177,7 @@ block()
   if(NOT EXISTS ${OPENSSL_BINARY_DIR}/makefile)
     if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
       set(_DEBUG_SUFFIX d)
+      set(_DEBUG_FLAG --debug)
     else()
       set(_DEBUG_PREFIX n)
     endif()
@@ -195,7 +196,7 @@ block()
         -static
         --prefix=${CMAKE_INSTALL_PREFIX}
         --openssldir=${CMAKE_INSTALL_PREFIX}/ssl
-        --${_DEBUG_PREFIX}debug
+        ${_DEBUG_FLAG}
         zlib
         --with-zlib-include=${CMAKE_INSTALL_PREFIX}/include
         --with-zlib-lib=${_ZLIB_LIBRARY}
@@ -380,6 +381,22 @@ block()
 endblock()
 
 block()
+  set(OPENTELEMETRY_PROTO_SOURCE_DIR ${PROJECT_SOURCE_DIR}/opentelemetry-proto)
+  if(NOT EXISTS ${OPENTELEMETRY_SOURCE_DIR}/Makefile)
+    execute_process(COMMAND git submodule update
+        --init third_party/opentelemetry-proto
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+      COMMAND_ERROR_IS_FATAL ANY
+    )
+    execute_process(COMMAND git checkout v1.6.0
+      WORKING_DIRECTORY ${OPENTELEMETRY_PROTO_SOURCE_DIR}
+      COMMAND_ERROR_IS_FATAL ANY
+    )
+  endif()
+  set(OTELCPP_PROTO_PATH ${OPENTELEMETRY_PROTO_SOURCE_DIR} CACHE INTERNAL "OpenTelemetry Proto path")
+endblock()
+
+block()
   set(OPENTELEMETRY_SOURCE_DIR ${PROJECT_SOURCE_DIR}/opentelemetry)
   set(OPENTELEMETRY_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/opentelemetry)
   if(NOT EXISTS ${OPENTELEMETRY_SOURCE_DIR}/CMakeLists.txt)
@@ -412,6 +429,7 @@ block()
         -DWITH_EXAMPLES=OFF
         -DWITH_FUNC_TESTS=OFF
         -DZLIB_USE_STATIC_LIBS=${ZLIB_USE_STATIC_LIBS}
+        -DOTELCPP_PROTO_PATH=${OTELCPP_PROTO_PATH}
         -B . -S ${OPENTELEMETRY_SOURCE_DIR}
       WORKING_DIRECTORY ${OPENTELEMETRY_BINARY_DIR}
       COMMAND_ERROR_IS_FATAL ANY

@@ -28,3 +28,6 @@
 [submodule "third_party/sqlite"]
 	path = third_party/sqlite
 	url = https://github.com/sqlite/sqlite
+[submodule "third_party/opentelemetry-proto"]
+	path = third_party/opentelemetry-proto
+	url = https://github.com/open-telemetry/opentelemetry-proto
