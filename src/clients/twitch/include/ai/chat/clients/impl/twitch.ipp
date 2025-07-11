@@ -45,7 +45,8 @@ private:
     friend twitch;
 
     explicit connection(size_t dop, twitch<Handler>& handler)
-        : _io_context{ 1 }
+        : _io_context{}
+        , _io_run_context{ 1 }
         , _h_context{ dop }
         , _resolver{ _io_context }
         , _ssl_context{ ::boost::asio::ssl::context::tlsv12_client }
@@ -95,7 +96,8 @@ private:
     
     };
 
-    ::boost::asio::thread_pool _io_context;
+    ::boost::asio::io_context _io_context;
+    ::boost::asio::thread_pool _io_run_context;
     ::boost::asio::thread_pool _h_context;
     ::boost::asio::ip::tcp::resolver _resolver;
     ::boost::asio::ssl::context _ssl_context;
@@ -157,6 +159,10 @@ private:
         on_disconnect(span);
 
         }); // SIG
+        ::boost::asio::post(_io_run_context, [this]()->void {
+        _io_context.run();
+
+        }); // post
     };
 
     void on_connect(::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root) {
@@ -464,8 +470,9 @@ private:
         };
         _stream.async_close(::boost::beast::websocket::close_code::normal, [this, span, operation](::boost::beast::error_code error_code) mutable ->void {
         operation = nullptr;
-        _h_context.stop();
         _io_context.stop();
+        _io_run_context.stop();
+        _h_context.stop();
 
         }); // close
     };

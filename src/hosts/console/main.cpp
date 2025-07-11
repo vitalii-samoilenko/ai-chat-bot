@@ -40,6 +40,8 @@
 #include "eboost/system/cpu.hpp"
 #include "eboost/system/memory.hpp"
 
+#include "sqlite3.h"
+
 ::std::string telemetry_endpoint{};
 ::std::string botname{};
 ::std::vector<::std::string> moderators{};
@@ -223,6 +225,11 @@ int main(int argc, char* argv[]) {
         init_meter();
         init_tracer();
         init_logger();
+
+        auto on_exit = ::boost::scope::make_scope_exit([=]()->void {
+            ::sqlite3_shutdown();
+        });
+        ::sqlite3_initialize();
 
         auto meter = ::opentelemetry::metrics::Provider::GetMeterProvider()
             ->GetMeter("ai_chat_hosts_console");

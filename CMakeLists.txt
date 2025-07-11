@@ -4,7 +4,11 @@ project(AI VERSION 0.1)
 
 if(MSVC)
     add_compile_options(/bigobj)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreaded$<$<CONFIG:Debug>:Debug>)
+    if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
+      set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreadedDebug)
+    else()
+      set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreaded)
+    endif()
     #add_compile_options(/GR-)
 endif()
 

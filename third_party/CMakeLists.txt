@@ -29,6 +29,7 @@ block()
         -DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_MSVC_RUNTIME_LIBRARY=${CMAKE_MSVC_RUNTIME_LIBRARY}
         -DZLIB_BUILD_EXAMPLES=OFF
         -B . -S ${ZLIB_SOURCE_DIR}
       WORKING_DIRECTORY ${ZLIB_BINARY_DIR}
@@ -175,13 +176,16 @@ block()
   endif()
   if(NOT EXISTS ${OPENSSL_BINARY_DIR}/makefile)
     if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
-      set(_ZLIB_SUFFIX d)
+      set(_DEBUG_SUFFIX d)
     else()
       set(_DEBUG_PREFIX n)
     endif()
+    if(MSVC)
+      set(_MSVC_STATIC_RUNTIME /MT${_DEBUG_SUFFIX})
+    endif()
     find_library(_ZLIB_LIBRARY
       REQUIRED
-      NAMES zlibstatic${_ZLIB_SUFFIX} zlibstat${_ZLIB_SUFFIX} zs${_ZLIB_SUFFIX} zlib${_ZLIB_SUFFIX} z${_ZLIB_SUFFIX}
+      NAMES zlibstatic${_DEBUG_SUFFIX} zlibstat${_DEBUG_SUFFIX} zs${_DEBUG_SUFFIX} zlib${_DEBUG_SUFFIX} z${_DEBUG_SUFFIX}
       PATHS ${CMAKE_INSTALL_PREFIX}/lib
       NO_DEFAULT_PATH
       NO_CACHE
@@ -195,6 +199,7 @@ block()
         zlib
         --with-zlib-include=${CMAKE_INSTALL_PREFIX}/include
         --with-zlib-lib=${_ZLIB_LIBRARY}
+        ${_MSVC_STATIC_RUNTIME}
         no-apps
         no-docs
         no-weak-ssl-ciphers
@@ -203,7 +208,8 @@ block()
         no-tests
         no-unit-test
         no-external-tests
-        #deprecated and legacy
+        no-legacy
+        no-tls-deprecated-ec
       WORKING_DIRECTORY ${OPENSSL_BINARY_DIR}
       COMMAND_ERROR_IS_FATAL ANY
     )
@@ -244,6 +250,8 @@ block()
         -DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_POLICY_DEFAULT_CMP0091=NEW
+        -DCMAKE_MSVC_RUNTIME_LIBRARY=${CMAKE_MSVC_RUNTIME_LIBRARY}
         -B . -S ${RE2_SOURCE_DIR}
       WORKING_DIRECTORY ${RE2_BINARY_DIR}
       COMMAND_ERROR_IS_FATAL ANY
@@ -391,6 +399,7 @@ block()
         -DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_MSVC_RUNTIME_LIBRARY=${CMAKE_MSVC_RUNTIME_LIBRARY}
         -DWITH_ABI_VERSION_1=OFF
         -DWITH_ABI_VERSION_2=ON
         -DWITH_NO_DEPRECATED_CODE=ON
@@ -444,6 +453,7 @@ block()
         -DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+        -DCMAKE_MSVC_RUNTIME_LIBRARY=${CMAKE_MSVC_RUNTIME_LIBRARY}
         -DOPENSSL_USE_STATIC_LIBS=${OPENSSL_USE_STATIC_LIBS}
         -DOPENSSL_MSVC_STATIC_RT=${OPENSSL_MSVC_STATIC_RT}
         -DZLIB_USE_STATIC_LIBS=${ZLIB_USE_STATIC_LIBS}
