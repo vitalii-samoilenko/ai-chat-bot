@@ -15,7 +15,7 @@ enum class role {
     assistant
 };
 struct message {
-    role role;
+    ::ai::chat::adapters::role role;
     ::std::string content;
 };
 

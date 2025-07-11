@@ -22,7 +22,7 @@ typename openai<History>::binding openai<History>::bind(::ai::chat::histories::o
     const ::std::string& model, const ::std::string& key,
     const ::std::string& pattern, size_t retries, const ::std::string& apology,
     const ::std::string& botname) {
-    auto s_history = history.subscribe<::ai::chat::adapters::openai>();
+    auto s_history = history.template subscribe<::ai::chat::adapters::openai>();
     s_history.on_message([&history, &adapter, &moderator, model, key, pattern, retries, apology, botname](const ::ai::chat::histories::message& history_message)->void {
         const ::ai::chat::histories::tag* p_username_tag{ nullptr };
         const ::ai::chat::histories::tag* p_channel_tag{ nullptr };
@@ -83,7 +83,7 @@ typename openai<History>::binding openai<History>::bind(::ai::chat::histories::o
                     {"user.name", botname}
                 }
         };
-        history.insert<::ai::chat::adapters::openai>(history_completion);
+        history.template insert<::ai::chat::adapters::openai>(history_completion);
     });
     return binding{ ::std::move(s_history) };
 };

@@ -21,7 +21,7 @@ template<typename Moderator, typename... Commands>
 typename twitch<History>::binding twitch<History>::bind(::ai::chat::histories::observable<History>& history, ::ai::chat::clients::observable<::ai::chat::clients::twitch>& client,
     Moderator& moderator, ::ai::chat::commands::executor<Commands...>& executor,
     const ::std::string& botname) {
-    auto s_history = history.subscribe<::ai::chat::clients::observable<::ai::chat::clients::twitch>>();
+    auto s_history = history.template subscribe<::ai::chat::clients::observable<::ai::chat::clients::twitch>>();
     s_history.on_message([&client](const ::ai::chat::histories::message& history_message)->void {
         const ::ai::chat::histories::tag* p_username_tag{ nullptr };
         const ::ai::chat::histories::tag* p_channel_tag{ nullptr };
@@ -55,7 +55,7 @@ typename twitch<History>::binding twitch<History>::bind(::ai::chat::histories::o
                 {"channel", client_message.channel}
             }
         };
-        history.insert<::ai::chat::clients::observable<::ai::chat::clients::twitch>>(history_message);
+        history.template insert<::ai::chat::clients::observable<::ai::chat::clients::twitch>>(history_message);
     });
     s_client.on_command([&client, &moderator, &executor, botname](const ::ai::chat::clients::command& client_command)->void {
         if (!(client_command.channel == botname)) {

@@ -1,7 +1,7 @@
 #ifndef AI_CHAT_MODERATORS_SQLITE_IPP
 #define AI_CHAT_MODERATORS_SQLITE_IPP
 
-#include <exception>
+#include <stdexcept>
 #include <limits>
 #include <regex>
 
@@ -93,7 +93,7 @@ private:
         case SQLITE_DONE:
             return;
         default:
-            throw ::std::exception{ ::sqlite3_errstr(error_code) };
+            throw ::std::runtime_error{ ::sqlite3_errstr(error_code) };
         }
     };
     void on_init() {

@@ -587,7 +587,7 @@ void twitch<Handler>::leave() {
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
         _channel->_tracer->StartSpan("leave")
     };
-    ::boost::asio::post(_channel->_io_context, [this, channel, span]()->void {
+    ::boost::asio::post(_channel->_io_context, [this, span]()->void {
     _channel->on_leave(span);
     _channel->_channel.clear();
 

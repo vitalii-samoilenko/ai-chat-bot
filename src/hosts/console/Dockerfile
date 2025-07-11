@@ -42,7 +42,7 @@ RUN --mount=type=cache,id=build,target=build \
 
 FROM install AS deploy
 RUN --mount=type=cache,id=install,target=install \
-    mkdir deploy/bin \
+    mkdir deploy && mkdir deploy/bin \
     && cp install/bin/ai-chat-hosts-console deploy/bin
 
 FROM base AS host

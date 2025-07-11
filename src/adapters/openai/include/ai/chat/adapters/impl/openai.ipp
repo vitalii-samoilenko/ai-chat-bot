@@ -223,9 +223,9 @@ enum class finish_reason {
     tool_calls
 };
 struct choice {
-    finish_reason finis_reason;
+    ::ai::chat::adapters::finish_reason finis_reason;
     size_t index;
-    message message;
+    ::ai::chat::adapters::message message;
 };
 struct usage {
     size_t completion_tokens;
@@ -234,7 +234,7 @@ struct usage {
 };
 struct completion_result {
     ::std::vector<choice> choices;
-    usage usage;
+    ::ai::chat::adapters::usage usage;
 };
 
 ::std::string to_string(const role& role) {
