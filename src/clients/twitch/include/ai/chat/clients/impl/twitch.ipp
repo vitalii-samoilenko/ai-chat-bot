@@ -16,6 +16,7 @@
 #include "boost/beast/ssl.hpp"
 #include "eboost/beast/ensure_success.hpp"
 #include "eboost/beast/metered_rate_policy.hpp"
+#include "opentelemetry/logs/provider.h"
 #include "opentelemetry/metrics/provider.h"
 #include "opentelemetry/trace/provider.h"
 #include "re2/re2.h"
@@ -51,6 +52,10 @@ private:
         , _stream{ ::eboost::beast::metered_tcp_stream<connection>{ ::eboost::beast::metered_rate_policy<connection>{ *this }, _io_context }, _ssl_context }
         , _signals{ _io_context }
         , _handler{ handler }
+        , _logger{
+            ::opentelemetry::logs::Provider::GetLoggerProvider()
+                ->GetLogger("ai_chat_clients_twitch")
+        }
         , _tracer{
             ::opentelemetry::trace::Provider::GetTracerProvider()
                 ->GetTracer("ai_chat_clients_twitch")
@@ -99,6 +104,7 @@ private:
     ::boost::beast::websocket::stream<::boost::asio::ssl::stream<::eboost::beast::metered_tcp_stream<connection>>> _stream;
     ::boost::asio::signal_set _signals;
     twitch<Handler>& _handler;
+    ::opentelemetry::nostd::shared_ptr<::opentelemetry::logs::Logger> _logger;
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Tracer> _tracer;
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::metrics::Meter> _meter;
     ::opentelemetry::nostd::unique_ptr<::opentelemetry::metrics::Counter<uint64_t>> _m_network;
@@ -254,6 +260,7 @@ private:
         }
         ::eboost::beast::ensure_success(error_code);
         ::boost::asio::const_buffer response{ _buffer.cdata() };
+        _logger->Info(::opentelemetry::nostd::string_view{ reinterpret_cast<const char*>(response.data()), bytes_transferred }, operation->GetContext());
         ::std::string notice{};
         {
             ::std::string_view cursor{ reinterpret_cast<const char*>(response.data()), bytes_transferred };
@@ -306,6 +313,7 @@ private:
         }
         ::eboost::beast::ensure_success(error_code);
         ::boost::asio::const_buffer response{ _buffer.cdata() };
+        _logger->Info(::opentelemetry::nostd::string_view{ reinterpret_cast<const char*>(response.data()), bytes_transferred }, operation->GetContext());
         bool pong{ false };
         bool disconnect{ false };
         {
