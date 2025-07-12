@@ -78,22 +78,14 @@ private:
         , _q_write{}
         , _buffer{}
         , _next{}
-        , _notice{ R"(:tmi\.twitch\.tv NOTICE \* :(?<notice>[^\r\n]+))" }
-        , _command{
-            R"((?:)"
-                R"(:(?<username>[a-z]+)![a-z]+@[a-z]+\.tmi\.twitch\.tv PRIVMSG #(?<channel>[a-z]+) :)"
-                R"((?:)"
-                    R"((?:!(?<command>[a-z]+)(?: (?<args>[^\r\n]+))?))"
-                    R"(|)"
-                    R"((?<message>[^\r\n]+))"
-                R"())"
-            R"())"
-            R"(|)"
-            R"((?:PING (?<ping>:tmi\.twitch\.tv)))"
-            R"(|)"
-            R"((?:(?<reconnect>:tmi\.twitch\.tv) RECONNECT))"
-        } {
-    
+        , _re_notice{ R"(:tmi\.twitch\.tv NOTICE \* :(?<notice>[^\r\n]+)[\r\n]*)" }
+        , _re_line{ R"((?<line>[^\r\n]+))" }
+        , _re_command_wargs{ R"(:(?<username>[a-z]+)![a-z]+@[a-z]+\.tmi\.twitch\.tv PRIVMSG #(?<channel>[a-z]+) :!(?<command>[a-z]+) (?<args>.+))" }
+        , _re_command{ R"(:(?<username>[a-z]+)![a-z]+@[a-z]+\.tmi\.twitch\.tv PRIVMSG #(?<channel>[a-z]+) :!(?<command>[a-z]+))" }
+        , _re_message{ R"(:(?<username>[a-z]+)![a-z]+@[a-z]+\.tmi\.twitch\.tv PRIVMSG #(?<channel>[a-z]+) :(?<message>.+))" }
+        , _re_ping{ R"(PING (?<ping>:tmi\.twitch\.tv))" }
+        , _re_reconnect{ R"((?<reconnect>:tmi\.twitch\.tv) RECONNECT)" } {
+
     };
 
     ::boost::asio::io_context _io_context;
@@ -121,8 +113,14 @@ private:
     ::std::queue<::std::string> _q_write;
     ::boost::beast::flat_buffer _buffer;
     ::std::chrono::nanoseconds _next;
-    ::RE2 _notice;
-    ::RE2 _command;
+    ::RE2 _re_notice;
+    ::RE2 _re_line;
+    ::RE2 _re_command_wargs;
+    ::RE2 _re_command;
+    ::RE2 _re_message;
+    ::RE2 _re_ping;
+    ::RE2 _re_reconnect;
+
 
     void bytes_rx(size_t n) {
         _m_network->Add(n,
@@ -261,12 +259,12 @@ private:
         ::eboost::beast::ensure_success(error_code);
         ::boost::asio::const_buffer response{ _buffer.cdata() };
         _logger->Info(::opentelemetry::nostd::string_view{ reinterpret_cast<const char*>(response.data()), bytes_transferred }, operation->GetContext());
-        ::std::string notice{};
         {
+            ::std::string_view notice{};
             ::std::string_view cursor{ reinterpret_cast<const char*>(response.data()), bytes_transferred };
-            if (::RE2::FullMatch(cursor, _notice,
+            if (::RE2::FullMatch(cursor, _re_notice,
                     &notice)) {
-                throw ::std::invalid_argument{ notice };
+                throw ::std::invalid_argument{ ::std::string{ notice } };
             }
         }
         _buffer.consume(bytes_transferred);
@@ -319,36 +317,16 @@ private:
         {
             command command{};
             message message{};
-            ::std::string ping{};
-            ::std::string reconnect{};
+            ::std::string_view ping{};
+            ::std::string_view reconnect{};
+            ::std::string_view line{};
             ::std::string_view cursor{ reinterpret_cast<const char*>(response.data()), bytes_transferred };
-            while (::RE2::Consume(&cursor, _command,
-                    &command.username, &command.channel, &command.name, &command.args,
-                    &message.username, &message.channel, &message.content,
-                    &ping, &reconnect)) {
-                if (!message.content.empty()) {
-                    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-                        _tracer->StartSpan("message", ::opentelemetry::trace::StartSpanOptions
-                        {
-                            {}, {},
-                            operation->GetContext()
-                        })
-                    };
-                    ::boost::asio::post(_h_context, [this, message = ::std::move(message), span]()->void {
-                    ::opentelemetry::trace::Scope scope{
-                        _tracer->StartSpan("on_message", ::opentelemetry::trace::StartSpanOptions
-                        {
-                            {}, {},
-                            span->GetContext()
-                        })
-                    };
-                    _handler.on_message(message);
-
-                    }); // post
-                } else if (!ping.empty()) {
-                    pong = true;
-                    ping = {};
-                } else if (!command.name.empty()) {
+            while (::RE2::FindAndConsume(&cursor, _re_line,
+                    &line)) {
+                if (::RE2::FullMatch(line, _re_command_wargs,
+                        &command.username, &command.channel, &command.name, &command.args)
+                    || ::RE2::FullMatch(line, _re_command,
+                        &command.username, &command.channel, &command.name)) {
                     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
                         _tracer->StartSpan("command", ::opentelemetry::trace::StartSpanOptions
                         {
@@ -367,9 +345,32 @@ private:
                     _handler.on_command(command);
 
                     }); // post
-                } else if (!reconnect.empty()) {
+                } else if (::RE2::FullMatch(line, _re_message,
+                        &message.username, &message.channel, &message.content)) {
+                    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
+                        _tracer->StartSpan("message", ::opentelemetry::trace::StartSpanOptions
+                        {
+                            {}, {},
+                            operation->GetContext()
+                        })
+                    };
+                    ::boost::asio::post(_h_context, [this, message = ::std::move(message), span]()->void {
+                    ::opentelemetry::trace::Scope scope{
+                        _tracer->StartSpan("on_message", ::opentelemetry::trace::StartSpanOptions
+                        {
+                            {}, {},
+                            span->GetContext()
+                        })
+                    };
+                    _handler.on_message(message);
+
+                    }); // post
+                } else if (::RE2::FullMatch(line, _re_ping,
+                        &ping)) {
+                    pong = true;
+                } else if (::RE2::FullMatch(line, _re_reconnect,
+                        &reconnect)) {
                     disconnect = true;
-                    reconnect = {};
                 }
             }
         }
