@@ -4,23 +4,21 @@
 #include <memory>
 #include <queue>
 #include <stdexcept>
+#include <string_view>
 #include <thread>
 #include <utility>
 
 #include "boost/asio/buffer.hpp"
 #include "boost/asio/signal_set.hpp"
-#include "boost/asio/thread_pool.hpp"
 #include "boost/asio/ssl.hpp"
+#include "boost/asio/thread_pool.hpp"
 #include "boost/beast.hpp"
 #include "boost/beast/ssl.hpp"
-#include "boost/url.hpp"
-#include "boost/xpressive/xpressive.hpp"
-
-#include "opentelemetry/metrics/provider.h"
-#include "opentelemetry/trace/provider.h"
-
 #include "eboost/beast/ensure_success.hpp"
 #include "eboost/beast/metered_rate_policy.hpp"
+#include "opentelemetry/metrics/provider.h"
+#include "opentelemetry/trace/provider.h"
+#include "re2/re2.h"
 
 #include "ai/chat/clients/twitch.hpp"
 
@@ -64,6 +62,7 @@ private:
         , _m_network{ _meter->CreateUInt64Counter("ai_chat_clients_twitch_network") }
         , _host{}
         , _port{}
+        , _path{}
         , _timeout{}
         , _delay{}
         , _authority{}
@@ -74,24 +73,20 @@ private:
         , _q_write{}
         , _buffer{}
         , _next{}
-        , _ping_group{ 1 }
-        , _username_group{ 2 }
-        , _privmsg_group{ 3 }
-        , _channel_group{ 4 }
-        , _command_group{ 5 }
-        , _args_group{ 6 }
-        , _message_group{ 7 }
-        , _notice_group{ 8 }
-        , _reason_group{ 9 }
-        , _reconnect_group{ 10 }
-        , _command_pattern{
-            ((_ping_group = "PING") >> " :tmi.twitch.tv" >> ::boost::xpressive::_ln)
-            | (':' >> (_username_group = +::boost::xpressive::range('a', 'z')) >> '!' >> _username_group >> '@' >> _username_group >> ".tmi.twitch.tv "
-                >> (_privmsg_group = "PRIVMSG") >> " #" >> (_channel_group = +::boost::xpressive::range('a', 'z')) >> " :" >> (
-                    ('!' >> (_command_group = +::boost::xpressive::range('a', 'z')) >> *(' ' >> (_args_group = +~::boost::xpressive::_ln)))
-                    | (_message_group = +~::boost::xpressive::_ln)) >> ::boost::xpressive::_ln)
-            | (":tmi.twitch.tv " >> (_notice_group = "NOTICE") >> " * :" >> (_reason_group = +~::boost::xpressive::_ln) >> ::boost::xpressive::_ln)
-            | (":tmi.twitch.tv " >> (_reconnect_group = "RECONNECT"))
+        , _notice{ R"(:tmi\.twitch\.tv NOTICE \* :(?<notice>[^\r\n]+))" }
+        , _command{
+            R"((?:)"
+                R"(:(?<username>[a-z]+)![a-z]+@[a-z]+\.tmi\.twitch\.tv PRIVMSG #(?<channel>[a-z]+) :)"
+                R"((?:)"
+                    R"((?:!(?<command>[a-z]+)(?: (?<args>[^\r\n]+))?))"
+                    R"(|)"
+                    R"((?<message>[^\r\n]+))"
+                R"())"
+            R"())"
+            R"(|)"
+            R"((?:PING (?<ping>:tmi\.twitch\.tv)))"
+            R"(|)"
+            R"((?:(?<reconnect>:tmi\.twitch\.tv) RECONNECT))"
         } {
     
     };
@@ -109,6 +104,7 @@ private:
     ::opentelemetry::nostd::unique_ptr<::opentelemetry::metrics::Counter<uint64_t>> _m_network;
     ::std::string _host;
     ::std::string _port;
+    ::std::string _path;
     ::std::chrono::milliseconds _timeout;
     ::std::chrono::milliseconds _delay;
     ::std::string _authority;
@@ -119,17 +115,8 @@ private:
     ::std::queue<::std::string> _q_write;
     ::boost::beast::flat_buffer _buffer;
     ::std::chrono::nanoseconds _next;
-    ::boost::xpressive::mark_tag _ping_group;
-    ::boost::xpressive::mark_tag _username_group;
-    ::boost::xpressive::mark_tag _privmsg_group;
-    ::boost::xpressive::mark_tag _channel_group;
-    ::boost::xpressive::mark_tag _command_group;
-    ::boost::xpressive::mark_tag _args_group;
-    ::boost::xpressive::mark_tag _message_group;
-    ::boost::xpressive::mark_tag _notice_group;
-    ::boost::xpressive::mark_tag _reason_group;
-    ::boost::xpressive::mark_tag _reconnect_group;
-    ::boost::xpressive::cregex _command_pattern;
+    ::RE2 _notice;
+    ::RE2 _command;
 
     void bytes_rx(size_t n) {
         _m_network->Add(n,
@@ -221,7 +208,7 @@ private:
             {}, {},
             span->GetContext()
         });
-        _stream.async_handshake(_authority, "/", [this, span, operation](::boost::beast::error_code error_code) mutable ->void {
+        _stream.async_handshake(_authority, _path, [this, span, operation](::boost::beast::error_code error_code) mutable ->void {
         if (error_code == ::boost::beast::errc::operation_canceled) {
             return;
         }
@@ -267,10 +254,13 @@ private:
         }
         ::eboost::beast::ensure_success(error_code);
         ::boost::asio::const_buffer response{ _buffer.cdata() };
-        ::boost::xpressive::cmatch what{};
-        ::boost::xpressive::regex_match(reinterpret_cast<const char*>(response.data()), reinterpret_cast<const char*>(response.data()) + bytes_transferred, what, _command_pattern);
-        if (what[_notice_group]) {
-            throw ::std::invalid_argument{ what[_reason_group] };
+        ::std::string notice{};
+        {
+            ::std::string_view cursor{ reinterpret_cast<const char*>(response.data()), bytes_transferred };
+            if (::RE2::FullMatch(cursor, _notice,
+                    &notice)) {
+                throw ::std::invalid_argument{ notice };
+            }
         }
         _buffer.consume(bytes_transferred);
         operation = _tracer->StartSpan("on_join", ::opentelemetry::trace::StartSpanOptions
@@ -316,44 +306,19 @@ private:
         }
         ::eboost::beast::ensure_success(error_code);
         ::boost::asio::const_buffer response{ _buffer.cdata() };
-        bool reconnect{ false };
-        for (::boost::xpressive::cregex_iterator current{ reinterpret_cast<const char*>(response.data()), reinterpret_cast<const char*>(response.data()) + bytes_transferred, _command_pattern }, end{}; !(current == end); ++current) {
-            const ::boost::xpressive::cmatch& what{ *current };
-            if (what[_ping_group]) {
-                ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-                    _tracer->StartSpan("on_pong", ::opentelemetry::trace::StartSpanOptions
-                    {
-                        {}, {},
-                        operation->GetContext()
-                    })
-                };
-                on_push("PONG :tmi.twitch.tv", span);
-            } else if (what[_privmsg_group]) {
-                if (what[_command_group]) {
-                    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-                        _tracer->StartSpan("command", ::opentelemetry::trace::StartSpanOptions
-                        {
-                            {}, {},
-                            operation->GetContext()
-                        })
-                    };
-                    ::boost::asio::post(_h_context, [this, command = command{
-                        what[_username_group],
-                        what[_command_group],
-                        what[_args_group],
-                        what[_channel_group]
-                    }, span]()->void {
-                    ::opentelemetry::trace::Scope scope{
-                        _tracer->StartSpan("on_command", ::opentelemetry::trace::StartSpanOptions
-                        {
-                            {}, {},
-                            span->GetContext()
-                        })
-                    };
-                    _handler.on_command(command);
-
-                    }); // post
-                } else {
+        bool pong{ false };
+        bool disconnect{ false };
+        {
+            command command{};
+            message message{};
+            ::std::string ping{};
+            ::std::string reconnect{};
+            ::std::string_view cursor{ reinterpret_cast<const char*>(response.data()), bytes_transferred };
+            while (::RE2::Consume(&cursor, _command,
+                    &command.username, &command.channel, &command.name, &command.args,
+                    &message.username, &message.channel, &message.content,
+                    &ping, &reconnect)) {
+                if (!message.content.empty()) {
                     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
                         _tracer->StartSpan("message", ::opentelemetry::trace::StartSpanOptions
                         {
@@ -361,11 +326,7 @@ private:
                             operation->GetContext()
                         })
                     };
-                    ::boost::asio::post(_h_context, [this, message = message{
-                        what[_username_group],
-                        what[_message_group],
-                        what[_channel_group]
-                    }, span]()->void {
+                    ::boost::asio::post(_h_context, [this, message = ::std::move(message), span]()->void {
                     ::opentelemetry::trace::Scope scope{
                         _tracer->StartSpan("on_message", ::opentelemetry::trace::StartSpanOptions
                         {
@@ -376,13 +337,46 @@ private:
                     _handler.on_message(message);
 
                     }); // post
+                } else if (!ping.empty()) {
+                    pong = true;
+                    ping = {};
+                } else if (!command.name.empty()) {
+                    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
+                        _tracer->StartSpan("command", ::opentelemetry::trace::StartSpanOptions
+                        {
+                            {}, {},
+                            operation->GetContext()
+                        })
+                    };
+                    ::boost::asio::post(_h_context, [this, command = ::std::move(command), span]()->void {
+                    ::opentelemetry::trace::Scope scope{
+                        _tracer->StartSpan("on_command", ::opentelemetry::trace::StartSpanOptions
+                        {
+                            {}, {},
+                            span->GetContext()
+                        })
+                    };
+                    _handler.on_command(command);
+
+                    }); // post
+                } else if (!reconnect.empty()) {
+                    disconnect = true;
+                    reconnect = {};
                 }
-            } else if (what[_reconnect_group]) {
-                reconnect = true;
             }
         }
         _buffer.consume(bytes_transferred);
-        if (reconnect) {
+        if (pong) {
+            ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
+                _tracer->StartSpan("on_pong", ::opentelemetry::trace::StartSpanOptions
+                {
+                    {}, {},
+                    operation->GetContext()
+                })
+            };
+            on_push("PONG :tmi.twitch.tv", span);
+        }
+        if (disconnect) {
             ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
                 _tracer->StartSpan("reconnect", ::opentelemetry::trace::StartSpanOptions
                 {
@@ -515,18 +509,14 @@ template<typename Handler>
 twitch<Handler>::twitch(const ::std::string& address, ::std::chrono::milliseconds timeout,
     ::std::chrono::milliseconds delay, size_t dop)
     : _channel{ new connection{ dop, *this } } {
-    ::boost::system::result<::boost::urls::url_view> result{ ::boost::urls::parse_uri(address) };
-    if (!result.has_value()) {
+    ::RE2 uri{ R"(wss:\/\/(?<host>[^:\/]+)(?::(?<port>\d+))?(?<path>\/.*))" };
+    if (!::RE2::FullMatch(address, uri,
+            &_channel->_host, &_channel->_port, &_channel->_path)) {
         throw ::std::invalid_argument{ "invalid uri" };
     }
-    ::boost::urls::url_view url{ result.value() };
-    if (!(url.scheme() == "wss")) {
-        throw ::std::invalid_argument{ "scheme is not supported" };
+    if (_channel->_port.empty()) {
+        _channel->_port = "443";
     }
-    _channel->_host = url.host();
-    _channel->_port = url.has_port()
-        ? url.port()
-        : "443";
     _channel->_timeout = timeout;
     _channel->_delay = delay;
     _channel->on_init();

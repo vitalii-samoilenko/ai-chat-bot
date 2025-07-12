@@ -5,7 +5,6 @@
 
 #include "boost/scope/scope_fail.hpp"
 #include "boost/scope/scope_success.hpp"
-
 #include "sqlite3.h"
 
 #include "ai/chat/histories/sqlite.hpp"

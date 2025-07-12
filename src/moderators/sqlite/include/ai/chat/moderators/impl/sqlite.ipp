@@ -1,25 +1,28 @@
 #ifndef AI_CHAT_MODERATORS_SQLITE_IPP
 #define AI_CHAT_MODERATORS_SQLITE_IPP
 
-#include <stdexcept>
 #include <limits>
-#include <regex>
+#include <stdexcept>
+#include <string_view>
 
 #include "boost/scope/scope_fail.hpp"
 #include "boost/scope/scope_success.hpp"
-
+#include "re2/re2.h"
 #include "sqlite3.h"
 
 #include "ai/chat/moderators/sqlite.hpp"
 
 extern "C" {
     void sqlite3_regexp(::sqlite3_context* context, int argc, ::sqlite3_value* argv[]) {
-        const char* pattern_begin{ reinterpret_cast<const char*>(::sqlite3_value_text(argv[0])) };
-        const char* pattern_end{ pattern_begin + ::sqlite3_value_bytes(argv[0]) };
-        const char* value_begin{ reinterpret_cast<const char*>(::sqlite3_value_text(argv[1])) };
-        const char* value_end{ value_begin + ::sqlite3_value_bytes(argv[1]) };
-        ::std::regex pattern{ pattern_begin, pattern_end };
-        ::sqlite3_result_int(context, ::std::regex_match(value_begin, value_end, pattern));
+        ::std::string_view pattern{ 
+            reinterpret_cast<const char*>(::sqlite3_value_text(argv[0])),
+            static_cast<size_t>(::sqlite3_value_bytes(argv[0]))
+        };
+        ::std::string_view value{
+            reinterpret_cast<const char*>(::sqlite3_value_text(argv[1])),
+            static_cast<size_t>(::sqlite3_value_bytes(argv[1]))
+        };
+        ::sqlite3_result_int(context, ::RE2::PartialMatch(value, pattern));
     };
 };
 

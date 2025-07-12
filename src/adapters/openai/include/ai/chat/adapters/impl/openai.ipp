@@ -9,14 +9,12 @@
 #include "boost/asio/buffer.hpp"
 #include "boost/asio/ssl.hpp"
 #include "boost/beast.hpp"
-#include "boost/url.hpp"
-
-#include "opentelemetry/metrics/provider.h"
-#include "opentelemetry/trace/provider.h"
-
 #include "eboost/beast/ensure_success.hpp"
 #include "eboost/beast/http/json_body.hpp"
 #include "eboost/beast/metered_rate_policy.hpp"
+#include "opentelemetry/metrics/provider.h"
+#include "opentelemetry/trace/provider.h"
+#include "re2/re2.h"
 
 #include "ai/chat/adapters/openai.hpp"
 
@@ -198,19 +196,14 @@ private:
 openai::openai(const ::std::string& address, ::std::chrono::milliseconds timeout,
     ::std::chrono::milliseconds delay)
     : _context{ new connection{} } {
-    ::boost::system::result<::boost::urls::url_view> result{ ::boost::urls::parse_uri(address) };
-    if (!result.has_value()) {
+    ::RE2 uri{ R"(https:\/\/(?<host>[^:\/]+)(?::(?<port>\d+))?(?<path>\/.*))" };
+    if (!::RE2::FullMatch(address, uri,
+            &_context->_host, &_context->_port, &_context->_path)) {
         throw ::std::invalid_argument{ "invalid uri" };
     }
-    ::boost::urls::url_view url{ result.value() };
-    if (!(url.scheme() == "https")) {
-        throw ::std::invalid_argument{ "scheme is not supported" };
+    if (_context->_port.empty()) {
+        _context->_port = "443";
     }
-    _context->_host = url.host();
-    _context->_port = url.has_port()
-        ? url.port()
-        : "443";
-    _context->_path = url.path();
     _context->_timeout = timeout;
     _context->_delay = delay;
     _context->on_init();

@@ -7,25 +7,24 @@ find_package(EBoost CONFIG REQUIRED)
 find_package(opentelemetry-cpp REQUIRED)
 
 add_executable(ai-chat-hosts-console main.cpp)
-add_executable(AI::Chat::Hosts::Console ALIAS ai-chat-hosts-console)
+target_compile_features(ai-chat-hosts-console PRIVATE cxx_std_17)
 target_link_libraries(ai-chat-hosts-console
   PRIVATE
-    Boost::json
-    Boost::scope
-    EBoost::eboost
+    AI::Chat::Adapters::OpenAI
+    AI::Chat::Binders::Twitch
+    AI::Chat::Binders::OpenAI
     AI::Chat::Clients::Twitch
     AI::Chat::Clients::Observable
-    AI::Chat::Adapters::OpenAI
+    AI::Chat::Commands
     AI::Chat::Histories::SQLite
     AI::Chat::Histories::Observable
     AI::Chat::Moderators::SQLite
-    AI::Chat::Binders::Twitch
-    AI::Chat::Binders::OpenAI
-    AI::Chat::Commands
+    Boost::json
+    Boost::scope
+    EBoost::eboost
     opentelemetry-cpp::otlp_grpc_exporter
     opentelemetry-cpp::otlp_grpc_metrics_exporter
     opentelemetry-cpp::otlp_grpc_log_record_exporter
 )
-target_compile_features(ai-chat-hosts-console PRIVATE cxx_std_17)
-
 install(TARGETS ai-chat-hosts-console)
+add_executable(AI::Chat::Hosts::Console ALIAS ai-chat-hosts-console)

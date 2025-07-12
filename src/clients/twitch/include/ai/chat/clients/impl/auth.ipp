@@ -8,15 +8,13 @@
 #include "boost/asio/buffer.hpp"
 #include "boost/asio/ssl.hpp"
 #include "boost/beast.hpp"
-#include "boost/url.hpp"
-
-#include "opentelemetry/metrics/provider.h"
-#include "opentelemetry/trace/provider.h"
-
 #include "eboost/beast/ensure_success.hpp"
 #include "eboost/beast/http/form_body.hpp"
 #include "eboost/beast/http/json_body.hpp"
 #include "eboost/beast/metered_rate_policy.hpp"
+#include "opentelemetry/metrics/provider.h"
+#include "opentelemetry/trace/provider.h"
+#include "re2/re2.h"
 
 #include "ai/chat/clients/auth.hpp"
 
@@ -179,19 +177,14 @@ private:
 
 auth::auth(const ::std::string& address, ::std::chrono::milliseconds timeout)
     : _service{ new connection{} } {
-    ::boost::system::result<::boost::urls::url_view> result{ ::boost::urls::parse_uri(address) };
-    if (!result.has_value()) {
+    ::RE2 uri{ R"(https:\/\/(?<host>[^:\/]+)(?::(?<port>\d+))?(?<path>\/.*))" };
+    if (!::RE2::FullMatch(address, uri,
+            &_service->_host, &_service->_port, &_service->_path)) {
         throw ::std::invalid_argument{ "invalid uri" };
     }
-    ::boost::urls::url_view url{ result.value() };
-    if (!(url.scheme() == "https")) {
-        throw ::std::invalid_argument{ "scheme is not supported" };
+    if (_service->_port.empty()) {
+        _service->_port = "443";
     }
-    _service->_host = url.host();
-    _service->_port = url.has_port()
-        ? url.port()
-        : "443";
-    _service->_path = url.path();
     _service->_timeout = timeout;
     _service->on_init();
 };
