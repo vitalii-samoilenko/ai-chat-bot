@@ -24,7 +24,7 @@ usage get_usage() {
     static double nanopt{ 1000000000. / g_ticksps };
     usage usage{};
     ::tms times{};
-    if (!(nanoseconds < 0) && !(::times(&times) == (time_t)-1)) {
+    if (!(nanopt < 0) && !(::times(&times) == (time_t)-1)) {
         usage.system = static_cast<size_t>((times.tms_stime + times.tms_cstime) * nanopt);
         usage.user = static_cast<size_t>((times.tms_utime + times.tms_cutime) * nanopt);
     }
