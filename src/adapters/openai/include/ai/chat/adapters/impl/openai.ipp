@@ -267,12 +267,6 @@ private:
             span->GetContext()
         });
         _stream.async_shutdown([this, span, operation](::boost::beast::error_code error_code) mutable ->void {
-        operation = nullptr;
-        _stream.~stream();
-        new(&_stream) ::boost::asio::ssl::stream<::eboost::beast::metered_tcp_stream<connection>>{
-            ::eboost::beast::metered_tcp_stream<connection>{ ::eboost::beast::metered_rate_policy<connection>{ *this }, _io_context },
-            _ssl_context
-        };
         if (error_code == ::boost::asio::ssl::error::stream_truncated) {
             return;
         }
@@ -285,6 +279,13 @@ private:
         }); // TCP connect
         }); // resolve
     };
+    void _stream_reset() {
+        _stream.~stream();
+        new(&_stream) ::boost::asio::ssl::stream<::eboost::beast::metered_tcp_stream<connection>>{
+            ::eboost::beast::metered_tcp_stream<connection>{ ::eboost::beast::metered_rate_policy<connection>{ *this }, _io_context },
+            _ssl_context
+        };
+    }
 };
 
 message openai::iterator::operator*() {
@@ -374,6 +375,7 @@ openai::iterator openai::complete(::std::string_view model, ::std::string_view k
         span);
     _context->_io_context.run();
     _context->_io_context.restart();
+    _context->_stream_reset();
     completion_result result{ ::boost::json::value_to<completion_result>(response.body()) };
     _context->_m_context->Record(static_cast<int64_t>(result.usage.completion_tokens), {
         {"type", "completion"}
