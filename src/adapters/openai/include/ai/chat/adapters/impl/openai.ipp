@@ -298,9 +298,8 @@ openai::iterator & openai::iterator::operator++() {
     ++_pos;
     return *this;
 };
-openai::iterator & openai::iterator::operator+=(size_t rhs) {
-    _pos += rhs;
-    return *this;
+openai::iterator openai::iterator::operator+(size_t rhs) {
+    return { _context, _pos + rhs };
 };
 bool openai::iterator::operator==(iterator const &rhs) const {
     return _context == rhs._context

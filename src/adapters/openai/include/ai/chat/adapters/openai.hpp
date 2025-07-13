@@ -46,7 +46,7 @@ public:
 
         message operator*();
         iterator & operator++();
-        iterator & operator+=(size_t rhs);
+        iterator operator+(size_t rhs);
         bool operator==(iterator const &rhs) const;
 
     private:
