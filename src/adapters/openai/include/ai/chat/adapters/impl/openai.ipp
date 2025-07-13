@@ -9,6 +9,7 @@
 
 #include "boost/asio/buffer.hpp"
 #include "boost/asio/ssl.hpp"
+#include "boost/scope/scope_exit.hpp"
 #include "eboost/beast/ensure_success.hpp"
 #include "eboost/beast/http/json_body.hpp"
 #include "eboost/beast/metered_rate_policy.hpp"
@@ -196,11 +197,11 @@ private:
     };
 
     void on_init() {
+        _t_completions = _host + "chat/completions";
         _ssl_context.set_verify_mode(::boost::asio::ssl::verify_none);
         ::boost::json::object &object{ _completion.as_object() };
         object.emplace("model", ::boost::json::kind::string);
         object.emplace("messages", ::boost::json::kind::array);
-        _t_completions = _host + "chat/completions";
     };
     template<typename Request, typename Response>
     void on_send(Request &request, Response &response,
@@ -371,11 +372,13 @@ openai::iterator openai::complete(::std::string_view model, ::std::string_view k
     ::std::string bearer{ "Bearer " };
     request.set(::boost::beast::http::field::authorization, bearer.append(key));
     ::boost::beast::http::response<::eboost::beast::http::json_body> response{};
+    auto on_exit = ::boost::scope::make_scope_exit([this]()->void {
+        _context->_io_context.restart();
+        _context->_stream_reset();
+    });
     _context->on_send(request, response,
         span);
     _context->_io_context.run();
-    _context->_io_context.restart();
-    _context->_stream_reset();
     completion_result result{ ::boost::json::value_to<completion_result>(response.body()) };
     _context->_m_context->Record(static_cast<int64_t>(result.usage.completion_tokens), {
         {"type", "completion"}
