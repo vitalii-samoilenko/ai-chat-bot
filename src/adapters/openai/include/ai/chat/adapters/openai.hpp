@@ -2,8 +2,10 @@
 #define AI_CHAT_ADAPTERS_OPENAI_HPP
 
 #include <chrono>
-#include <memory>
 #include <string_view>
+
+#include "detail/connection.hpp"
+#include "detail/scope.hpp"
 
 namespace ai {
 namespace chat {
@@ -19,44 +21,43 @@ struct message {
     ::std::string_view content;
 };
 
-class openai {
-private:
-    class connection;
+class openai;
 
+class iterator {
+public:
+    iterator() = delete;
+    iterator(iterator const &other);
+    iterator(iterator &&other);
+
+    ~iterator() = default;
+
+    iterator & operator=(iterator const &other);
+    iterator & operator=(iterator &&other);
+
+    message operator*();
+    iterator & operator++();
+    iterator operator+(size_t rhs);
+    bool operator==(iterator const &rhs) const;
+
+private:
+    friend openai;
+
+    template<typename... Args>
+    explicit iterator(Args &&...args);
+
+    detail::scope _target;
+};
+
+class openai {
 public:
     openai() = delete;
-    openai(openai const &) = delete;
-    openai(openai &&) = delete;
+    openai(openai const &other) = delete;
+    openai(openai &&other) = delete;
 
     ~openai() = default;
 
-    openai & operator=(openai const &) = delete;
-    openai & operator=(openai &&) = delete;
-
-    class iterator {
-    public:
-        iterator() = delete;
-        iterator(iterator const &) = default;
-        iterator(iterator &&) = default;
-
-        ~iterator() = default;
-
-        iterator & operator=(iterator const &) = delete;
-        iterator & operator=(iterator &&) = delete;
-
-        message operator*();
-        iterator & operator++();
-        iterator operator+(size_t rhs);
-        bool operator==(iterator const &rhs) const;
-
-    private:
-        friend openai;
-
-        iterator(connection *context, size_t pos);
-
-        connection *_context;
-        size_t _pos;
-    };
+    openai & operator=(openai const &other) = delete;
+    openai & operator=(openai &&other) = delete;
 
     openai(::std::string_view address, ::std::chrono::milliseconds timeout,
         ::std::chrono::milliseconds delay, size_t limit);
@@ -71,7 +72,7 @@ public:
     iterator erase(iterator first, iterator last);
 
 private:
-    ::std::unique_ptr<connection> _context;
+    detail::connection _context;
 };
 
 } // adapters
