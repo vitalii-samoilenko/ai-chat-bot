@@ -32,13 +32,13 @@ namespace clients {
 class auth {
 public:
     auth() = delete;
-    auth(auth const &) = delete;
-    auth(auth &&) = delete;
+    auth(auth const &other) = delete;
+    auth(auth &&other) = delete;
 
     ~auth() = default;
 
-    auth & operator=(auth const &) = delete;
-    auth & operator=(auth &&) = delete;
+    auth & operator=(auth const &other) = delete;
+    auth & operator=(auth &&other) = delete;
 
     auth(::std::string_view address, ::std::chrono::milliseconds timeout);
 

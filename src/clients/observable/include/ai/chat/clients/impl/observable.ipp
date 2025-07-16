@@ -4,8 +4,6 @@
 #include <functional>
 #include <utility>
 
-#include "ai/chat/clients/observable.hpp"
-
 namespace ai {
 namespace chat {
 namespace clients {
@@ -14,51 +12,42 @@ template<template <typename> class Client>
 class observable<Client>::subscription {
 private:
     friend observable;
-    friend slot;
+    friend slot<Client>;
 
-    ::std::function<void(const message&)> on_message;
-    ::std::function<void(const command&)> on_command;
+    ::std::function<void(message)> on_message;
+    ::std::function<void(command)> on_command;
 };
 
 template<template <typename> class Client>
-observable<Client>::slot::slot(slot&& other) {
-    _target = other._target;
+slot<Client>::slot(slot &&other) {
     _observer = other._observer;
-    other._target = nullptr;
+    _target = other._target;
     other._observer = nullptr;
+    other._target = nullptr;
 };
 
 template<template <typename> class Client>
-observable<Client>::slot::~slot() {
+slot<Client>::~slot() {
     if (_target) {
         _target->_subscriptions.erase(_observer);
     }
 };
 
 template<template <typename> class Client>
-typename observable<Client>::slot& observable<Client>::slot::operator=(slot&& other) {
-    _target = other._target;
-    _observer = other._observer;
-    other._target = nullptr;
-    other._observer = nullptr;
-    return *this;
-};
-
-template<template <typename> class Client>
 template<typename Action>
-void observable<Client>::slot::on_message(Action&& callback) {
+void slot<Client>::on_message(Action &&callback) {
     _target->_subscriptions[_observer]
         .on_message = ::std::forward<Action>(callback);
 };
 template<template <typename> class Client>
 template<typename Action>
-void observable<Client>::slot::on_command(Action&& callback) {
+void slot<Client>::on_command(Action &&callback) {
     _target->_subscriptions[_observer]
         .on_command = ::std::forward<Action>(callback);
 };
 
 template<template <typename> class Client>
-observable<Client>::slot::slot(const ::std::type_info* observer, observable* target)
+slot<Client>::slot(::std::type_info const *observer, observable<Client> *target)
     : _observer{ observer }
     , _target{ target } {
 
@@ -66,7 +55,7 @@ observable<Client>::slot::slot(const ::std::type_info* observer, observable* tar
 
 template<template <typename> class Client>
 template<typename... Args>
-observable<Client>::observable(Args&& ...args)
+observable<Client>::observable(Args &&...args)
     : Client<observable>( ::std::forward<Args>(args)... )
     , _subscriptions{} {
 
@@ -74,21 +63,21 @@ observable<Client>::observable(Args&& ...args)
 
 template<template <typename> class Client>
 template<typename Observer>
-typename observable<Client>::slot observable<Client>::subscribe() {
-    return { &typeid(Observer), this };
+slot<Client> observable<Client>::subscribe() {
+    return slot<Client>{ &typeid(Observer), this };
 };
 
 template<template <typename> class Client>
-void observable<Client>::on_message(const message& message) const {
-    for (const auto& observer_n_subscription : _subscriptions) {
-        const subscription& subscription{ observer_n_subscription.second };
+void observable<Client>::on_message(message const &message) const {
+    for (auto const &observer_n_subscription : _subscriptions) {
+        subscription const &subscription{ observer_n_subscription.second };
         subscription.on_message(message);
     }
 };
 template<template <typename> class Client>
-void observable<Client>::on_command(const command& command) const {
-    for (const auto& observer_n_subscription : _subscriptions) {
-        const subscription& subscription{ observer_n_subscription.second };
+void observable<Client>::on_command(command const &command) const {
+    for (auto const &observer_n_subscription : _subscriptions) {
+        subscription const &subscription{ observer_n_subscription.second };
         subscription.on_command(command);
     }
 };

@@ -1,7 +1,7 @@
 #ifndef AI_CHAT_COMMANDS_JOIN_HPP
 #define AI_CHAT_COMMANDS_JOIN_HPP
 
-#include <string>
+#include <string_view>
 
 namespace ai {
 namespace chat {
@@ -13,20 +13,20 @@ public:
     static constexpr char name[]{ "join" };
 
     join() = delete;
-    join(const join&) = delete;
-    join(join&&) = delete;
+    join(join const &other) = delete;
+    join(join &&other) = delete;
 
     ~join() = default;
 
-    join& operator=(const join&) = delete;
-    join& operator=(join&&) = delete;
+    join & operator=(join const &other) = delete;
+    join & operator=(join &&other) = delete;
 
-    explicit join(Client& client);
+    explicit join(Client &client);
 
-    ::std::string execute(const ::std::string& args);
+    ::std::string_view execute(::std::string_view args);
 
 private:
-    Client& _client;
+    Client &_client;
 };
 
 } // commands

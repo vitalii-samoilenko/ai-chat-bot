@@ -3,22 +3,20 @@
 
 #include <utility>
 
-#include "ai/chat/commands/executor.hpp"
-
 namespace ai {
 namespace chat {
 namespace commands {
 
 template<typename... Commands>
 template<typename... Args>
-executor<Commands...>::executor(Args&& ...args)
+executor<Commands...>::executor(Args &&...args)
     : _commands{ ::std::forward<Args>(args)... } {
 
 };
 
 template<typename... Commands>
 template<size_t I>
-::std::string executor<Commands...>::execute(const ::std::string& name, const ::std::string& args) {
+::std::string_view executor<Commands...>::execute(::std::string_view name, ::std::string_view args) {
     if constexpr (!(I < ::std::tuple_size_v<decltype(_commands)>)) {
         return {};
     } else {

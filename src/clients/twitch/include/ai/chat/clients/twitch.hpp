@@ -37,13 +37,13 @@ template<typename Handler>
 class twitch {
 public:
     twitch() = delete;
-    twitch(twitch const &) = delete;
-    twitch(twitch &&) = delete;
+    twitch(twitch const &other) = delete;
+    twitch(twitch &&other) = delete;
 
     ~twitch() = default;
 
-    twitch & operator=(twitch const &) = delete;
-    twitch & operator=(twitch &&) = delete;
+    twitch & operator=(twitch const &other) = delete;
+    twitch & operator=(twitch &&other) = delete;
 
     twitch(::std::string_view address, ::std::chrono::milliseconds timeout,
         ::std::chrono::milliseconds delay, size_t dop);
@@ -60,8 +60,8 @@ private:
 
     detail::connection<Handler> _channel;
 
-    void on_message(message &message) const;
-    void on_command(command &command) const;
+    void on_message(message const &message) const;
+    void on_command(command const &command) const;
 };
 
 } // clients

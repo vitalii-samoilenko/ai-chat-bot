@@ -24,13 +24,13 @@ namespace moderators {
 class sqlite {
 public:
     sqlite() = delete;
-    sqlite(sqlite const &) = delete;
-    sqlite(sqlite &&) = delete;
+    sqlite(sqlite const &other) = delete;
+    sqlite(sqlite &&other) = delete;
 
     ~sqlite() = default;
 
-    sqlite& operator=(sqlite const &) = delete;
-    sqlite& operator=(sqlite &&) = delete;
+    sqlite& operator=(sqlite const &other) = delete;
+    sqlite& operator=(sqlite &&other) = delete;
 
     sqlite(::std::string_view filename, size_t length);
 

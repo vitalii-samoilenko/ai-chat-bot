@@ -104,11 +104,11 @@ void twitch<Handler>::attach() {
 };
 
 template<typename Handler>
-void twitch<Handler>::on_message(message &message) const {
+void twitch<Handler>::on_message(message const &message) const {
     static_cast<const Handler *>(this)->on_message(message);
 };
 template<typename Handler>
-void twitch<Handler>::on_command(command &command) const {
+void twitch<Handler>::on_command(command const &command) const {
     static_cast<const Handler *>(this)->on_command(command);
 };
 
