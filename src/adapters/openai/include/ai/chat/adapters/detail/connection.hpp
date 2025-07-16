@@ -14,10 +14,6 @@
 namespace ai {
 namespace chat {
 namespace adapters {
-
-class iterator;
-class openai;
-
 namespace detail {
 
 class connection {

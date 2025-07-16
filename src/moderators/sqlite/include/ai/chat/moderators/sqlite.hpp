@@ -4,6 +4,7 @@
 #include <chrono>
 #include <memory>
 #include <string>
+#include <string_view>
 
 namespace ai {
 namespace chat {
@@ -26,7 +27,7 @@ public:
 
     iterator is_moderator(const ::std::string& username);
     iterator is_allowed(const ::std::string& username1, const ::std::string& username2);
-    iterator is_filtered(const ::std::string& content);
+    iterator is_filtered(::std::string_view content);
 
     iterator mod(const ::std::string& username);
     iterator unmod(const ::std::string& username);

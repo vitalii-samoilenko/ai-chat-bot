@@ -6,10 +6,6 @@
 namespace ai {
 namespace chat {
 namespace adapters {
-
-class iterator;
-class openai;
-
 namespace detail {
 
 class scope {
@@ -26,9 +22,9 @@ private:
     scope & operator=(scope const &other) = delete;
     scope & operator=(scope &&other) = delete;
 
-    explicit scope(::boost::json::array::const_iterator const &pos);
+    explicit scope(::boost::json::array::iterator const &pos);
 
-    ::boost::json::array::const_iterator _pos;
+    ::boost::json::array::iterator _pos;
 };
 
 } // detail

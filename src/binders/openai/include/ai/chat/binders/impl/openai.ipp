@@ -36,44 +36,62 @@ typename openai<History>::binding openai<History>::bind(::ai::chat::histories::o
         const char USERNAME[]{ "{username}" };
         const char CONTENT[]{ "{content}" };
         if (p_username_tag) {
-            ::ai::chat::adapters::message adapter_message{ ::ai::chat::adapters::role::user, pattern };
+            ::std::string content{ pattern };
             {
-                size_t pos{ adapter_message.content.find(USERNAME) };
+                size_t pos{ content.find(USERNAME) };
                 if (!(pos == ::std::string::npos)) {
-                    adapter_message.content.replace(pos, ::std::size(USERNAME) - 1, p_username_tag->value);
+                    content.replace(pos, ::std::size(USERNAME) - 1, p_username_tag->value);
                 }
             }
             {
-                size_t pos{ adapter_message.content.find(CONTENT) };
+                size_t pos{ content.find(CONTENT) };
                 if (!(pos == ::std::string::npos)) {
-                    adapter_message.content.replace(pos, ::std::size(CONTENT) - 1, history_message.content);
+                    content.replace(pos, ::std::size(CONTENT) - 1, history_message.content);
                 }
             }
-            adapter.insert(adapter_message);
+            adapter.push_back(::ai::chat::adapters::message{
+                ::ai::chat::adapters::role::user,
+                content
+            });
         } else {
-            ::ai::chat::adapters::message adapter_message{ ::ai::chat::adapters::role::system, history_message.content };
-            adapter.insert(adapter_message);
+            adapter.push_back(::ai::chat::adapters::message{
+                ::ai::chat::adapters::role::system,
+                history_message.content
+            });
             return;
         }
-        ::ai::chat::adapters::message adapter_completion{ adapter.complete(model, key) };
+        ::std::string content{};
+        ::ai::chat::adapters::iterator adapter_pos{ adapter.complete(model, key) };
+        if (adapter_pos == adapter.end()) {
+            throw ::std::exception{};
+        }
+        ::ai::chat::adapters::message adapter_completion{ *adapter_pos };
         for (size_t left{ retries }; moderator.is_filtered(adapter_completion.content); --left) {
+            adapter.pop_back();
             if (left) {
-                adapter_completion = adapter.complete(model, key);
+                adapter_pos = adapter.complete(model, key);
+                if (adapter_pos == adapter.end()) {
+                    throw ::std::exception{};
+                }
+                adapter_completion = *adapter_pos;
             } else {
-                adapter_completion.content = apology;
+                content = apology;
                 {
-                    size_t pos{ adapter_completion.content.find(USERNAME) };
+                    size_t pos{ content.find(USERNAME) };
                     if (!(pos == ::std::string::npos)) {
-                        adapter_completion.content.replace(pos, ::std::size(USERNAME) - 1, p_username_tag->value);
+                        content.replace(pos, ::std::size(USERNAME) - 1, p_username_tag->value);
                     }
                 }
                 break;
             }
         }
-        adapter.insert(adapter_completion);
+        adapter.push_back(::ai::chat::adapters::message{
+            ::ai::chat::adapters::role::assistant,
+            content
+        });
         ::ai::chat::histories::message history_completion{ 
             {},
-            adapter_completion.content,
+            content,
             p_channel_tag
                 ? ::std::initializer_list<::ai::chat::histories::tag>{
                     {"user.name", botname},

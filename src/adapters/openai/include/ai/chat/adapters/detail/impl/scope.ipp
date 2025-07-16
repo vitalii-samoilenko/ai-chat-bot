@@ -8,7 +8,7 @@ namespace chat {
 namespace adapters {
 namespace detail {
 
-scope::scope(::boost::json::array::const_iterator const &pos)
+scope::scope(::boost::json::array::iterator const &pos)
     : _pos{ pos } {
 
 };

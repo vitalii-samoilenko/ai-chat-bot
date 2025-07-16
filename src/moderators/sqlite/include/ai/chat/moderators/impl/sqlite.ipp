@@ -311,11 +311,11 @@ private:
             ::sqlite3_reset(_is_allowed2));
         return count;
     };
-    iterator on_is_filtered(const ::std::string& content) {
+    iterator on_is_filtered(::std::string_view content) {
         ensure_success(
             ::sqlite3_bind_text(_is_filtered,
                 ::sqlite3_bind_parameter_index(_is_filtered, "@CONTENT"),
-                content.c_str(),
+                content.data(),
                 static_cast<int>(content.size()),
                 SQLITE_STATIC));
         ensure_success(
@@ -426,7 +426,7 @@ sqlite::iterator sqlite::is_allowed(const ::std::string& username1, const ::std:
     return _controller->on_is_allowed(username1, username2, connection::role::interlocutor,
         ::std::chrono::duration_cast<::std::chrono::seconds>(now.time_since_epoch()).count());
 };
-sqlite::iterator sqlite::is_filtered(const ::std::string& content) {
+sqlite::iterator sqlite::is_filtered(::std::string_view content) {
     return _controller->on_is_filtered(content);
 };
 

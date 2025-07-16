@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.25.1)
 project(third_party VERSION 0.1)
 
 set(CMAKE_CXX_STANDARD 17)
+
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
   set(PLATFORM_PREFIX x32)
 else()
@@ -745,4 +746,48 @@ block()
   endif()
   set(PC_SQLite3_INCLUDE_DIRS ${SQLITE_INCLUDE_DIR} CACHE INTERNAL "SQLite include directory")
   set(PC_SQLite3_LIBRARY_DIRS ${SQLITE_LIBRARY_DIR} CACHE INTERNAL "SQLite library directory")
+endblock()
+
+block()
+  set(ESQLITE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/esqlite)
+  set(ESQLITE_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/esqlite)
+  if(NOT EXISTS ${ESQLITE_BINARY_DIR}/configure.done)
+    execute_process(COMMAND cmake
+        -DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+        -B ${ESQLITE_BINARY_DIR} -S .
+      WORKING_DIRECTORY ${ESQLITE_SOURCE_DIR}
+      COMMAND_ERROR_IS_FATAL ANY
+    )
+    execute_process(COMMAND cmake
+        -E touch configure.done
+      WORKING_DIRECTORY ${ESQLITE_BINARY_DIR}
+      COMMAND_ERROR_IS_FATAL ANY
+    )
+  endif()
+  if(NOT EXISTS ${ESQLITE_BINARY_DIR}/build.done)
+    execute_process(COMMAND cmake
+        --build . --config ${CMAKE_BUILD_TYPE}
+      WORKING_DIRECTORY ${ESQLITE_BINARY_DIR}
+      COMMAND_ERROR_IS_FATAL ANY
+    )
+    execute_process(COMMAND cmake
+        -E touch build.done
+      WORKING_DIRECTORY ${ESQLITE_BINARY_DIR}
+      COMMAND_ERROR_IS_FATAL ANY
+    )
+  endif()
+  if(NOT EXISTS ${ESQLITE_BINARY_DIR}/install.done)
+    execute_process(COMMAND cmake
+        --install . --config ${CMAKE_BUILD_TYPE} --prefix ${CMAKE_INSTALL_PREFIX}
+      WORKING_DIRECTORY ${ESQLITE_BINARY_DIR}
+      COMMAND_ERROR_IS_FATAL ANY
+    )
+    execute_process(COMMAND cmake
+        -E touch install.done
+      WORKING_DIRECTORY ${ESQLITE_BINARY_DIR}
+      COMMAND_ERROR_IS_FATAL ANY
+    )
+  endif()
 endblock()

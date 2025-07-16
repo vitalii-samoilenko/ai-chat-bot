@@ -3,6 +3,7 @@
 #include <iostream>
 #include <exception>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -59,9 +60,10 @@ size_t retries{};
 ::std::string client_address{};
 ::std::chrono::milliseconds client_timeout{};
 ::std::chrono::milliseconds client_delay{};
-::std::string adapter_address{};
+::std::string_view adapter_address{};
 ::std::chrono::milliseconds adapter_timeout{};
 ::std::chrono::milliseconds adapter_delay{};
+size_t adapter_limit{};
 ::std::string adapter_model{};
 ::std::string adapter_key{};
 ::std::string history_filename{};
@@ -72,7 +74,7 @@ void init_config(const ::std::string& filename) {
     if (!input.is_open()) {
         throw ::std::invalid_argument{ "configuration not found" };
     }
-    ::boost::json::monotonic_resource buffer{};
+    static ::boost::json::monotonic_resource buffer{};
     ::boost::json::stream_parser parser{ &buffer };
     ::std::string line{};
     while (::std::getline(input, line)) {
@@ -98,6 +100,7 @@ void init_config(const ::std::string& filename) {
     adapter_address = adapter.at("address").as_string();
     adapter_timeout = ::std::chrono::milliseconds{ adapter.at("timeout").as_int64() };
     adapter_delay = ::std::chrono::milliseconds{ adapter.at("delay").as_int64() };
+    adapter_limit = static_cast<size_t>(adapter.at("limit").as_int64());
     adapter_model = adapter.at("model").as_string();
     adapter_key = adapter.at("key").as_string();
     moderator_filename = moderator.at("filename").as_string();
@@ -240,7 +243,7 @@ int main(int argc, char* argv[]) {
 
         ::ai::chat::clients::auth auth{ auth_address, auth_timeout };
         ::ai::chat::clients::observable<::ai::chat::clients::twitch> client{ client_address, client_timeout, client_delay, 0 };
-        ::ai::chat::adapters::openai adapter{ adapter_address, adapter_timeout, adapter_delay };
+        ::ai::chat::adapters::openai adapter{ adapter_address, adapter_timeout, adapter_delay, adapter_limit };
         ::ai::chat::histories::observable<::ai::chat::histories::sqlite> history{ history_filename };
         ::ai::chat::moderators::sqlite moderator{ moderator_filename, moderator_length };
         ::ai::chat::commands::executor<
@@ -269,7 +272,7 @@ int main(int argc, char* argv[]) {
                         : ::ai::chat::adapters::role::user;
                 }
             }
-            adapter.insert(adapter_message);
+            adapter.push_back(adapter_message);
         }
 
         auto client_binding = ::ai::chat::binders::twitch<::ai::chat::histories::sqlite>::bind(history, client,

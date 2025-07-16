@@ -123,22 +123,9 @@ completion_result tag_invoke(::boost::json::value_to_tag<completion_result>, ::b
     };
 };
 
-iterator::iterator(iterator const &other)
-    : _target{ other._target._pos } {
-
-};
 iterator::iterator(iterator &&other)
     : _target{ ::std::move(other._target._pos) } {
 
-};
-
-iterator & iterator::operator=(iterator const &other) {
-    _target._pos = other._target._pos;
-    return *this;
-};
-iterator & iterator::operator=(iterator &&other) {
-    _target._pos = ::std::move(other._target._pos);
-    return *this;
 };
 
 message iterator::operator*() {
@@ -148,11 +135,15 @@ iterator & iterator::operator++() {
     ++(_target._pos);
     return *this;
 };
-iterator iterator::operator+(size_t rhs) {
-    return iterator{ (_target._pos) + rhs };
-};
 bool iterator::operator==(iterator const &rhs) const {
     return _target._pos == rhs._target._pos;
+};
+
+iterator iterator::operator+(ptrdiff_t rhs) {
+    return iterator{ (_target._pos) + rhs };
+};
+ptrdiff_t iterator::operator-(iterator rhs) const {
+    return _target._pos - rhs._target._pos;
 };
 
 template<typename... Args>
@@ -181,22 +172,22 @@ openai::openai(::std::string_view address, ::std::chrono::milliseconds timeout,
 iterator openai::begin() {
     ::boost::json::value &messages{ _context._completion.at("messages") };
     ::boost::json::array &array{ messages.as_array() };
-    return iterator{ array.begin() };
+    return iterator{ const_cast<::boost::json::array::iterator>(array.begin()) };
 };
 iterator openai::end() {
     ::boost::json::value const &messages{ _context._completion.at("messages") };
     ::boost::json::array const &array{ messages.as_array() };
-    return iterator{ array.end() };
+    return iterator{ const_cast<::boost::json::array::iterator>(array.end()) };
 };
 
-void openai::push_back(message const &message) {
+void openai::push_back(message const &value) {
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
         _context._tracer->StartSpan("push_back")
     };
     ::boost::json::value &messages{ _context._completion.at("messages") };
     ::boost::json::array &array{ messages.as_array() };
     ::boost::json::value &value{ array.emplace_back(nullptr) };
-    ::boost::json::value_from(message, value);
+    ::boost::json::value_from(value, value);
 };
 void openai::pop_back() {
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{

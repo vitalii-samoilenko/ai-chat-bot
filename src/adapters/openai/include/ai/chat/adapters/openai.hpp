@@ -4,9 +4,6 @@
 #include <chrono>
 #include <string_view>
 
-#include "detail/connection.hpp"
-#include "detail/scope.hpp"
-
 namespace ai {
 namespace chat {
 namespace adapters {
@@ -21,23 +18,37 @@ struct message {
     ::std::string_view content;
 };
 
+class iterator;
 class openai;
+
+} // adapters
+} // chat
+} // ai
+
+#include "detail/connection.hpp"
+#include "detail/scope.hpp"
+
+namespace ai {
+namespace chat {
+namespace adapters {
 
 class iterator {
 public:
     iterator() = delete;
-    iterator(iterator const &other);
+    iterator(iterator const &other) = delete;
     iterator(iterator &&other);
 
     ~iterator() = default;
 
-    iterator & operator=(iterator const &other);
-    iterator & operator=(iterator &&other);
+    iterator & operator=(iterator const &other) = delete;
+    iterator & operator=(iterator &&other) = delete;
 
     message operator*();
     iterator & operator++();
-    iterator operator+(size_t rhs);
     bool operator==(iterator const &rhs) const;
+
+    iterator operator+(ptrdiff_t rhs);
+    ptrdiff_t operator-(iterator rhs) const;
 
 private:
     friend openai;
