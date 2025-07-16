@@ -69,7 +69,11 @@ void scope::on_advance() {
     ::esqlite3_ensure_success(
         error_code);
     _timestamp = ::std::chrono::nanoseconds{ ::sqlite3_column_int64(_s_message, 0) };
-    _content = ::std::string_view{ reinterpret_cast<const char *>(::sqlite3_column_text(_s_message, 1)) };
+    ::sqlite3_value *value{ ::sqlite3_column_value(_s_message, 1) };
+    _content = ::std::string_view{
+        reinterpret_cast<const char *>(::sqlite3_value_text(value)),
+        static_cast<size_t>(::sqlite3_value_bytes(value))
+    };
     ::esqlite3_ensure_success(
         ::sqlite3_bind_int64(_s_message_tag,
             ::sqlite3_bind_parameter_index(_s_message_tag, "@TIMESTAMP"),
@@ -81,7 +85,10 @@ void scope::on_advance() {
                 ::sqlite3_column_int64(_s_message_tag, 0)));
         ::esqlite3_ensure_success(
             ::sqlite3_step(_s_tag_name));
-        _tag_names.emplace_back(reinterpret_cast<const char *>(::sqlite3_column_text(_s_tag_name, 0)));
+        value = ::sqlite3_column_value(_s_tag_name, 0);
+        _tag_names.emplace_back(
+            reinterpret_cast<const char *>(::sqlite3_value_text(value)),
+            static_cast<size_t>(::sqlite3_value_bytes(value)));
         ::esqlite3_ensure_success(
             ::sqlite3_reset(_s_tag_name));
         ::esqlite3_ensure_success(
@@ -90,7 +97,10 @@ void scope::on_advance() {
                 ::sqlite3_column_int64(_s_message_tag, 1)));
         ::esqlite3_ensure_success(
             ::sqlite3_step(_s_tag_value));
-        _tag_values.emplace_back(reinterpret_cast<const char *>(::sqlite3_column_text(_s_tag_value, 0)));
+        value = ::sqlite3_column_value(_s_tag_value, 0);
+        _tag_values.emplace_back(
+            reinterpret_cast<const char *>(::sqlite3_value_text(value)),
+            static_cast<size_t>(::sqlite3_value_bytes(value)));
         ::esqlite3_ensure_success(
             ::sqlite3_reset(_s_tag_value));
         _tags.emplace_back(_tag_names.back(), _tag_values.back());
