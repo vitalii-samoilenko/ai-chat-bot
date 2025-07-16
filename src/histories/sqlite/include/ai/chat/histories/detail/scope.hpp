@@ -1,9 +1,7 @@
 #ifndef AI_CHAT_HISTORIES_DETAIL_SCOPE_HPP
 #define AI_CHAT_HISTORIES_DETAIL_SCOPE_HPP
 
-#include <chrono>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "sqlite3.h"

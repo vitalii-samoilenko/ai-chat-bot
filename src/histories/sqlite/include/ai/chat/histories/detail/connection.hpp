@@ -2,7 +2,6 @@
 #define AI_CHAT_HISTORIES_DETAIL_CONNECTION_HPP
 
 #include <string>
-#include <string_view>
 #include <utility>
 
 #include "opentelemetry/trace/provider.h"
@@ -60,6 +59,10 @@ private:
     ::sqlite3_stmt *_d_begin;
     ::sqlite3_stmt *_d_message_tag;
     ::sqlite3_stmt *_d_message;
+    ::sqlite3_stmt *_s_message_tag;
+    ::sqlite3_stmt *_s_tag_name;
+    ::sqlite3_stmt *_s_tag_value;
+    ::sqlite3_stmt *_s_count;
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Tracer> _tracer;
 };
 

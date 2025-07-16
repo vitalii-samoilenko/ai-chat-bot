@@ -32,10 +32,6 @@ iterator::iterator(iterator &&other)
     other._target._commit = nullptr;
     other._target._rollback = nullptr;
     other._target._s_message = nullptr;
-    other._target._s_message_tag = nullptr;
-    other._target._s_tag_name = nullptr;
-    other._target._s_tag_value = nullptr;
-    other._target._s_count = nullptr;
 };
 
 iterator::~iterator() {
@@ -91,6 +87,10 @@ sqlite::sqlite(::std::string_view filename)
 iterator sqlite::begin() {
     iterator pos{ _chat._database };
     pos._target._timestamp = ::std::numeric_limits<::std::chrono::nanoseconds>::min();
+    pos._target._s_message_tag = _chat._s_message_tag;
+    pos._target._s_tag_name = _chat._s_tag_name;
+    pos._target._s_tag_value = _chat._s_tag_value;
+    pos._target._s_count = _chat._s_count;
     pos._target.on_init();
     pos._target.on_advance();
     return pos;
@@ -98,6 +98,7 @@ iterator sqlite::begin() {
 iterator sqlite::end() {
     iterator pos{ _chat._database };
     pos._target._timestamp = ::std::numeric_limits<::std::chrono::nanoseconds>::max();
+    pos._target._s_count = _chat._s_count;
     return pos;
 };
 
@@ -117,6 +118,10 @@ iterator sqlite::insert(message const &message) {
         _chat.on_insert_message_tag(pos._target._timestamp, tag.name, tag.value,
             span);
     }
+    pos._target._s_message_tag = _chat._s_message_tag;
+    pos._target._s_tag_name = _chat._s_tag_name;
+    pos._target._s_tag_value = _chat._s_tag_value;
+    pos._target._s_count = _chat._s_count;
     pos._target.on_init();
     pos._target.on_advance();
     return pos;
@@ -134,6 +139,10 @@ iterator sqlite::erase(iterator first, iterator last) {
         span);
     _chat.on_erase_message(first._target._timestamp, last._target._timestamp,
         span);
+    pos._target._s_message_tag = _chat._s_message_tag;
+    pos._target._s_tag_name = _chat._s_tag_name;
+    pos._target._s_tag_value = _chat._s_tag_value;
+    pos._target._s_count = _chat._s_count;
     pos._target.on_init();
     pos._target.on_advance();
     return pos;

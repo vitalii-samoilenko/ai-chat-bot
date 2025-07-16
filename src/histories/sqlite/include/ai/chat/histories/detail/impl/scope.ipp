@@ -14,10 +14,6 @@ namespace histories {
 namespace detail {
 
 scope::~scope() {
-    ::sqlite3_finalize(_s_count);
-    ::sqlite3_finalize(_s_tag_name);
-    ::sqlite3_finalize(_s_tag_value);
-    ::sqlite3_finalize(_s_message_tag);
     ::sqlite3_finalize(_s_message);
     ::sqlite3_finalize(_rollback);
     ::sqlite3_finalize(_commit);
@@ -59,38 +55,6 @@ void scope::on_init() {
         ::sqlite3_bind_int64(_s_message,
             ::sqlite3_bind_parameter_index(_s_message, "@SKIP"),
             0));
-    const char SELECT_MESSAGE_TAG[]{
-        "SELECT name_id, value_id FROM message_tag"
-        " WHERE timestamp = @TIMESTAMP"
-    };
-    ::esqlite3_ensure_success(
-        ::sqlite3_prepare_v2(_database, SELECT_MESSAGE_TAG,
-            static_cast<int>(::std::size(SELECT_MESSAGE_TAG) - 1),
-            &_s_message_tag, nullptr));
-    const char SELECT_TAG_NAME[]{
-        "SELECT name FROM tag_name"
-        " WHERE id = @ID"
-    };
-    ::esqlite3_ensure_success(
-        ::sqlite3_prepare_v2(_database, SELECT_TAG_NAME,
-            static_cast<int>(::std::size(SELECT_TAG_NAME) - 1),
-            &_s_tag_name, nullptr));
-    const char SELECT_TAG_VALUE[]{
-        "SELECT value FROM tag_value"
-        " WHERE id = @ID"
-    };
-    ::esqlite3_ensure_success(
-        ::sqlite3_prepare_v2(_database, SELECT_TAG_VALUE,
-            static_cast<int>(::std::size(SELECT_TAG_VALUE) - 1),
-            &_s_tag_value, nullptr));
-    const char SELECT_COUNT[]{
-        "SELECT COUNT(*) FROM message"
-        " WHERE timestamp BETWEEN @FIRST AND @LAST - 1"
-    };
-    ::esqlite3_ensure_success(
-        ::sqlite3_prepare_v2(_database, SELECT_COUNT,
-            static_cast<int>(::std::size(SELECT_COUNT) - 1),
-            &_s_count, nullptr));
 };
 void scope::on_advance() {
     _tags.clear();
