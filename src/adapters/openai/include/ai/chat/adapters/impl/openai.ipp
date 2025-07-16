@@ -132,14 +132,13 @@ iterator openai::end() {
     return iterator{ array.end() };
 };
 
-void openai::push_back(message const &value) {
+void openai::push_back(message value) {
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
         _context._tracer->StartSpan("push_back")
     };
     ::boost::json::value &messages{ _context._completion.at("messages") };
     ::boost::json::array &array{ messages.as_array() };
-    ::boost::json::value &value{ array.emplace_back(nullptr) };
-    ::boost::json::value_from(value, value);
+    ::boost::json::value_from(array.emplace_back(nullptr), value);
 };
 void openai::pop_back() {
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
@@ -188,8 +187,7 @@ iterator openai::complete(::std::string_view model, ::std::string_view key) {
     ::boost::json::array &_array{ _choices.as_array() };
     ::boost::json::value &_choice{ _array[0] };
     ::boost::json::value &_message{ _choice.at("message") };
-    ::ai::chat::adapters::message message{ ::boost::json::value_to<::ai::chat::adapters::message>(_message) };
-    push_back(message);
+    push_back(::boost::json::value_to<::ai::chat::adapters::message>(_message));
     return end() + -1;
 };
 iterator openai::erase(iterator first, iterator last) {

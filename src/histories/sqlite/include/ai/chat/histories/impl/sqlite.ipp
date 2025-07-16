@@ -97,7 +97,7 @@ iterator sqlite::end() {
     return pos;
 };
 
-iterator sqlite::insert(message const &message) {
+iterator sqlite::insert(message message) {
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
         _chat._tracer->StartSpan("insert")
     };

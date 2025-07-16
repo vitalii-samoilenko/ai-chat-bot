@@ -12,13 +12,14 @@ template<typename History>
 class observable<History>::subscription {
 private:
     friend observable;
-    friend slot;
+    friend slot<History>;
 
-    ::std::function<void(const message&)> on_message;
+    ::std::function<void(iterator)> on_message;
+    ::std::function(void(iterator, iterator)) on_erase;
 };
 
 template<typename History>
-observable<History>::slot::slot(slot&& other) {
+slot<History>::slot(slot &&other) {
     _observer = other._observer;
     _target = other._target;
     other._observer = nullptr;
@@ -26,38 +27,35 @@ observable<History>::slot::slot(slot&& other) {
 };
 
 template<typename History>
-observable<History>::slot::~slot() {
+slot<History>::~slot() {
     if (_target) {
         _target->_subscriptions.erase(_observer);
     }
 };
 
 template<typename History>
-typename observable<History>::slot& observable<History>::slot::operator=(slot&& other) {
-    _observer = other._observer;
-    _target = other._target;
-    other._observer = nullptr;
-    other._target = nullptr;
-    return *this;
+template<typename Action>
+void slot<History>::on_message(Action &&callback) {
+    _target->_subscriptions[_observer]
+        .on_message = ::std::forward<Action>(callback);
+};
+template<typename History>
+template<typename Action>
+void slot<History>::on_erase(Action &&callback) {
+    _target->_subscriptions[_observer]
+        .on_erase = ::std::forward<Action>(callback);
 };
 
 template<typename History>
-observable<History>::slot::slot(const ::std::type_info* observer, observable* target)
+slot<History>::slot(::std::type_info const *observer, observable<History> *target)
     : _observer{ observer }
     , _target{ target } {
 
 };
 
 template<typename History>
-template<typename Action>
-void observable<History>::slot::on_message(Action&& callback) {
-    _target->_subscriptions[_observer]
-        .on_message = ::std::forward<Action>(callback);
-};
-
-template<typename History>
 template<typename... Args>
-observable<History>::observable(Args&& ...args)
+observable<History>::observable(Args &&...args)
     : History{ ::std::forward<Args>(args)... }
     , _subscriptions{} {
 
@@ -65,23 +63,36 @@ observable<History>::observable(Args&& ...args)
 
 template<typename History>
 template<typename Observer>
-typename observable<History>::slot observable<History>::subscribe() {
-    return { &typeid(Observer), this };
+slot<History> observable<History>::subscribe() {
+    return slot<History>{ &typeid(Observer), this };
 };
 
 template<typename History>
 template<typename Client>
-typename observable<History>::iterator observable<History>::insert(const message& message) {
+iterator observable<History>::insert(message message) {
     iterator iterator{ History::insert(message) };
-    for (const auto& observer_n_subscription : _subscriptions) {
-        const ::std::type_info* observer{ observer_n_subscription.first };
-        const subscription& subscription{ observer_n_subscription.second };
+    for (auto const &observer_n_subscription : _subscriptions) {
+        ::std::type_info const *observer{ observer_n_subscription.first };
+        subscription const &subscription{ observer_n_subscription.second };
         if (observer == &typeid(Client)) {
             continue;
         }
-        subscription.on_message(message);
+        subscription.on_message(iterator);
     }
     return iterator;
+};
+template<typename History>
+template<typename Client>
+iterator observable<History>::erase(iterator first, iterator last) {
+    for (auto const &observer_n_subscription : _subscriptions) {
+        ::std::type_info const *observer{ observer_n_subscription.first };
+        subscription const &subscription{ observer_n_subscription.second };
+        if (observer == &typeid(Client)) {
+            continue;
+        }
+        subscription.on_erase(first, last);
+    }
+    return History::erase(first, last);
 };
 
 } // histories

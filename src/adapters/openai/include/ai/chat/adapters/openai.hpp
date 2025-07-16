@@ -76,7 +76,7 @@ public:
     iterator begin();
     iterator end();
 
-    void push_back(message const &value);
+    void push_back(message value);
     void pop_back();
 
     iterator complete(::std::string_view model, ::std::string_view key);

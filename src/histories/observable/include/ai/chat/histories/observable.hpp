@@ -9,55 +9,66 @@ namespace chat {
 namespace histories {
 
 template<typename History>
+class observable;
+
+template<typename History>
+class slot {
+public:
+    slot() = delete;
+    slot(slot const &other) = delete;
+    slot(slot &&other);
+
+    ~slot();
+
+    slot & operator=(slot const &other) = delete;
+    slot & operator=(slot &&other) = delete;
+
+    template<typename Action>
+    void on_message(Action &&callback);
+    template<typename Action>
+    void on_erase(Action &&callback);
+
+private:
+    friend observable<History>;
+
+    slot(::std::type_info const *observer, observable<History> *target);
+
+    ::std::type_info const *_observer;
+    observable<History> *_target;
+};
+
+template<typename History>
 class observable : private History {
 public:
     observable() = delete;
-    observable(const observable&) = delete;
-    observable(observable&&) = delete;
+    observable(observable const &other) = delete;
+    observable(observable &&other) = delete;
 
     ~observable() = default;
 
-    observable& operator=(const observable&) = delete;
-    observable& operator=(observable&&) = delete;
-
-    class slot {
-    public:
-        slot() = delete;
-        slot(const slot&) = delete;
-        slot(slot&&);
-
-        ~slot();
-
-        slot& operator=(const slot&) = delete;
-        slot& operator=(slot&&);
-
-        template<typename Action>
-        void on_message(Action&& callback);
-
-    private:
-        friend observable;
-
-        slot(const ::std::type_info* observer, observable* target);
-
-        const ::std::type_info* _observer;
-        observable* _target;
-    };
-
-    using typename History::iterator;
+    observable & operator=(observable const &other) = delete;
+    observable & operator=(observable &&other) = delete;
 
     template<typename... Args>
-    explicit observable(Args&& ...args);
+    explicit observable(Args &&...args);
 
     template<typename Observer>
-    slot subscribe();
+    slot<History> subscribe();
+
+    using History::begin;
+    using History::end;
 
     template<typename Client>
-    iterator insert(const message& message);
+    iterator insert(message message);
+    template<typename Client>
+    iterator erase(iterator first, iterator last);
 
 private:
+    friend slot<History>;
+
     class subscription;
 
-    ::std::unordered_map<const ::std::type_info*, subscription> _subscriptions;
+    ::std::unordered_map<::std::type_info const *, subscription> _subscriptions;
 };
 
 } // histories

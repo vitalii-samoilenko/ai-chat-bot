@@ -77,7 +77,7 @@ public:
     iterator begin();
     iterator end();
 
-    iterator insert(message const &message);
+    iterator insert(message message);
     iterator erase(iterator first, iterator last);
 
 private:
