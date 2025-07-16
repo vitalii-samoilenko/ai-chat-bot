@@ -2,12 +2,14 @@ cmake_minimum_required(VERSION 3.25.1)
 
 project(ESQLite VERSION 0.1 LANGUAGES CXX)
 
+find_package(re2 REQUIRED)
 find_package(SQLite3 REQUIRED)
 
 add_library(esqlite3 INTERFACE)
 target_compile_features(esqlite3 INTERFACE cxx_std_11)
 target_link_libraries(esqlite3
   INTERFACE
+    re2::re2
     SQLite::SQLite3
 )
 target_include_directories(esqlite3

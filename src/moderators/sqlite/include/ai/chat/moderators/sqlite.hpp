@@ -2,9 +2,20 @@
 #define AI_CHAT_MODERATORS_SQLITE_HPP
 
 #include <chrono>
-#include <memory>
-#include <string>
 #include <string_view>
+
+namespace ai {
+namespace chat {
+namespace moderators {
+
+using iterator = size_t;
+class sqlite;
+
+} // moderators
+} // chat
+} // ai
+
+#include "detail/connection.hpp"
 
 namespace ai {
 namespace chat {
@@ -13,36 +24,32 @@ namespace moderators {
 class sqlite {
 public:
     sqlite() = delete;
-    sqlite(const sqlite&) = delete;
-    sqlite(sqlite&&) = delete;
+    sqlite(sqlite const &) = delete;
+    sqlite(sqlite &&) = delete;
 
     ~sqlite() = default;
 
-    sqlite& operator=(const sqlite&) = delete;
-    sqlite& operator=(sqlite&&) = delete;
+    sqlite& operator=(sqlite const &) = delete;
+    sqlite& operator=(sqlite &&) = delete;
 
-    using iterator = size_t;
+    sqlite(::std::string_view filename, size_t length);
 
-    sqlite(const ::std::string& filename, size_t length);
-
-    iterator is_moderator(const ::std::string& username);
-    iterator is_allowed(const ::std::string& username1, const ::std::string& username2);
+    iterator is_moderator(::std::string_view username);
+    iterator is_allowed(::std::string_view username1, ::std::string_view username2);
     iterator is_filtered(::std::string_view content);
 
-    iterator mod(const ::std::string& username);
-    iterator unmod(const ::std::string& username);
-    iterator allow(const ::std::string& username);
-    iterator deny(const ::std::string& username);
-    iterator timeout(const ::std::string& username, ::std::chrono::seconds until);
-    iterator ban(const ::std::string& username);
-    iterator unban(const ::std::string& username);
-    iterator filter(const ::std::string& name, const ::std::string& pattern);
-    iterator discard(const ::std::string& name);
+    iterator mod(::std::string_view username);
+    iterator unmod(::std::string_view username);
+    iterator allow(::std::string_view username);
+    iterator deny(::std::string_view username);
+    iterator timeout(::std::string_view username, ::std::chrono::seconds until);
+    iterator ban(::std::string_view username);
+    iterator unban(::std::string_view username);
+    iterator filter(::std::string_view name, ::std::string_view pattern);
+    iterator discard(::std::string_view name);
 
 private:
-    class connection;
-
-    ::std::unique_ptr<connection> _controller;
+    detail::connection _controller;
 };
 
 } // moderators

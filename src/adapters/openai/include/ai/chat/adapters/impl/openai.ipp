@@ -11,8 +11,6 @@
 #include "eboost/beast.hpp"
 #include "re2/re2.h"
 
-#include "ai/chat/adapters/openai.hpp"
-
 namespace ai {
 namespace chat {
 namespace adapters {

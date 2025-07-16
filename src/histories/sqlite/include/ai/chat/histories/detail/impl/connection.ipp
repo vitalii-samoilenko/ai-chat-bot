@@ -3,8 +3,6 @@
 
 #include "esqlite3/ensure_success.hpp"
 
-#include "ai/chat/histories/detail/connection.hpp"
-
 namespace ai {
 namespace chat {
 namespace histories {

@@ -1,8 +1,6 @@
 #ifndef AI_CHAT_ADAPTERS_DETAIL_CONNECTION_IPP
 #define AI_CHAT_ADAPTERS_DETAIL_CONNECTION_IPP
 
-#include "ai/chat/adapters/detail/connection.hpp"
-
 namespace ai {
 namespace chat {
 namespace adapters {

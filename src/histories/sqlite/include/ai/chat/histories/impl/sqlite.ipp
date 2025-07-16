@@ -8,8 +8,6 @@
 
 #include "sqlite3.h"
 
-#include "ai/chat/histories/sqlite.hpp"
-
 namespace ai {
 namespace chat {
 namespace histories {

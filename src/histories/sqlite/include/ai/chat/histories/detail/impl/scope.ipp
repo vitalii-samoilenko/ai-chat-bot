@@ -6,8 +6,6 @@
 
 #include "esqlite3/ensure_success.hpp"
 
-#include "ai/chat/histories/detail/scope.hpp"
-
 namespace ai {
 namespace chat {
 namespace histories {

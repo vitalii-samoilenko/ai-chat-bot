@@ -2,6 +2,7 @@
 
 include(CMakeFindDependencyMacro)
 
+find_package(re2 REQUIRED)
 find_package(SQLite3 REQUIRED)
 
 check_required_components(ESQLite3)

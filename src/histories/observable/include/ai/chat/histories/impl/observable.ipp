@@ -4,8 +4,6 @@
 #include <functional>
 #include <utility>
 
-#include "ai/chat/histories/observable.hpp"
-
 namespace ai {
 namespace chat {
 namespace histories {
