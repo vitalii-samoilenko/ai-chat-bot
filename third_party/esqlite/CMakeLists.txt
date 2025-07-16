@@ -5,15 +5,16 @@ project(ESQLite VERSION 0.1 LANGUAGES CXX)
 find_package(SQLite3 REQUIRED)
 
 add_library(esqlite3 INTERFACE)
-target_include_directories(esqlite3
-  INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+target_compile_features(esqlite3 INTERFACE cxx_std_11)
 target_link_libraries(esqlite3
   INTERFACE
     SQLite::SQLite3
 )
-target_compile_features(esqlite3 INTERFACE cxx_std_11)
+target_include_directories(esqlite3
+  INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
 add_library(ESQLite3 ALIAS esqlite3)
 
 include(GNUInstallDirs)

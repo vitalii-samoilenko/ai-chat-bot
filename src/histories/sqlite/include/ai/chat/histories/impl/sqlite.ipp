@@ -24,15 +24,18 @@ iterator::iterator(iterator &&other)
     _target._s_message_tag = other._target._s_message_tag;
     _target._s_tag_name = other._target._s_tag_name;
     _target._s_tag_value = other._target._s_tag_value;
-    _target._content = ::std::move(other._target._content);
+    _target._s_count = other._target._s_count;
     _target._tag_names = ::std::move(other._target._tag_names);
     _target._tag_values = ::std::move(other._target._tag_values);
+    _target._content = ::std::move(other._target._content);
+    _target._tags = ::std::move(other._target._tags);
     other._target._commit = nullptr;
     other._target._rollback = nullptr;
     other._target._s_message = nullptr;
     other._target._s_message_tag = nullptr;
     other._target._s_tag_name = nullptr;
     other._target._s_tag_value = nullptr;
+    other._target._s_count = nullptr;
 };
 
 iterator::~iterator() {
@@ -89,6 +92,7 @@ iterator sqlite::begin() {
     iterator pos{ _chat._database };
     pos._target._timestamp = ::std::numeric_limits<::std::chrono::nanoseconds>::min();
     pos._target.on_init();
+    pos._target.on_advance();
     return pos;
 };
 iterator sqlite::end() {
@@ -113,6 +117,8 @@ iterator sqlite::insert(message const &message) {
         _chat.on_insert_message_tag(pos._target._timestamp, tag.name, tag.value,
             span);
     }
+    pos._target.on_init();
+    pos._target.on_advance();
     return pos;
 };
 iterator sqlite::erase(iterator first, iterator last) {
@@ -128,6 +134,8 @@ iterator sqlite::erase(iterator first, iterator last) {
         span);
     _chat.on_erase_message(first._target._timestamp, last._target._timestamp,
         span);
+    pos._target.on_init();
+    pos._target.on_advance();
     return pos;
 };
 

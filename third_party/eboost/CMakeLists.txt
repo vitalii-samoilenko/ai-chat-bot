@@ -5,17 +5,18 @@ project(EBoost VERSION 0.1 LANGUAGES CXX)
 find_package(Boost CONFIG REQUIRED COMPONENTS asio beast json)
 
 add_library(eboost INTERFACE)
-target_include_directories(eboost
-  INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+target_compile_features(eboost INTERFACE cxx_std_11)
 target_link_libraries(eboost
   INTERFACE
     Boost::asio
     Boost::beast
     Boost::json
 )
-target_compile_features(eboost INTERFACE cxx_std_11)
+target_include_directories(eboost
+  INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
 add_library(EBoost ALIAS eboost)
 
 include(GNUInstallDirs)
