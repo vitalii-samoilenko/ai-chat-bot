@@ -1,59 +1,57 @@
-#ifndef AI_CHAT_ADAPTERS_DETAIL_CONNECTION_IPP
-#define AI_CHAT_ADAPTERS_DETAIL_CONNECTION_IPP
+#ifndef AI_CHAT_CLIENTS_DETAIL_AUTH_CONNECTION_IPP
+#define AI_CHAT_CLIENTS_DETAIL_AUTH_CONNECTION_IPP
 
 namespace ai {
 namespace chat {
-namespace adapters {
+namespace clients {
 namespace detail {
 
-connection::connection()
+auth_connection::auth_connection()
     : _io_context{}
     , _resolver{ _io_context }
     , _ssl_context{ ::boost::asio::ssl::context::tlsv12_client }
-    , _stream{ ::eboost::beast::metered_tcp_stream<connection>{ ::eboost::beast::metered_rate_policy<connection>{ *this }, _io_context }, _ssl_context }
+    , _stream{ ::eboost::beast::metered_tcp_stream<auth_connection>{ ::eboost::beast::metered_rate_policy<auth_connection>{ *this }, _io_context }, _ssl_context }
     , _buffer{}
-    , _completion{ ::boost::json::object_kind }
+    , _context{ nullptr }
     , _tracer{
         ::opentelemetry::trace::Provider::GetTracerProvider()
-            ->GetTracer("ai_chat_adapters_openai")
+            ->GetTracer("ai_chat_clients_auth")
     }
     , _meter{
         ::opentelemetry::metrics::Provider::GetMeterProvider()
-            ->GetMeter("ai_chat_adapters_openai")
+            ->GetMeter("ai_chat_clients_auth")
     }
-    , _m_context{ _meter->CreateInt64Gauge("ai_chat_adapters_openai_context_total") }
-    , _m_network{ _meter->CreateUInt64Counter("ai_chat_adapters_openai_network") }
+    , _m_network{ _meter->CreateUInt64Counter("ai_chat_clients_auth_network") }
     , _host{}
     , _port{}
-    , _t_completions{}
-    , _h_bearer{ "Bearer " }
-    , _timeout{}
-    , _delay{}
-    , _limit{}
-    , _next{} {
+    , _path{}
+    , _t_validate{}
+    , _t_token{}
+    , _t_device{}
+    , _h_oauth{ "OAuth " }
+    , _timeout{} {
 
 };
 
-void connection::bytes_rx(size_t n) {
+void auth_connection::bytes_rx(size_t n) {
     _m_network->Add(n, {
         {"type", "rx"}
     });
 };
-void connection::bytes_tx(size_t n) {
+void auth_connection::bytes_tx(size_t n) {
     _m_network->Add(n, {
         {"type", "tx"}
     });
 };
 
-void connection::on_init() {
-    _t_completions += "chat/completions";
+void auth_connection::on_init() {
+    _t_validate = _path + "validate";
+    _t_token = _path + "token";
+    _t_device = _path + "device";
     _ssl_context.set_verify_mode(::boost::asio::ssl::verify_none);
-    ::boost::json::object &object{ _completion.as_object() };
-    object.emplace("model", ::boost::json::string_kind);
-    object.emplace("messages", ::boost::json::array_kind);
 };
 template<typename Request, typename Response>
-void connection::on_send(Request &request, Response &response,
+void auth_connection::on_send(Request &request, Response &response,
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root) {
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
         _tracer->StartSpan("on_send", ::opentelemetry::trace::StartSpanOptions{
@@ -70,10 +68,6 @@ void connection::on_send(Request &request, Response &response,
         };
     }
     _stream.set_verify_callback(::boost::asio::ssl::host_name_verification{ _host });
-    auto now = ::std::chrono::steady_clock::now();
-    if (now.time_since_epoch() < _next) {
-        ::std::this_thread::sleep_for(_next - now.time_since_epoch());
-    }
     ::boost::beast::get_lowest_layer(_stream).expires_after(_timeout);
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> operation{
         _tracer->StartSpan("on_dns_resolve", ::opentelemetry::trace::StartSpanOptions{
@@ -129,16 +123,16 @@ void connection::on_send(Request &request, Response &response,
     }); // TCP connect
     }); // resolve
 };
-void connection::_stream_reset() {
+void auth_connection::_stream_reset() {
     _stream.~stream();
-    new(&_stream) ::boost::asio::ssl::stream<::eboost::beast::metered_tcp_stream<connection>>{
-        ::eboost::beast::metered_tcp_stream<connection>{ ::eboost::beast::metered_rate_policy<connection>{ *this }, _io_context },
+    new(&_stream) ::boost::asio::ssl::stream<::eboost::beast::metered_tcp_stream<auth_connection>>{
+        ::eboost::beast::metered_tcp_stream<auth_connection>{ ::eboost::beast::metered_rate_policy<auth_connection>{ *this }, _io_context },
         _ssl_context
     };
 };
 
 } // detail
-} // adapters
+} // clients
 } // chat
 } // ai
 

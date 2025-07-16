@@ -2,11 +2,8 @@
 #define AI_CHAT_HISTORIES_SQLITE_IPP
 
 #include <limits>
-#include <stdexcept>
 #include <tuple>
 #include <utility>
-
-#include "sqlite3.h"
 
 namespace ai {
 namespace chat {

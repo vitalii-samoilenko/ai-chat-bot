@@ -2,55 +2,66 @@
 #define AI_CHAT_CLIENTS_TWITCH_HPP
 
 #include <chrono>
-#include <memory>
-#include <string>
+#include <string_view>
 
 namespace ai {
 namespace chat {
 namespace clients {
 
 struct message {
-    ::std::string username;
-    ::std::string content;
-    ::std::string channel;
+    ::std::string_view username;
+    ::std::string_view content;
+    ::std::string_view channel;
 };
 struct command {
-    ::std::string username;
-    ::std::string name;
-    ::std::string args;
-    ::std::string channel;
+    ::std::string_view username;
+    ::std::string_view name;
+    ::std::string_view args;
+    ::std::string_view channel;
 };
+
+template<typename Handler>
+class twitch;
+
+} // clients
+} // chat
+} // ai
+
+#include "detail/connection.hpp"
+
+namespace ai {
+namespace chat {
+namespace clients {
 
 template<typename Handler>
 class twitch {
 public:
     twitch() = delete;
-    twitch(const twitch&) = delete;
-    twitch(twitch&&) = delete;
+    twitch(twitch const &) = delete;
+    twitch(twitch &&) = delete;
 
     ~twitch() = default;
 
-    twitch& operator=(const twitch&) = delete;
-    twitch& operator=(twitch&&) = delete;
+    twitch & operator=(twitch const &) = delete;
+    twitch & operator=(twitch &&) = delete;
 
-    twitch(const ::std::string& address, ::std::chrono::milliseconds timeout,
+    twitch(::std::string_view address, ::std::chrono::milliseconds timeout,
         ::std::chrono::milliseconds delay, size_t dop);
 
-    void connect(const ::std::string& username, const ::std::string& access_token);
+    void connect(::std::string_view username, ::std::string_view access_token);
     void disconnect();
-    void send(const message& message);
+    void send(message message);
 
-    void join(const ::std::string& channel);
+    void join(::std::string_view channel);
     void leave();
     void attach();
 private:
-    class connection;
-    friend connection;
+    friend detail::connection<Handler>;
 
-    ::std::unique_ptr<connection> _channel;
+    detail::connection<Handler> _channel;
 
-    void on_message(const message& message) const;
-    void on_command(const command& command) const;
+    void on_message(message &message) const;
+    void on_command(command &command) const;
 };
 
 } // clients

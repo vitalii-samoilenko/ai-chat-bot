@@ -1,8 +1,7 @@
 #ifndef AI_CHAT_MODERATORS_DETAIL_CONNECTION_IPP
 #define AI_CHAT_MODERATORS_DETAIL_CONNECTION_IPP
 
-#include "esqlite3/ensure_success.hpp"
-#include "esqlite3/regexp.hpp"
+#include "esqlite3.hpp"
 
 namespace ai {
 namespace chat {

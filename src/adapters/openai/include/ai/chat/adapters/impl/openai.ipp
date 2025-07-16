@@ -4,10 +4,8 @@
 #include <stdexcept>
 #include <thread>
 #include <utility>
-#include <vector>
 
 #include "boost/scope/scope_exit.hpp"
-#include "boost/json.hpp"
 #include "eboost/beast.hpp"
 #include "re2/re2.h"
 
@@ -15,25 +13,10 @@ namespace ai {
 namespace chat {
 namespace adapters {
 
-enum class finish_reason {
-    stop,
-    length,
-    content_filter,
-    tool_calls
-};
-struct choice {
-    ::ai::chat::adapters::finish_reason finis_reason;
-    size_t index;
-    ::ai::chat::adapters::message message;
-};
 struct usage {
     size_t completion_tokens;
     size_t prompt_tokens;
     size_t total_tokens;
-};
-struct completion_result {
-    ::std::vector<choice> choices;
-    ::ai::chat::adapters::usage usage;
 };
 
 void tag_invoke(::boost::json::value_from_tag, ::boost::json::value &value, role const &role) {
@@ -91,35 +74,6 @@ usage tag_invoke(::boost::json::value_to_tag<usage>, ::boost::json::value const 
         ::boost::json::value_to<size_t>(value.at("total_tokens")),
     };
 };
-finish_reason tag_invoke(::boost::json::value_to_tag<finish_reason>, ::boost::json::value const &value) {
-    ::boost::json::string const &string{ value.as_string() };
-    if (string == "stop") {
-        return finish_reason::stop;
-    }
-    if (string == "length") {
-        return finish_reason::length;
-    }
-    if (string == "content_filter") {
-        return finish_reason::content_filter;
-    }
-    if (string == "tool_calls") {
-        return finish_reason::tool_calls;
-    }
-    throw ::std::invalid_argument{ "finish reason is not supported" };
-};
-choice tag_invoke(::boost::json::value_to_tag<choice>, ::boost::json::value const &value) {
-    return choice{
-        ::boost::json::value_to<finish_reason>(value.at("finish_reason")),
-        ::boost::json::value_to<size_t>(value.at("index")),
-        ::boost::json::value_to<message>(value.at("message")),
-    };
-};
-completion_result tag_invoke(::boost::json::value_to_tag<completion_result>, ::boost::json::value const &value) {
-    return completion_result{
-        ::boost::json::value_to<::std::vector<choice>>(value.at("choices")),
-        ::boost::json::value_to<usage>(value.at("usage")),
-    };
-};
 
 iterator::iterator(iterator &&other)
     : _target{ ::std::move(other._target._pos) } {
@@ -170,12 +124,12 @@ openai::openai(::std::string_view address, ::std::chrono::milliseconds timeout,
 iterator openai::begin() {
     ::boost::json::value &messages{ _context._completion.at("messages") };
     ::boost::json::array &array{ messages.as_array() };
-    return iterator{ const_cast<::boost::json::array::iterator>(array.begin()) };
+    return iterator{ array.begin() };
 };
 iterator openai::end() {
-    ::boost::json::value const &messages{ _context._completion.at("messages") };
-    ::boost::json::array const &array{ messages.as_array() };
-    return iterator{ const_cast<::boost::json::array::iterator>(array.end()) };
+    ::boost::json::value &messages{ _context._completion.at("messages") };
+    ::boost::json::array &array{ messages.as_array() };
+    return iterator{ array.end() };
 };
 
 void openai::push_back(message const &value) {
@@ -201,7 +155,8 @@ iterator openai::complete(::std::string_view model, ::std::string_view key) {
         _context._tracer->StartSpan("complete")
     };
     _context._completion.at("model") = model;
-    _context._h_bearer.replace(::std::size("Bearer "), key.size(), key);
+    _context._h_bearer.resize(::std::size("Bearer ") - 1);
+    _context._h_bearer += key;
     ::boost::beast::http::request<::eboost::beast::http::json_body> request{
         ::boost::beast::http::verb::post, _context._t_completions, 11,
         _context._completion
@@ -217,18 +172,25 @@ iterator openai::complete(::std::string_view model, ::std::string_view key) {
     _context.on_send(request, response,
         span);
     _context._io_context.run();
-    completion_result result{ ::boost::json::value_to<completion_result>(response.body()) };
-    _context._m_context->Record(static_cast<int64_t>(result.usage.completion_tokens), {
+    ::boost::json::value &_completion_result{ response.body() };
+    ::boost::json::value &_usage{ _completion_result.at("usage") };
+    ::ai::chat::adapters::usage usage{ ::boost::json::value_to<::ai::chat::adapters::usage>(_usage) };
+    _context._m_context->Record(static_cast<int64_t>(usage.completion_tokens), {
         {"type", "completion"}
     });
-    _context._m_context->Record(static_cast<int64_t>(result.usage.prompt_tokens), {
+    _context._m_context->Record(static_cast<int64_t>(usage.prompt_tokens), {
         {"type", "prompt"}
     });
-    iterator pos{ end() };
-    if (!(_context._limit < result.usage.total_tokens)) {
-        push_back(result.choices[0].message);
+    if (_context._limit < usage.total_tokens) {
+        return end();
     }
-    return pos;
+    ::boost::json::value &_choices{ _completion_result.at("choices") };
+    ::boost::json::array &_array{ _choices.as_array() };
+    ::boost::json::value &_choice{ _array[0] };
+    ::boost::json::value &_message{ _choice.at("message") };
+    ::ai::chat::adapters::message message{ ::boost::json::value_to<::ai::chat::adapters::message>(_message) };
+    push_back(message);
+    return end() + -1;
 };
 iterator openai::erase(iterator first, iterator last) {
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
