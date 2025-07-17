@@ -12,40 +12,40 @@ template<typename History>
 class openai {
 public:
     openai() = delete;
-    openai(const openai&) = delete;
-    openai(openai&&) = delete;
+    openai(openai const &other) = delete;
+    openai(openai &&other) = delete;
 
     ~openai() = delete;
 
-    openai& operator=(const openai&) = delete;
-    openai& operator=(openai&&) = delete;
+    openai & operator=(openai const &other) = delete;
+    openai & operator=(openai &&other) = delete;
 
     class binding {
     public:
         binding() = delete;
-        binding(const binding&) = delete;
-        binding(binding&&) = default;
+        binding(binding const &other) = delete;
+        binding(binding &&other) = default;
 
         ~binding() = default;
 
-        binding& operator=(const binding&) = delete;
-        binding& operator=(binding&&) = default;
+        binding & operator=(binding const &other) = delete;
+        binding & operator=(binding &&other) = delete;
 
     private:
         friend openai;
 
-        explicit binding(typename ::ai::chat::histories::observable<History>::slot&& s_history);
+        explicit binding(::ai::chat::histories::slot<History> &&s_history);
 
-        typename ::ai::chat::histories::observable<History>::slot _s_history;
+        ::ai::chat::histories::slot<History> _s_history;
     };
 
     template<typename Moderator>
-    static binding bind(::ai::chat::histories::observable<History>& history, ::ai::chat::adapters::openai& adapter,
-        Moderator& moderator,
-        const ::std::string& model, const ::std::string& key,
-        const ::std::string& pattern, size_t retires, const ::std::string& apology,
-        const ::std::string& botname);
-
+    static binding bind(::ai::chat::histories::observable<History> &history, ::ai::chat::adapters::openai &adapter,
+        Moderator &moderator,
+        ::std::string_view model, ::std::string_view key,
+        size_t skip, ::std::chrono::hours range,
+        ::std::string_view pattern, size_t retries, ::std::string_view apology,
+        ::std::string_view botname);
 };
 
 } // binders
