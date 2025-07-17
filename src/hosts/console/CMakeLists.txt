@@ -7,7 +7,7 @@ find_package(EBoost CONFIG REQUIRED)
 find_package(opentelemetry-cpp REQUIRED)
 
 add_executable(ai-chat-hosts-console main.cpp)
-target_compile_features(ai-chat-hosts-console PRIVATE cxx_std_17)
+target_compile_features(ai-chat-hosts-console PRIVATE cxx_std_20)
 target_link_libraries(ai-chat-hosts-console
   PRIVATE
     AI::Chat::Adapters::OpenAI
@@ -26,5 +26,6 @@ target_link_libraries(ai-chat-hosts-console
     opentelemetry-cpp::otlp_grpc_metrics_exporter
     opentelemetry-cpp::otlp_grpc_log_record_exporter
 )
-install(TARGETS ai-chat-hosts-console)
 add_executable(AI::Chat::Hosts::Console ALIAS ai-chat-hosts-console)
+
+install(TARGETS ai-chat-hosts-console)
