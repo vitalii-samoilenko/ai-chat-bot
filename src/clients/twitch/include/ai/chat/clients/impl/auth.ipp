@@ -56,6 +56,7 @@ bool auth::validate_token(::std::string_view token) {
     });
     _service.on_send(request, response,
         span);
+    _service._io_context.run();
     return response.result() == ::boost::beast::http::status::ok;
 };
 token_context auth::refresh_token(::std::string_view client_id, ::std::string_view client_secret, ::std::string_view refresh_token) {
@@ -82,6 +83,7 @@ token_context auth::refresh_token(::std::string_view client_id, ::std::string_vi
     });
     _service.on_send(request, response,
         span);
+    _service._io_context.run();
     _service._context = ::std::move(response.body());
     return ::boost::json::value_to<token_context>(_service._context);
 };
@@ -107,6 +109,7 @@ token_context auth::issue_token(::std::string_view client_id, ::std::string_view
     });
     _service.on_send(request, response,
         span);
+    _service._io_context.run();
     _service._context = ::std::move(response.body());
     return ::boost::json::value_to<token_context>(_service._context);
 };
@@ -130,6 +133,7 @@ access_context auth::request_access(::std::string_view client_id, ::std::string_
     });
     _service.on_send(request, response,
         span);
+    _service._io_context.run();
     _service._context = ::std::move(response.body());
     return ::boost::json::value_to<access_context>(_service._context);
 };

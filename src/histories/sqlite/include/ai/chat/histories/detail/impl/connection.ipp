@@ -72,6 +72,7 @@ void connection::on_init() {
         ::sqlite3_step(_init_wal));
     ::esqlite3_ensure_success(
         ::sqlite3_finalize(_init_wal));
+    _init_wal = nullptr;
     char const INIT_MESSAGE[]{
         "CREATE TABLE IF NOT EXISTS message"
         "("
@@ -87,6 +88,7 @@ void connection::on_init() {
         ::sqlite3_step(_init_message));
     ::esqlite3_ensure_success(
         ::sqlite3_finalize(_init_message));
+    _init_message = nullptr;
     char const INIT_TAG_NAME[]{
         "CREATE TABLE IF NOT EXISTS tag_name"
         "("
@@ -102,6 +104,7 @@ void connection::on_init() {
         ::sqlite3_step(_init_tag_name));
     ::esqlite3_ensure_success(
         ::sqlite3_finalize(_init_tag_name));
+    _init_tag_name = nullptr;
     char const INIT_TAG_VALUE[]{
         "CREATE TABLE IF NOT EXISTS tag_value"
         "("
@@ -117,6 +120,7 @@ void connection::on_init() {
         ::sqlite3_step(_init_tag_value));
     ::esqlite3_ensure_success(
         ::sqlite3_finalize(_init_tag_value));
+    _init_tag_value = nullptr;
     char const INIT_MESSAGE_TAG[]{
         "CREATE TABLE IF NOT EXISTS message_tag"
         "("
@@ -134,6 +138,7 @@ void connection::on_init() {
         ::sqlite3_step(_init_message_tag));
     ::esqlite3_ensure_success(
         ::sqlite3_finalize(_init_message_tag));
+    _init_message_tag = nullptr;
     char const INSERT_BEGIN[]{
         "SAVEPOINT insert_message"
     };
@@ -205,7 +210,7 @@ void connection::on_init() {
             &_d_begin, nullptr));
     char const DELETE_MESSAGE_TAG[]{
         "DELETE FROM message_tag"
-        " WHERE timestamp IS BETWEEN @FIRST AND @LAST - 1"
+        " WHERE timestamp BETWEEN @FIRST AND @LAST - 1"
     };
     ::esqlite3_ensure_success(
         ::sqlite3_prepare_v2(_database, DELETE_MESSAGE_TAG,
@@ -213,7 +218,7 @@ void connection::on_init() {
             &_d_message_tag, nullptr));
     char const DELETE_MESSAGE[]{
         "DELETE FROM message"
-        " WHERE timestamp IS BETWEEN @FIRST AND @LAST - 1"
+        " WHERE timestamp BETWEEN @FIRST AND @LAST - 1"
     };
     ::esqlite3_ensure_success(
         ::sqlite3_prepare_v2(_database, DELETE_MESSAGE,

@@ -157,7 +157,7 @@ int main(int argc, char* argv[]) {
             config.at("history").at("filename").as_string()
         };
         if (!history_exists) {
-            for (::boost::json::value const &message : config.at("contenxt").as_array()) {
+            for (::boost::json::value const &message : config.at("context").as_array()) {
                 ::std::vector<::ai::chat::histories::tag> tags{};
                 for (::boost::json::value const &tag : message.at("tags").as_array()) {
                     tags.emplace_back(

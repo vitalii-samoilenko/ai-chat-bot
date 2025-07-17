@@ -101,12 +101,14 @@ void scope::on_advance() {
             static_cast<size_t>(::sqlite3_value_bytes(value)));
         ::esqlite3_ensure_success(
             ::sqlite3_reset(_s_tag_value));
-        _tags.emplace_back(_tag_names.back(), _tag_values.back());
     }
     ::esqlite3_ensure_success(
         error_code);
     ::esqlite3_ensure_success(
         ::sqlite3_reset(_s_message_tag));
+    for (size_t i{ 0 }; i < _tag_names.size(); ++i) {
+        _tags.emplace_back(_tag_names[i], _tag_values[i]);
+    }
 };
 void scope::on_commit() {
     ::esqlite3_ensure_success(

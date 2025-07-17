@@ -54,12 +54,12 @@ void tag_invoke(::boost::json::value_from_tag, ::boost::json::value &value, mess
         object.emplace("content", nullptr)
             .first
     };
+    ::boost::json::value_from(message.content, content->value());
     ::boost::json::object::iterator role{
         object.emplace("role", nullptr)
             .first
     };
     ::boost::json::value_from(message.role, role->value());
-    ::boost::json::value_from(message.content, content->value());
 };
 message tag_invoke(::boost::json::value_to_tag<message>, ::boost::json::value const &value) {
     return message{
@@ -143,7 +143,7 @@ void openai::push_back(message value) {
     _context._logger->Info(::opentelemetry::nostd::string_view{ value.content.data(), value.content.size() }, span->GetContext());
     ::boost::json::value &messages{ _context._completion.at("messages") };
     ::boost::json::array &array{ messages.as_array() };
-    ::boost::json::value_from(array.emplace_back(nullptr), value);
+    ::boost::json::value_from(value, array.emplace_back(nullptr));
 };
 void openai::pop_back() {
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
@@ -176,8 +176,7 @@ iterator openai::complete(::std::string_view model, ::std::string_view key) {
     _context.on_send(request, response,
         span);
     _context._io_context.run();
-    ::boost::json::value &_completion_result{ response.body() };
-    ::boost::json::value &_usage{ _completion_result.at("usage") };
+    ::boost::json::value &_usage{ response.body().at("usage") };
     ::ai::chat::adapters::usage usage{ ::boost::json::value_to<::ai::chat::adapters::usage>(_usage) };
     _context._m_context->Record(static_cast<int64_t>(usage.completion_tokens), {
         {"type", "completion"}
@@ -188,7 +187,7 @@ iterator openai::complete(::std::string_view model, ::std::string_view key) {
     if (_context._limit < usage.total_tokens) {
         return end();
     }
-    ::boost::json::value &_choices{ _completion_result.at("choices") };
+    ::boost::json::value &_choices{ response.body().at("choices") };
     ::boost::json::array &_array{ _choices.as_array() };
     ::boost::json::value &_choice{ _array[0] };
     ::boost::json::value &_message{ _choice.at("message") };

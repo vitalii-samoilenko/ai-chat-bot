@@ -65,6 +65,7 @@ void connection::on_init() {
         ::sqlite3_step(_init_wal));
     ::esqlite3_ensure_success(
         ::sqlite3_finalize(_init_wal));
+    _init_wal = nullptr;
     char const INIT_USER[]{
         "CREATE TABLE IF NOT EXISTS user"
         "("
@@ -82,6 +83,7 @@ void connection::on_init() {
         ::sqlite3_step(_init_user));
     ::esqlite3_ensure_success(
         ::sqlite3_finalize(_init_user));
+    _init_user = nullptr;
     char const INIT_FILTER[]{
         "CREATE TABLE IF NOT EXISTS filter"
         "("
@@ -98,6 +100,7 @@ void connection::on_init() {
         ::sqlite3_step(_init_filter));
     ::esqlite3_ensure_success(
         ::sqlite3_finalize(_init_filter));
+    _init_filter = nullptr;
     char const IS_ALLOWED1[]{
         "SELECT COUNT(*) FROM user"
         " WHERE name = @USERNAME1"
