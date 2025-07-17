@@ -21,7 +21,7 @@ template<typename Moderator, typename... Commands>
 twitch<History>::binding twitch<History>::bind(::ai::chat::histories::observable<History> &history, ::ai::chat::clients::observable<::ai::chat::clients::twitch> &client,
     Moderator &moderator, ::ai::chat::commands::executor<Commands...> &executor,
     ::std::string_view botname) {
-    ::ai::chat::histories::slot<History> s_history{ history.subscribe<::ai::chat::clients::observable<::ai::chat::clients::twitch>>() };
+    ::ai::chat::histories::slot<History> s_history{ history.template subscribe<::ai::chat::clients::observable<::ai::chat::clients::twitch>>() };
     s_history.on_message([&client
     ](::ai::chat::histories::iterator history_pos)->void {
         ::ai::chat::histories::message history_message{ *history_pos };
@@ -54,7 +54,7 @@ twitch<History>::binding twitch<History>::bind(::ai::chat::histories::observable
             ::ai::chat::histories::tag{ "user.name", client_message.username },
             ::ai::chat::histories::tag{ "channel", client_message.channel },
         };
-        history.insert<::ai::chat::clients::observable<::ai::chat::clients::twitch>>(::ai::chat::histories::message{
+        history.template insert<::ai::chat::clients::observable<::ai::chat::clients::twitch>>(::ai::chat::histories::message{
             {},
             client_message.content,
             tags

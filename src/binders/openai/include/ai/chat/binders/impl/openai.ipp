@@ -23,7 +23,7 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
     size_t skip, ::std::chrono::hours range,
     ::std::string_view pattern, size_t retries, ::std::string_view apology,
     ::std::string_view botname) {
-    ::ai::chat::histories::slot<History> s_history{ history.subscribe<::ai::chat::adapters::openai>() };
+    ::ai::chat::histories::slot<History> s_history{ history.template subscribe<::ai::chat::adapters::openai>() };
     char const USERNAME[]{ "{username}" };
     char const CONTENT[]{ "{content}" };
     s_history.on_message([&history, &adapter,
@@ -75,7 +75,7 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
                 ::ai::chat::adapters::iterator adapter_first{ adapter_begin + (history_first - history_begin) };
                 ::ai::chat::adapters::iterator adapter_last{ adapter_begin + (history_last - history_begin) };
                 adapter.erase(adapter_first, adapter_last);
-                history.erase<::ai::chat::adapters::openai>(history_first, history_last);
+                history.template erase<::ai::chat::adapters::openai>(history_first, history_last);
                 continue;
             }
             ::ai::chat::adapters::message adapter_message{ *adapter_pos };
@@ -98,7 +98,7 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
         if (channel_tag) {
             tags.emplace_back("channel", channel_tag->value);
         }
-        history.insert<::ai::chat::adapters::openai>(::ai::chat::histories::message{
+        history.template insert<::ai::chat::adapters::openai>(::ai::chat::histories::message{
             {},
             content,
             tags
