@@ -13,6 +13,10 @@ connection::connection()
     , _stream{ ::eboost::beast::metered_tcp_stream<connection>{ ::eboost::beast::metered_rate_policy<connection>{ *this }, _io_context }, _ssl_context }
     , _buffer{}
     , _completion{ ::boost::json::object_kind }
+    , _logger{
+        ::opentelemetry::logs::Provider::GetLoggerProvider()
+            ->GetLogger("ai_chat_adapters_openai")
+    }
     , _tracer{
         ::opentelemetry::trace::Provider::GetTracerProvider()
             ->GetTracer("ai_chat_adapters_openai")

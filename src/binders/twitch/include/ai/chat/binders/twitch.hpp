@@ -14,38 +14,38 @@ template<typename History>
 class twitch {
 public:
     twitch() = delete;
-    twitch(const twitch&) = delete;
-    twitch(twitch&&) = delete;
+    twitch(twitch const &other) = delete;
+    twitch(twitch &&other) = delete;
 
     ~twitch() = delete;
 
-    twitch& operator=(const twitch&) = delete;
-    twitch& operator=(twitch&&) = delete;
+    twitch & operator=(twitch const &other) = delete;
+    twitch & operator=(twitch &&other) = delete;
 
     class binding {
     public:
         binding() = delete;
-        binding(const binding&) = delete;
-        binding(binding&&) = default;
+        binding(binding const &other) = delete;
+        binding(binding &&other) = default;
 
         ~binding() = default;
 
-        binding& operator=(const binding&) = delete;
-        binding& operator=(binding&&) = default;
+        binding & operator=(binding const &other) = delete;
+        binding & operator=(binding &&other) = default;
 
     private:
         friend twitch;
 
-        binding(typename ::ai::chat::histories::observable<History>::slot&& s_history, ::ai::chat::clients::observable<::ai::chat::clients::twitch>::slot&& s_client);
+        binding(::ai::chat::histories::slot<History> &&s_history, ::ai::chat::clients::slot<::ai::chat::clients::twitch> &&s_client);
 
-        typename ::ai::chat::histories::observable<History>::slot _s_history;
-        ::ai::chat::clients::observable<::ai::chat::clients::twitch>::slot _s_client;
+        ::ai::chat::histories::slot<History> _s_history;
+        ::ai::chat::clients::slot<::ai::chat::clients::twitch> _s_client;
     };
 
     template<typename Moderator, typename... Commands>
-    static binding bind(::ai::chat::histories::observable<History>& history, ::ai::chat::clients::observable<::ai::chat::clients::twitch>& client,
-        Moderator& moderator, ::ai::chat::commands::executor<Commands...>& executor,
-        const ::std::string& botname);
+    static binding bind(::ai::chat::histories::observable<History> &history, ::ai::chat::clients::observable<::ai::chat::clients::twitch> &client,
+        Moderator &moderator, ::ai::chat::commands::executor<Commands...> &executor,
+        ::std::string_view botname);
 };
 
 } // binders

@@ -8,6 +8,7 @@
 #include "boost/beast.hpp"
 #include "boost/json.hpp"
 #include "eboost/beast.hpp"
+#include "opentelemetry/logs/provider.h"
 #include "opentelemetry/metrics/provider.h"
 #include "opentelemetry/trace/provider.h"
 
@@ -46,6 +47,7 @@ private:
     ::boost::asio::ssl::stream<::eboost::beast::metered_tcp_stream<connection>> _stream;
     ::boost::beast::flat_buffer _buffer;
     ::boost::json::value _completion;
+    ::opentelemetry::nostd::shared_ptr<::opentelemetry::logs::Logger> _logger;
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Tracer> _tracer;
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::metrics::Meter> _meter;
     ::opentelemetry::nostd::unique_ptr<::opentelemetry::metrics::Gauge<int64_t>> _m_context;

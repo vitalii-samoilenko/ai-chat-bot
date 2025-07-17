@@ -136,6 +136,7 @@ void openai::push_back(message value) {
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
         _context._tracer->StartSpan("push_back")
     };
+    _context._logger->Info(value.content, span->GetContext());
     ::boost::json::value &messages{ _context._completion.at("messages") };
     ::boost::json::array &array{ messages.as_array() };
     ::boost::json::value_from(array.emplace_back(nullptr), value);

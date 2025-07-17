@@ -1,16 +1,16 @@
 #ifndef AI_CHAT_BINDERS_TWITCH_IPP
 #define AI_CHAT_BINDERS_TWITCH_IPP
 
+#include <string>
 #include <utility>
-
-#include "ai/chat/binders/twitch.hpp"
+#include <vector>
 
 namespace ai {
 namespace chat {
 namespace binders {
 
 template<typename History>
-twitch<History>::binding::binding(typename ::ai::chat::histories::observable<History>::slot&& s_history, ::ai::chat::clients::observable<::ai::chat::clients::twitch>::slot&& s_client)
+twitch<History>::binding::binding(::ai::chat::histories::slot<History> &&s_history, ::ai::chat::clients::slot<::ai::chat::clients::twitch> &&s_client)
     : _s_history{ ::std::move(s_history) }
     , _s_client{ ::std::move(s_client) } {
 
@@ -18,58 +18,63 @@ twitch<History>::binding::binding(typename ::ai::chat::histories::observable<His
 
 template<typename History>
 template<typename Moderator, typename... Commands>
-typename twitch<History>::binding twitch<History>::bind(::ai::chat::histories::observable<History>& history, ::ai::chat::clients::observable<::ai::chat::clients::twitch>& client,
-    Moderator& moderator, ::ai::chat::commands::executor<Commands...>& executor,
-    const ::std::string& botname) {
-    auto s_history = history.template subscribe<::ai::chat::clients::observable<::ai::chat::clients::twitch>>();
-    s_history.on_message([&client](const ::ai::chat::histories::message& history_message)->void {
-        const ::ai::chat::histories::tag* p_username_tag{ nullptr };
-        const ::ai::chat::histories::tag* p_channel_tag{ nullptr };
-        for (const ::ai::chat::histories::tag& tag : history_message.tags) {
+twitch<History>::binding twitch<History>::bind(::ai::chat::histories::observable<History> &history, ::ai::chat::clients::observable<::ai::chat::clients::twitch> &client,
+    Moderator &moderator, ::ai::chat::commands::executor<Commands...> &executor,
+    ::std::string_view botname) {
+    ::ai::chat::histories::slot<History> s_history{ history.subscribe<::ai::chat::clients::observable<::ai::chat::clients::twitch>>() };
+    s_history.on_message([&client
+    ](::ai::chat::histories::iterator history_pos)->void {
+        ::ai::chat::histories::message history_message{ *history_pos };
+        ::ai::chat::histories::tag const *username_tag{ nullptr };
+        ::ai::chat::histories::tag const *channel_tag{ nullptr };
+        for (::ai::chat::histories::tag const &tag : history_message.tags) {
             if (tag.name == "user.name") {
-                p_username_tag = &tag;
+                username_tag = &tag;
             } else if (tag.name == "channel") {
-                p_channel_tag = &tag;
+                channel_tag = &tag;
             }
         }
-        ::ai::chat::clients::message client_message{
+        client.send(::ai::chat::clients::message{
             p_username_tag->value,
             history_message.content,
             p_channel_tag->value
-        };
-        client.send(client_message);
+        });
     });
-    auto s_client = client.subscribe<::ai::chat::histories::observable<History>>();
-    s_client.on_message([&history, &moderator, botname](const ::ai::chat::clients::message& client_message)->void {
+    ::ai::chat::clients::slot<::ai::chat::clients::twitch> s_client{ client.subscribe<::ai::chat::histories::observable<History>>() };
+    s_client.on_message([&history, &moderator,
+        botname = ::std::string{ botname }
+    ](::ai::chat::clients::message client_message)->void {
         if (client_message.content.find("@" + botname) == ::std::string::npos) {
             return;
         }
         if (!moderator.is_allowed(botname, client_message.username)) {
             return;
         }
-        ::ai::chat::histories::message history_message{
+        ::std::vector<::ai::chat::histories::tag> tags{
+            ::ai::chat::histories::tag{ "user.name", client_message.username },
+            ::ai::chat::histories::tag{ "channel", client_message.channel },
+        };
+        history.insert<::ai::chat::clients::observable<::ai::chat::clients::twitch>>(::ai::chat::histories::message{
             {},
             client_message.content,
-            {
-                {"user.name", client_message.username},
-                {"channel", client_message.channel}
-            }
-        };
-        history.template insert<::ai::chat::clients::observable<::ai::chat::clients::twitch>>(history_message);
+            tags
+        });
     });
-    s_client.on_command([&client, &moderator, &executor, botname](const ::ai::chat::clients::command& client_command)->void {
+    s_client.on_command([&client,
+        &moderator, &executor,
+        botname = ::std::string{ botname }
+    ](::ai::chat::clients::command client_command)->void {
         if (!(client_command.channel == botname)) {
             return;
         }
         if (!moderator.is_moderator(client_command.username)) {
             return;
         }
-        ::ai::chat::clients::message client_message{
+        client.send(::ai::chat::clients::message{
             botname,
             executor.execute(client_command.name, client_command.args),
             client_command.channel
-        };
-        client.send(client_message);
+        });
     });
     return binding{ ::std::move(s_history), ::std::move(s_client) };
 };
