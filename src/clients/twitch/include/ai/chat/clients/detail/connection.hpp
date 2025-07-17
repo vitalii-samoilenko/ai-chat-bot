@@ -6,6 +6,7 @@
 
 #include "boost/asio/ssl.hpp"
 #include "boost/asio.hpp"
+#include "boost/beast/ssl.hpp"
 #include "boost/beast.hpp"
 #include "boost/json.hpp"
 #include "eboost/beast.hpp"

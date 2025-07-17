@@ -158,7 +158,7 @@ void connection<Handler>::on_connect(
         {}, {},
         span->GetContext()
     });
-    const char PASS[]{ "PASS oauth:" };
+    char const PASS[]{ "PASS oauth:" };
     ::boost::asio::mutable_buffer request{ _buffer.prepare(::std::size(PASS) - 1 + _access_token.size()) };
     ::std::memcpy(reinterpret_cast<char *>(request.data()), PASS, ::std::size(PASS) - 1);
     ::std::memcpy(reinterpret_cast<char *>(request.data()) + ::std::size(PASS) - 1, _access_token.data(), _access_token.size());
@@ -173,7 +173,7 @@ void connection<Handler>::on_connect(
         {}, {},
         span->GetContext()
     });
-    const char NICK[]{ "NICK " };
+    char const NICK[]{ "NICK " };
     ::boost::asio::mutable_buffer request{ _buffer.prepare(::std::size(NICK) - 1 + _username.size()) };
     ::std::memcpy(reinterpret_cast<char *>(request.data()), NICK, ::std::size(NICK) - 1);
     ::std::memcpy(reinterpret_cast<char *>(request.data()) + ::std::size(NICK) - 1, _username.data(), _username.size());
@@ -194,10 +194,10 @@ void connection<Handler>::on_connect(
     }
     ::eboost::beast::ensure_success(error_code);
     ::boost::asio::const_buffer response{ _buffer.cdata() };
-    _logger->Info(::opentelemetry::nostd::string_view{ reinterpret_cast<const char *>(response.data()), bytes_transferred }, operation->GetContext());
+    _logger->Info(::opentelemetry::nostd::string_view{ reinterpret_cast<char const *>(response.data()), bytes_transferred }, operation->GetContext());
     {
         ::std::string_view notice{};
-        ::std::string_view cursor{ reinterpret_cast<const char *>(response.data()), bytes_transferred };
+        ::std::string_view cursor{ reinterpret_cast<char const *>(response.data()), bytes_transferred };
         if (::RE2::FullMatch(cursor, _re_notice,
                 &notice)) {
             throw ::std::invalid_argument{ ::std::string{ notice } };
@@ -209,8 +209,8 @@ void connection<Handler>::on_connect(
         {}, {},
         span->GetContext()
     });
-    const char JOIN[]{ "JOIN #" };
-    const char AND[]{ ",#" };
+    char const JOIN[]{ "JOIN #" };
+    char const AND[]{ ",#" };
     ::boost::asio::mutable_buffer request{ _buffer.prepare(::std::size(JOIN) - 1 + _username.size() + (!_channel.empty() ? ::std::size(AND) - 1 + _channel.size() : 0)) };
     ::std::memcpy(reinterpret_cast<char *>(request.data()), JOIN, ::std::size(JOIN) - 1);
     ::std::memcpy(reinterpret_cast<char *>(request.data()) + ::std::size(JOIN) - 1, _username.data(), _username.size());
@@ -248,12 +248,12 @@ void connection<Handler>::on_read() {
     }
     ::eboost::beast::ensure_success(error_code);
     ::boost::asio::const_buffer response{ _buffer.cdata() };
-    _logger->Info(::opentelemetry::nostd::string_view{ reinterpret_cast<const char *>(response.data()), bytes_transferred }, operation->GetContext());
+    _logger->Info(::opentelemetry::nostd::string_view{ reinterpret_cast<char const *>(response.data()), bytes_transferred }, operation->GetContext());
     bool pong{ false };
     bool disconnect{ false };
     {
         ::std::string_view line{};
-        ::std::string_view cursor{ reinterpret_cast<const char *>(response.data()), bytes_transferred };
+        ::std::string_view cursor{ reinterpret_cast<char const *>(response.data()), bytes_transferred };
         while (::RE2::FindAndConsume(&cursor, _re_line,
                 &line)) {
             ::std::string_view arg1{};

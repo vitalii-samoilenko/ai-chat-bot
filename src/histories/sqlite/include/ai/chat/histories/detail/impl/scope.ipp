@@ -36,7 +36,7 @@ scope::scope(::sqlite3 *database)
 };
 
 void scope::on_init() {
-    const char SELECT_MESSAGE[]{
+    char const SELECT_MESSAGE[]{
         "SELECT timestamp, content FROM message"
         " WHERE NOT timestamp < @TIMESTAMP"
         " LIMIT -1 OFFSET @SKIP"
@@ -69,7 +69,7 @@ void scope::on_advance() {
     _timestamp = ::std::chrono::nanoseconds{ ::sqlite3_column_int64(_s_message, 0) };
     ::sqlite3_value *value{ ::sqlite3_column_value(_s_message, 1) };
     _content = ::std::string_view{
-        reinterpret_cast<const char *>(::sqlite3_value_text(value)),
+        reinterpret_cast<char const *>(::sqlite3_value_text(value)),
         static_cast<size_t>(::sqlite3_value_bytes(value))
     };
     ::esqlite3_ensure_success(
@@ -85,7 +85,7 @@ void scope::on_advance() {
             ::sqlite3_step(_s_tag_name));
         value = ::sqlite3_column_value(_s_tag_name, 0);
         _tag_names.emplace_back(
-            reinterpret_cast<const char *>(::sqlite3_value_text(value)),
+            reinterpret_cast<char const *>(::sqlite3_value_text(value)),
             static_cast<size_t>(::sqlite3_value_bytes(value)));
         ::esqlite3_ensure_success(
             ::sqlite3_reset(_s_tag_name));
@@ -97,7 +97,7 @@ void scope::on_advance() {
             ::sqlite3_step(_s_tag_value));
         value = ::sqlite3_column_value(_s_tag_value, 0);
         _tag_values.emplace_back(
-            reinterpret_cast<const char *>(::sqlite3_value_text(value)),
+            reinterpret_cast<char const *>(::sqlite3_value_text(value)),
             static_cast<size_t>(::sqlite3_value_bytes(value)));
         ::esqlite3_ensure_success(
             ::sqlite3_reset(_s_tag_value));

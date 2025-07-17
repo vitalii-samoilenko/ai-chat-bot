@@ -24,14 +24,15 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
     ::std::string_view pattern, size_t retries, ::std::string_view apology,
     ::std::string_view botname) {
     ::ai::chat::histories::slot<History> s_history{ history.subscribe<::ai::chat::adapters::openai>() };
-    const char USERNAME[]{ "{username}" };
-    const char CONTENT[]{ "{content}" };
+    char const USERNAME[]{ "{username}" };
+    char const CONTENT[]{ "{content}" };
     s_history.on_message([&history, &adapter,
         &moderator,
         model = ::std::string{ model }, key = ::std::string{ key },
         skip, range,
         pattern = ::std::string{ pattern }, retries, apology = ::std::string{ apology },
             pos_p_username = pattern.find(USERNAME), pos_p_content = pattern.find(CONTENT), pos_a_username = apology.find(USERNAME),
+            USERNAME_SIZE = ::std::size(USERNAME), CONTENT_SIZE = ::std::size(CONTENT),
         botname = ::std::string{ botname }
     ](::ai::chat::histories::iterator history_pos)->void {
         ::ai::chat::histories::message history_message{ *history_pos };
@@ -46,11 +47,11 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
         }
         if (username_tag) {
             ::std::string content{ pattern };
-            if (!(pos_username == ::std::string::npos)) {
-                content.replace(pos_username, ::std::size(USERNAME) - 1, username_tag->value);
+            if (!(pos_p_username == ::std::string::npos)) {
+                content.replace(pos_p_username, USERNAME_SIZE - 1, username_tag->value);
             }
-            if (!(pos_content == ::std::string::npos)) {
-                content.replace(pos_content, ::std::size(CONTENT) - 1, history_message.content);
+            if (!(pos_p_content == ::std::string::npos)) {
+                content.replace(pos_p_content, CONTENT_SIZE - 1, history_message.content);
             }
             adapter.push_back(::ai::chat::adapters::message{
                 ::ai::chat::adapters::role::user,
@@ -74,7 +75,7 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
                 ::ai::chat::adapters::iterator adapter_first{ adapter_begin + (history_first - history_begin) };
                 ::ai::chat::adapters::iterator adapter_last{ adapter_begin + (history_last - history_begin) };
                 adapter.erase(adapter_first, adapter_last);
-                history.erase(history_first, history_last);
+                history.erase<::ai::chat::adapters::openai>(history_first, history_last);
                 continue;
             }
             ::ai::chat::adapters::message adapter_message{ *adapter_pos };
@@ -85,7 +86,7 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
                 }
                 content = apology;
                 if (!(pos_a_username == ::std::string::npos)) {
-                    content.replace(pos_a_username, ::std::size(USERNAME) - 1, username_tag->value);
+                    content.replace(pos_a_username, USERNAME_SIZE - 1, username_tag->value);
                 }
                 break;
             }
@@ -97,6 +98,7 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
             tags.emplace_back("channel", channel_tag->value);
         }
         history.insert<::ai::chat::adapters::openai>(::ai::chat::histories::message{
+            {},
             content,
             tags
         });

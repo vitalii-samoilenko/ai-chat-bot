@@ -61,7 +61,7 @@ void connection::on_init() {
         ::sqlite3_open_v2(_filename.c_str(), &_database,
             SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE,
             nullptr));
-    const char INIT_WAL[]{
+    char const INIT_WAL[]{
         "PRAGMA journal_mode=WAL"
     };
     ::esqlite3_ensure_success(
@@ -72,7 +72,7 @@ void connection::on_init() {
         ::sqlite3_step(_init_wal));
     ::esqlite3_ensure_success(
         ::sqlite3_finalize(_init_wal));
-    const char INIT_MESSAGE[]{
+    char const INIT_MESSAGE[]{
         "CREATE TABLE IF NOT EXISTS message"
         "("
                 "timestamp INTEGER NOT NULL CONSTRAINT PK_message PRIMARY KEY"
@@ -87,7 +87,7 @@ void connection::on_init() {
         ::sqlite3_step(_init_message));
     ::esqlite3_ensure_success(
         ::sqlite3_finalize(_init_message));
-    const char INIT_TAG_NAME[]{
+    char const INIT_TAG_NAME[]{
         "CREATE TABLE IF NOT EXISTS tag_name"
         "("
                 "id INTEGER NOT NULL CONSTRAINT PK_tag_name PRIMARY KEY AUTOINCREMENT"
@@ -102,7 +102,7 @@ void connection::on_init() {
         ::sqlite3_step(_init_tag_name));
     ::esqlite3_ensure_success(
         ::sqlite3_finalize(_init_tag_name));
-    const char INIT_TAG_VALUE[]{
+    char const INIT_TAG_VALUE[]{
         "CREATE TABLE IF NOT EXISTS tag_value"
         "("
                 "id INTEGER NOT NULL CONSTRAINT PK_tag_value PRIMARY KEY AUTOINCREMENT"
@@ -117,7 +117,7 @@ void connection::on_init() {
         ::sqlite3_step(_init_tag_value));
     ::esqlite3_ensure_success(
         ::sqlite3_finalize(_init_tag_value));
-    const char INIT_MESSAGE_TAG[]{
+    char const INIT_MESSAGE_TAG[]{
         "CREATE TABLE IF NOT EXISTS message_tag"
         "("
                 "timestamp INTEGER NOT NULL CONSTRAINT FK_message_tag_message REFERENCES message(timestamp)"
@@ -134,14 +134,14 @@ void connection::on_init() {
         ::sqlite3_step(_init_message_tag));
     ::esqlite3_ensure_success(
         ::sqlite3_finalize(_init_message_tag));
-    const char INSERT_BEGIN[]{
+    char const INSERT_BEGIN[]{
         "SAVEPOINT insert_message"
     };
     ::esqlite3_ensure_success(
         ::sqlite3_prepare_v2(_database, INSERT_BEGIN,
             static_cast<int>(::std::size(INSERT_BEGIN) - 1),
             &_i_begin, nullptr));
-    const char INSERT_MESSAGE[]{
+    char const INSERT_MESSAGE[]{
         "INSERT INTO message"
         "("
             "timestamp, content"
@@ -155,7 +155,7 @@ void connection::on_init() {
         ::sqlite3_prepare_v2(_database, INSERT_MESSAGE,
             static_cast<int>(::std::size(INSERT_MESSAGE) - 1),
             &_i_message, nullptr));
-    const char INSERT_TAG_NAME[]{
+    char const INSERT_TAG_NAME[]{
         "INSERT OR IGNORE INTO tag_name"
         "("
             "name"
@@ -169,7 +169,7 @@ void connection::on_init() {
         ::sqlite3_prepare_v2(_database, INSERT_TAG_NAME,
             static_cast<int>(::std::size(INSERT_TAG_NAME) - 1),
             &_i_tag_name, nullptr));
-    const char INSERT_TAG_VALUE[]{
+    char const INSERT_TAG_VALUE[]{
         "INSERT OR IGNORE INTO tag_value"
         "("
             "value"
@@ -183,7 +183,7 @@ void connection::on_init() {
         ::sqlite3_prepare_v2(_database, INSERT_TAG_VALUE,
             static_cast<int>(::std::size(INSERT_TAG_VALUE) - 1),
             &_i_tag_value, nullptr));
-    const char INSERT_MESSAGE_TAG[]{
+    char const INSERT_MESSAGE_TAG[]{
         "INSERT OR IGNORE INTO message_tag"
         "("
             "timestamp, name_id, value_id"
@@ -196,14 +196,14 @@ void connection::on_init() {
         ::sqlite3_prepare_v2(_database, INSERT_MESSAGE_TAG,
             static_cast<int>(::std::size(INSERT_MESSAGE_TAG) - 1),
             &_i_message_tag, nullptr));
-    const char DELETE_BEGIN[]{
+    char const DELETE_BEGIN[]{
         "SAVEPOINT delete_message"
     };
     ::esqlite3_ensure_success(
         ::sqlite3_prepare_v2(_database, DELETE_BEGIN,
             static_cast<int>(::std::size(DELETE_BEGIN) - 1),
             &_d_begin, nullptr));
-    const char DELETE_MESSAGE_TAG[]{
+    char const DELETE_MESSAGE_TAG[]{
         "DELETE FROM message_tag"
         " WHERE timestamp IS BETWEEN @FIRST AND @LAST - 1"
     };
@@ -211,7 +211,7 @@ void connection::on_init() {
         ::sqlite3_prepare_v2(_database, DELETE_MESSAGE_TAG,
             static_cast<int>(::std::size(DELETE_MESSAGE_TAG) - 1),
             &_d_message_tag, nullptr));
-    const char DELETE_MESSAGE[]{
+    char const DELETE_MESSAGE[]{
         "DELETE FROM message"
         " WHERE timestamp IS BETWEEN @FIRST AND @LAST - 1"
     };
@@ -219,7 +219,7 @@ void connection::on_init() {
         ::sqlite3_prepare_v2(_database, DELETE_MESSAGE,
             static_cast<int>(::std::size(DELETE_MESSAGE) - 1),
             &_d_message, nullptr));
-    const char SELECT_MESSAGE_TAG[]{
+    char const SELECT_MESSAGE_TAG[]{
         "SELECT name_id, value_id FROM message_tag"
         " WHERE timestamp = @TIMESTAMP"
     };
@@ -227,7 +227,7 @@ void connection::on_init() {
         ::sqlite3_prepare_v2(_database, SELECT_MESSAGE_TAG,
             static_cast<int>(::std::size(SELECT_MESSAGE_TAG) - 1),
             &_s_message_tag, nullptr));
-    const char SELECT_TAG_NAME[]{
+    char const SELECT_TAG_NAME[]{
         "SELECT name FROM tag_name"
         " WHERE id = @ID"
     };
@@ -235,7 +235,7 @@ void connection::on_init() {
         ::sqlite3_prepare_v2(_database, SELECT_TAG_NAME,
             static_cast<int>(::std::size(SELECT_TAG_NAME) - 1),
             &_s_tag_name, nullptr));
-    const char SELECT_TAG_VALUE[]{
+    char const SELECT_TAG_VALUE[]{
         "SELECT value FROM tag_value"
         " WHERE id = @ID"
     };
@@ -243,7 +243,7 @@ void connection::on_init() {
         ::sqlite3_prepare_v2(_database, SELECT_TAG_VALUE,
             static_cast<int>(::std::size(SELECT_TAG_VALUE) - 1),
             &_s_tag_value, nullptr));
-    const char SELECT_COUNT[]{
+    char const SELECT_COUNT[]{
         "SELECT COUNT(*) FROM message"
         " WHERE timestamp BETWEEN @FIRST AND @LAST - 1"
     };
@@ -263,14 +263,14 @@ void connection::on_init() {
     ::esqlite3_ensure_success(
         ::sqlite3_reset(_i_begin));
     ::std::pair<::sqlite3_stmt *, ::sqlite3_stmt *> commit_n_rollback{};
-    const char INSERT_COMMIT[]{
+    char const INSERT_COMMIT[]{
         "RELEASE SAVEPOINT insert_message"
     };
     ::esqlite3_ensure_success(
         ::sqlite3_prepare_v2(_database, INSERT_COMMIT,
             static_cast<int>(::std::size(INSERT_COMMIT) - 1),
             &commit_n_rollback.first, nullptr));
-    const char INSERT_ROLLBACK[]{
+    char const INSERT_ROLLBACK[]{
         "ROLLBACK TO SAVEPOINT insert_message"
     };
     ::esqlite3_ensure_success(
@@ -364,14 +364,14 @@ void connection::on_insert_message_tag(::std::chrono::nanoseconds timestamp, ::s
     ::esqlite3_ensure_success(
         ::sqlite3_reset(_d_begin));
     ::std::pair<::sqlite3_stmt *, ::sqlite3_stmt *> commit_n_rollback{};
-    const char INSERT_COMMIT[]{
+    char const INSERT_COMMIT[]{
         "RELEASE SAVEPOINT delete_message"
     };
     ::esqlite3_ensure_success(
         ::sqlite3_prepare_v2(_database, INSERT_COMMIT,
             static_cast<int>(::std::size(INSERT_COMMIT) - 1),
             &commit_n_rollback.first, nullptr));
-    const char INSERT_ROLLBACK[]{
+    char const INSERT_ROLLBACK[]{
         "ROLLBACK TO SAVEPOINT delete_message"
     };
     ::esqlite3_ensure_success(

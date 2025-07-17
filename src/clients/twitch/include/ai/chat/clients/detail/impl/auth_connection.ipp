@@ -104,8 +104,6 @@ void auth_connection::on_send(Request &request, Response &response,
     ::eboost::beast::ensure_success(error_code);
     ::boost::ignore_unused(bytes_transferred);
     operation = nullptr;
-    auto now = ::std::chrono::steady_clock::now();
-    _next = now.time_since_epoch() + _delay;
     operation = _tracer->StartSpan("on_shutdown", ::opentelemetry::trace::StartSpanOptions{
         {}, {},
         span->GetContext()

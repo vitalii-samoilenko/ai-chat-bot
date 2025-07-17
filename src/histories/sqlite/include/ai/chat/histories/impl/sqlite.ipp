@@ -9,6 +9,16 @@ namespace ai {
 namespace chat {
 namespace histories {
 
+iterator::iterator(iterator const &other)
+    : _target{ other._target._database } {
+    _target._timestamp = other._target._timestamp;
+    _target._s_message_tag = other._target._s_message_tag;
+    _target._s_tag_name = other._target._s_tag_name;
+    _target._s_tag_value = other._target._s_tag_value;
+    _target._s_count = other._target._s_count;
+    _target.on_init();
+    _target.on_advance();
+}
 iterator::iterator(iterator &&other)
     : _target{ other._target._database } {
     _target._timestamp = other._target._timestamp;
@@ -55,13 +65,15 @@ bool iterator::operator==(iterator const &rhs) const {
         && _target._timestamp == rhs._target._timestamp;
 };
 
-iterator & iterator::operator+(ptrdiff_t rhs) {
-    _target.on_advance(rhs);
-    return *this;
+iterator iterator::operator+(ptrdiff_t rhs) const {
+    iterator pos{ *this };
+    pos._target.on_advance(rhs);
+    return pos;
 };
-iterator & iterator::operator+(::std::chrono::nanoseconds rhs) {
-    _target.on_advance(rhs);
-    return *this;
+iterator iterator::operator+(::std::chrono::nanoseconds rhs) const {
+    iterator pos{ *this };
+    pos._target.on_advance(rhs);
+    return pos;
 };
 ptrdiff_t iterator::operator-(iterator rhs) const {
     return _target.on_count(rhs._target._timestamp);

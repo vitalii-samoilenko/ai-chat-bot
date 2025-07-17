@@ -15,7 +15,7 @@ private:
     friend slot<History>;
 
     ::std::function<void(iterator)> on_message;
-    ::std::function(void(iterator, iterator)) on_erase;
+    ::std::function<void(iterator, iterator)> on_erase;
 };
 
 template<typename History>

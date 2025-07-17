@@ -36,7 +36,7 @@ namespace histories {
 class iterator {
 public:
     iterator() = delete;
-    iterator(iterator const &other) = delete;
+    iterator(iterator const &other);
     iterator(iterator &&other);
 
     ~iterator();
@@ -48,8 +48,8 @@ public:
     iterator & operator++();
     bool operator==(iterator const &rhs) const;
 
-    iterator & operator+(ptrdiff_t rhs);
-    iterator & operator+(::std::chrono::nanoseconds rhs);
+    iterator operator+(ptrdiff_t rhs) const;
+    iterator operator+(::std::chrono::nanoseconds rhs) const;
     ptrdiff_t operator-(iterator rhs) const;
 
 private:

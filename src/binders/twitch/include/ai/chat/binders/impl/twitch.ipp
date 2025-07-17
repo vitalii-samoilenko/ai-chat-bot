@@ -35,9 +35,9 @@ twitch<History>::binding twitch<History>::bind(::ai::chat::histories::observable
             }
         }
         client.send(::ai::chat::clients::message{
-            p_username_tag->value,
+            username_tag->value,
             history_message.content,
-            p_channel_tag->value
+            channel_tag->value
         });
     });
     ::ai::chat::clients::slot<::ai::chat::clients::twitch> s_client{ client.subscribe<::ai::chat::histories::observable<History>>() };

@@ -29,10 +29,10 @@ struct form_body {
             error_code = {};
             
             size_t size{ 0 };
-            for (const ::std::pair<::std::string, ::std::string>& key_value : _body) {
+            for (auto const &key_value : _body) {
                 _buffer[size] = '&'; ++size;
-                const ::std::string& key{ key_value.first };
-                const ::std::string& value{ key_value.second };
+                auto const &key{ key_value.first };
+                auto const &value{ key_value.second };
                 ::std::memcpy(_buffer + size, key.data(), key.size()); size += key.size();
                 _buffer[size] = '='; ++size;
                 ::std::memcpy(_buffer + size, value.data(), value.size()); size += value.size();

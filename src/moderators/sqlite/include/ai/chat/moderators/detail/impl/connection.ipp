@@ -54,7 +54,7 @@ void connection::on_init() {
         ::sqlite3_create_function(_database, "regexp", 2,
             SQLITE_UTF8 | SQLITE_DETERMINISTIC | SQLITE_DIRECTONLY | SQLITE_INNOCUOUS,
             nullptr, &::esqlite3_regexp, nullptr, nullptr));
-    const char INIT_WAL[]{
+    char const INIT_WAL[]{
         "PRAGMA journal_mode=WAL"
     };
     ::esqlite3_ensure_success(
@@ -65,7 +65,7 @@ void connection::on_init() {
         ::sqlite3_step(_init_wal));
     ::esqlite3_ensure_success(
         ::sqlite3_finalize(_init_wal));
-    const char INIT_USER[]{
+    char const INIT_USER[]{
         "CREATE TABLE IF NOT EXISTS user"
         "("
                 "id INTEGER NOT NULL CONSTRAINT PK_user PRIMARY KEY AUTOINCREMENT"
@@ -82,7 +82,7 @@ void connection::on_init() {
         ::sqlite3_step(_init_user));
     ::esqlite3_ensure_success(
         ::sqlite3_finalize(_init_user));
-    const char INIT_FILTER[]{
+    char const INIT_FILTER[]{
         "CREATE TABLE IF NOT EXISTS filter"
         "("
                 "id INTEGER NOT NULL CONSTRAINT PK_filter PRIMARY KEY AUTOINCREMENT"
@@ -98,7 +98,7 @@ void connection::on_init() {
         ::sqlite3_step(_init_filter));
     ::esqlite3_ensure_success(
         ::sqlite3_finalize(_init_filter));
-    const char IS_ALLOWED1[]{
+    char const IS_ALLOWED1[]{
         "SELECT COUNT(*) FROM user"
         " WHERE name = @USERNAME1"
         " AND 0 < role & @ROLE"
@@ -108,7 +108,7 @@ void connection::on_init() {
         ::sqlite3_prepare_v2(_database, IS_ALLOWED1,
             static_cast<int>(::std::size(IS_ALLOWED1) - 1),
             &_is_allowed1, nullptr));
-    const char IS_ALLOWED2[]{
+    char const IS_ALLOWED2[]{
         "SELECT COUNT(*) FROM user"
         " WHERE name IN (@USERNAME1, @USERNAME2)"
         " AND 0 < role & @ROLE"
@@ -122,7 +122,7 @@ void connection::on_init() {
         ::sqlite3_prepare_v2(_database, IS_ALLOWED2,
             static_cast<int>(::std::size(IS_ALLOWED2) - 1),
             &_is_allowed2, nullptr));
-    const char IS_FILTERED[]{
+    char const IS_FILTERED[]{
         "SELECT "
         "("
             "SELECT COUNT(*) FROM filter"
@@ -141,7 +141,7 @@ void connection::on_init() {
         ::sqlite3_bind_int64(_is_filtered,
             ::sqlite3_bind_parameter_index(_is_filtered, "@LENGTH"),
             _length));
-    const char PROMOTE[]{
+    char const PROMOTE[]{
         "INSERT INTO user"
         "("
             "name, role"
@@ -157,7 +157,7 @@ void connection::on_init() {
         ::sqlite3_prepare_v2(_database, PROMOTE,
             static_cast<int>(::std::size(PROMOTE) - 1),
             &_promote, nullptr));
-    const char DEMOTE[]{
+    char const DEMOTE[]{
         "INSERT INTO user"
         "("
             "name, role"
@@ -173,7 +173,7 @@ void connection::on_init() {
         ::sqlite3_prepare_v2(_database, DEMOTE,
             static_cast<int>(::std::size(DEMOTE) - 1),
             &_demote, nullptr));
-    const char TIMEOUT[]{
+    char const TIMEOUT[]{
         "INSERT INTO user"
         "("
             "name, since"
@@ -189,7 +189,7 @@ void connection::on_init() {
         ::sqlite3_prepare_v2(_database, TIMEOUT,
             static_cast<int>(::std::size(TIMEOUT) - 1),
             &_timeout, nullptr));
-    const char FILTER[]{
+    char const FILTER[]{
         "INSERT INTO filter"
         "("
             "name, pattern"
@@ -205,7 +205,7 @@ void connection::on_init() {
         ::sqlite3_prepare_v2(_database, FILTER,
             static_cast<int>(::std::size(FILTER) - 1),
             &_filter, nullptr));
-    const char DISCARD[]{
+    char const DISCARD[]{
         "DELETE FROM filter"
         " WHERE name = @NAME"
     };

@@ -75,6 +75,10 @@ usage tag_invoke(::boost::json::value_to_tag<usage>, ::boost::json::value const 
     };
 };
 
+iterator::iterator(iterator const &other)
+    : _target{ other._target._pos } {
+
+};
 iterator::iterator(iterator &&other)
     : _target{ ::std::move(other._target._pos) } {
 
@@ -91,7 +95,7 @@ bool iterator::operator==(iterator const &rhs) const {
     return _target._pos == rhs._target._pos;
 };
 
-iterator iterator::operator+(ptrdiff_t rhs) {
+iterator iterator::operator+(ptrdiff_t rhs) const {
     return iterator{ (_target._pos) + rhs };
 };
 ptrdiff_t iterator::operator-(iterator rhs) const {
@@ -136,7 +140,7 @@ void openai::push_back(message value) {
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
         _context._tracer->StartSpan("push_back")
     };
-    _context._logger->Info(value.content, span->GetContext());
+    _context._logger->Info(::opentelemetry::nostd::string_view{ value.content.data(), value.content.size() }, span->GetContext());
     ::boost::json::value &messages{ _context._completion.at("messages") };
     ::boost::json::array &array{ messages.as_array() };
     ::boost::json::value_from(array.emplace_back(nullptr), value);

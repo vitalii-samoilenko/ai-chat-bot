@@ -35,7 +35,7 @@ namespace adapters {
 class iterator {
 public:
     iterator() = delete;
-    iterator(iterator const &other) = delete;
+    iterator(iterator const &other);
     iterator(iterator &&other);
 
     ~iterator() = default;
@@ -47,7 +47,7 @@ public:
     iterator & operator++();
     bool operator==(iterator const &rhs) const;
 
-    iterator operator+(ptrdiff_t rhs);
+    iterator operator+(ptrdiff_t rhs) const;
     ptrdiff_t operator-(iterator rhs) const;
 
 private:
