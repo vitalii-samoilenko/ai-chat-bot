@@ -136,6 +136,12 @@ iterator openai::end() {
     return iterator{ array.end() };
 };
 
+void openai::reserve(size_t capacity) {
+    ::boost::json::value &messages{ _context._completion.at("messages") };
+    ::boost::json::array &array{ messages.as_array() };
+    array.reserve(capacity);
+};
+
 void openai::push_back(message value) {
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
         _context._tracer->StartSpan("push_back")

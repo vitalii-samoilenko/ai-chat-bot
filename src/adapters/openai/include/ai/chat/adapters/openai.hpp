@@ -76,6 +76,8 @@ public:
     iterator begin();
     iterator end();
 
+    void reserve(size_t capacity);
+
     void push_back(message value);
     void pop_back();
 

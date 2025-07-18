@@ -178,24 +178,30 @@ int main(int argc, char* argv[]) {
             ::std::chrono::milliseconds{ config.at("adapter").at("delay").as_int64() },
             static_cast<size_t>(config.at("adapter").at("limit").as_int64())
         };
-        for (::ai::chat::histories::iterator current{ history.begin() }, last{ history.end() }; !(current == last); ++current) {
-            ::ai::chat::histories::message message{ *current };
-            ::ai::chat::histories::tag const *username_tag{ nullptr };
-            for (::ai::chat::histories::tag const &tag : message.tags) {
-                if (tag.name == "user.name") {
-                    username_tag = &tag;
-                    break;
+        {
+            ::ai::chat::histories::iterator current{ history.begin() };
+            ::ai::chat::histories::iterator last{ history.end() };
+            adapter.reserve(last - current);
+            for (; !(current == last); ++current) {
+                ::ai::chat::histories::message message{ *current };
+                ::ai::chat::histories::tag const *username_tag{ nullptr };
+                for (::ai::chat::histories::tag const &tag : message.tags) {
+                    if (tag.name == "user.name") {
+                        username_tag = &tag;
+                        break;
+                    }
                 }
+                adapter.push_back(::ai::chat::adapters::message{
+                    username_tag
+                        ? username_tag->value == config.at("botname").as_string()
+                            ? ::ai::chat::adapters::role::assistant
+                            : ::ai::chat::adapters::role::user
+                        : ::ai::chat::adapters::role::system,
+                    message.content
+                });
             }
-            adapter.push_back(::ai::chat::adapters::message{
-                username_tag
-                    ? username_tag->value == config.at("botname").as_string()
-                        ? ::ai::chat::adapters::role::assistant
-                        : ::ai::chat::adapters::role::user
-                    : ::ai::chat::adapters::role::system,
-                message.content
-            });
         }
+
 
         ::ai::chat::clients::auth auth{
             config.at("client").at("auth").at("address").as_string(),
