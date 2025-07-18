@@ -8,7 +8,7 @@ namespace commands {
 template<typename Moderator>
 unban<Moderator>::unban(Moderator &moderator)
     : _moderator{ moderator }
-    , _parser{ R"([a-z]+)" } {
+    , _parser{ R"([a-z0-9_]+)" } {
 
 };
 

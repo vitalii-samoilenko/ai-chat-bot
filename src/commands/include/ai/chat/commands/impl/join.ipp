@@ -8,7 +8,7 @@ namespace commands {
 template<typename Client>
 join<Client>::join(Client &client)
     : _client{ client }
-    , _parser{ R"([a-z]+)" } {
+    , _parser{ R"([a-z0-9_]+)" } {
 
 };
 

@@ -48,9 +48,9 @@ connection<Handler>::connection(size_t dop, twitch<Handler> &handler)
     , _next{}
     , _re_notice{ R"(:tmi\.twitch\.tv NOTICE \* :(?<notice>[^\r\n]+)[\r\n]*)" }
     , _re_line{ R"((?<line>[^\r\n]+))" }
-    , _re_command_wargs{ R"(:(?<username>[a-z]+)![a-z]+@[a-z]+\.tmi\.twitch\.tv PRIVMSG #(?<channel>[a-z]+) :!(?<command>[a-z]+) (?<args>.+))" }
-    , _re_command{ R"(:(?<username>[a-z]+)![a-z]+@[a-z]+\.tmi\.twitch\.tv PRIVMSG #(?<channel>[a-z]+) :!(?<command>[a-z]+))" }
-    , _re_message{ R"(:(?<username>[a-z]+)![a-z]+@[a-z]+\.tmi\.twitch\.tv PRIVMSG #(?<channel>[a-z]+) :(?<message>.+))" }
+    , _re_command_wargs{ R"(:(?<username>[a-z0-9_]+)![a-z0-9_]+@[a-z0-9_]+\.tmi\.twitch\.tv PRIVMSG #(?<channel>[a-z0-9_]+) :!(?<command>[a-z]+) (?<args>.+))" }
+    , _re_command{ R"(:(?<username>[a-z0-9_]+)![a-z0-9_]+@[a-z0-9_]+\.tmi\.twitch\.tv PRIVMSG #(?<channel>[a-z0-9_]+) :!(?<command>[a-z]+))" }
+    , _re_message{ R"(:(?<username>[a-z0-9_]+)![a-z0-9_]+@[a-z0-9_]+\.tmi\.twitch\.tv PRIVMSG #(?<channel>[a-z0-9_]+) :(?<message>.+))" }
     , _re_ping{ R"(PING (?<ping>:tmi\.twitch\.tv))" }
     , _re_reconnect{ R"((?<reconnect>:tmi\.twitch\.tv) RECONNECT)" } {
 

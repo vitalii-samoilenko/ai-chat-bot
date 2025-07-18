@@ -10,7 +10,7 @@ namespace commands {
 template<typename Moderator>
 timeout<Moderator>::timeout(Moderator &moderator)
     : _moderator{ moderator }
-    , _pattern{ R"((?<username>[a-z]+) (?<hours>[0-9]{2}):(?<minutes>[0-9]{2}):(?<seconds>[0-9]{2}))" } {
+    , _pattern{ R"((?<username>[a-z0-9_]+) (?<hours>[0-9]{2}):(?<minutes>[0-9]{2}):(?<seconds>[0-9]{2}))" } {
 
 };
 
