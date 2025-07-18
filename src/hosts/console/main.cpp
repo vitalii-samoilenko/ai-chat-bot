@@ -181,7 +181,7 @@ int main(int argc, char* argv[]) {
         {
             ::ai::chat::histories::iterator current{ history.begin() };
             ::ai::chat::histories::iterator last{ history.end() };
-            adapter.reserve(last - current);
+            adapter.reserve(static_cast<size_t>(last - current));
             for (; !(current == last); ++current) {
                 ::ai::chat::histories::message message{ *current };
                 ::ai::chat::histories::tag const *username_tag{ nullptr };
