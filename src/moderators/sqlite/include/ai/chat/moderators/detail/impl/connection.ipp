@@ -217,7 +217,7 @@ void connection::on_init() {
             static_cast<int>(::std::size(DISCARD) - 1),
             &_discard, nullptr));
 };
-iterator connection::on_is_allowed(::std::string_view username1, role role, ::sqlite3_int64 since,
+iterator connection::on_is_allowed(::std::string_view username1, ::sqlite3_int64 role, ::sqlite3_int64 since,
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root) {
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
         _tracer->StartSpan("on_is_allowed", ::opentelemetry::trace::StartSpanOptions{

@@ -34,6 +34,9 @@ twitch<History>::binding twitch<History>::bind(::ai::chat::histories::observable
                 channel_tag = &tag;
             }
         }
+        if (!channel_tag) {
+            return;
+        }
         client.send(::ai::chat::clients::message{
             username_tag->value,
             history_message.content,

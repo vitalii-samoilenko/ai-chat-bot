@@ -218,8 +218,8 @@ int main(int argc, char* argv[]) {
             static_cast<size_t>(config.at("moderator").at("length").as_int64()),
         };
         if (!moderator_exists) {
-            for (::boost::json::value const &username : config.at("moderators").as_array()) {
-                moderator.mod(username.as_string());
+            for (::boost::json::value const &username : config.at("administrators").as_array()) {
+                moderator.admin(username.as_string());
             }
             for (::boost::json::value const &username : config.at("allowed").as_array()) {
                 moderator.allow(username.as_string());

@@ -7,12 +7,16 @@ namespace commands {
 
 template<typename Client>
 join<Client>::join(Client &client)
-    : _client{ client } {
+    : _client{ client }
+    , _parser{ R"([a-z]+)" } {
 
 };
 
 template<typename Client>
 ::std::string_view join<Client>::execute(::std::string_view args) {
+    if (!::RE2::FullMatch(args, _parser)) {
+        return ::std::string_view{};
+    }
     _client.join(args);
     return args;
 };

@@ -1,27 +1,19 @@
-traces
-metrics
-logs
-delayed client
-delayed adapter
-iterators
-limited adapter
-init context
+dashboards
 commands
 
-generic binders
-
+opentelemetry macro library
+release
 google free tier host
 
-http client
+http server / browser client
 
 sqlite optimizations
 openssl optimizations
 boost optimizations
 opentelemetry optimizations
 json optimizations
-reduce allocations (string_view)?
+eboost optimizations
 
 sll chain validation
-Content-Length
 
 websocket ping pong packets?

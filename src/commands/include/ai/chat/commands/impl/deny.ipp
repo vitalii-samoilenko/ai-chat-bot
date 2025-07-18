@@ -1,0 +1,28 @@
+#ifndef AI_CHAT_COMMANDS_DENY_IPP
+#define AI_CHAT_COMMANDS_DENY_IPP
+
+namespace ai {
+namespace chat {
+namespace commands {
+
+template<typename Moderator>
+deny<Moderator>::deny(Moderator &moderator)
+    : _moderator{ moderator }
+    , _parser{ R"([a-z]+)" } {
+
+};
+
+template<typename Moderator>
+::std::string_view deny<Moderator>::execute(::std::string_view args) {
+    if (!::RE2::FullMatch(args, _parser)) {
+        return ::std::string_view{};
+    }
+    _moderator.deny(args)
+    return args;
+};
+
+} // commands
+} // chat
+} // ai
+
+#endif

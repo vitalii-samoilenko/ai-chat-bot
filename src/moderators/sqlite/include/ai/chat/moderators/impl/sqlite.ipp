@@ -18,7 +18,7 @@ iterator sqlite::is_moderator(::std::string_view username) {
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
         _controller._tracer->StartSpan("is_moderator")
     };
-    return _controller.on_is_allowed(username, detail::connection::role::moderator,
+    return _controller.on_is_allowed(username, detail::connection::role::moderator | detail::connection::role::administrator,
         ::std::numeric_limits<::sqlite3_int64>::max(),
         span);
 };
@@ -39,6 +39,13 @@ iterator sqlite::is_filtered(::std::string_view content) {
         span);
 };
 
+iterator sqlite::admin(::std::string_view username) {
+    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
+        _controller._tracer->StartSpan("admin")
+    };
+    return _controller.on_promote(username, detail::connection::role::administrator,
+        span);
+};
 iterator sqlite::mod(::std::string_view username) {
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
         _controller._tracer->StartSpan("mod")

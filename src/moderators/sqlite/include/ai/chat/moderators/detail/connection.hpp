@@ -17,9 +17,10 @@ private:
     friend sqlite;
 
     enum role : ::sqlite3_int64 {
-        none         = 0b000000000000000000000000000000000000000000000000000000000000,
-        moderator    = 0b000000000000000000000000000000000000000000000000000000000001,
-        interlocutor = 0b000000000000000000000000000000000000000000000000000000000010
+        none            = 0b000000000000000000000000000000000000000000000000000000000000,
+        administrator   = 0b000000000000000000000000000000000000000000000000000000000001,
+        moderator       = 0b000000000000000000000000000000000000000000000000000000000010,
+        interlocutor    = 0b000000000000000000000000000000000000000000000000000000000100
     };
 
     connection();
@@ -32,7 +33,7 @@ private:
     connection & operator=(connection &&other) = delete;
 
     void on_init();
-    iterator on_is_allowed(::std::string_view username1, role role, ::sqlite3_int64 since,
+    iterator on_is_allowed(::std::string_view username1, ::sqlite3_int64 role, ::sqlite3_int64 since,
         ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
     iterator on_is_allowed(::std::string_view username1, ::std::string_view username2, role role, ::sqlite3_int64 since,
         ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);

@@ -1,6 +1,8 @@
 #ifndef AI_CHAT_COMMANDS_JOIN_HPP
 #define AI_CHAT_COMMANDS_JOIN_HPP
 
+#include "re2/re2.h"
+
 #include <string_view>
 
 namespace ai {
@@ -10,7 +12,7 @@ namespace commands {
 template<typename Client>
 class join {
 public:
-    static constexpr char name[]{ "join" };
+    static char constexpr name[]{ "join" };
 
     join() = delete;
     join(join const &other) = delete;
@@ -27,6 +29,7 @@ public:
 
 private:
     Client &_client;
+    ::RE2 _parser;
 };
 
 } // commands

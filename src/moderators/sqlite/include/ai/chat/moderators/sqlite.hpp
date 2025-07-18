@@ -38,6 +38,7 @@ public:
     iterator is_allowed(::std::string_view username1, ::std::string_view username2);
     iterator is_filtered(::std::string_view content);
 
+    iterator admin(::std::string_view username);
     iterator mod(::std::string_view username);
     iterator unmod(::std::string_view username);
     iterator allow(::std::string_view username);
