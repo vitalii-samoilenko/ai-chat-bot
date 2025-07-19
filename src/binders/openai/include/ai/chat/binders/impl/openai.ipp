@@ -105,6 +105,13 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
         });
     });
     s_history.on_erase([&history, &adapter
+    ](::ai::chat::histories::iterator history_pos)->void {
+        ::ai::chat::histories::iterator history_begin{ history.begin() };
+        ::ai::chat::adapters::iterator adapter_begin{ adapter.begin() };
+        ::ai::chat::adapters::iterator adapter_pos{ adapter_begin + (history_pos - history_begin) };
+        adapter.erase(adapter_pos);
+    });
+    s_history.on_erase([&history, &adapter
     ](::ai::chat::histories::iterator history_first, ::ai::chat::histories::iterator history_last)->void {
         ::ai::chat::histories::iterator history_begin{ history.begin() };
         ::ai::chat::adapters::iterator adapter_begin{ adapter.begin() };

@@ -52,6 +52,8 @@ public:
     iterator operator+(::std::chrono::nanoseconds rhs) const;
     ptrdiff_t operator-(iterator rhs) const;
 
+    iterator & operator&=(tag rhs);
+
 private:
     friend sqlite;
 
@@ -77,7 +79,10 @@ public:
     iterator begin();
     iterator end();
 
-    iterator insert(message message);
+    iterator lower_bound(::std::chrono::nanoseconds timestamp);
+
+    iterator insert(message value);
+    iterator erase(iterator pos);
     iterator erase(iterator first, iterator last);
 
 private:

@@ -2,7 +2,6 @@
 #define AI_CHAT_HISTORIES_DETAIL_SCOPE_IPP
 
 #include <limits>
-#include <utility>
 
 #include "esqlite3.hpp"
 
@@ -18,20 +17,25 @@ scope::~scope() {
 };
 
 scope::scope(::sqlite3 *database)
-    : _database{ database }
-    , _timestamp{}
+    : _database{ nullptr }
     , _commit{ nullptr }
     , _rollback{ nullptr }
-    , _exceptions{}
     , _s_message{ nullptr }
+    , _s_message_content{ nullptr }
     , _s_message_tag{ nullptr }
     , _s_tag_name{ nullptr }
     , _s_tag_value{ nullptr }
     , _s_count{ nullptr }
+    , _s_tag_name_id{ nullptr }
+    , _s_tag_value_id{ nullptr }
+    , _statement{}
+    , _filters{}
+    , _timestamp{}
+    , _content{}
     , _tag_names{}
     , _tag_values{}
-    , _content{}
-    , _tags{} {
+    , _tags{}
+    , _exceptions{} {
 
 };
 
@@ -115,6 +119,8 @@ void scope::on_commit() {
         ::sqlite3_step(_commit));
 };
 void scope::on_rollback() {
+    ::esqlite3_ensure_success(
+        ::sqlite3_step(_commit));
     ::esqlite3_ensure_success(
         ::sqlite3_step(_rollback));
 };

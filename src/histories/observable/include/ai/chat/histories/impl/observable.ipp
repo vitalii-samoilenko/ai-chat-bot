@@ -15,7 +15,8 @@ private:
     friend slot<History>;
 
     ::std::function<void(iterator)> on_message;
-    ::std::function<void(iterator, iterator)> on_erase;
+    ::std::function<void(iterator)> on_erase1;
+    ::std::function<void(iterator, iterator)> on_erase2;
 };
 
 template<typename History>
@@ -39,11 +40,24 @@ void slot<History>::on_message(Action &&callback) {
     _target->_subscriptions[_observer]
         .on_message = ::std::forward<Action>(callback);
 };
+
 template<typename History>
-template<typename Action>
+template<typename Action,
+    ::std::enable_if_t<
+        ::std::is_invocable_v<Action, iterator>,
+        bool>>
 void slot<History>::on_erase(Action &&callback) {
     _target->_subscriptions[_observer]
-        .on_erase = ::std::forward<Action>(callback);
+        .on_erase1 = ::std::forward<Action>(callback);
+};
+template<typename History>
+template<typename Action,
+    ::std::enable_if_t<
+        ::std::is_invocable_v<Action, iterator, iterator>,
+        bool>>
+void slot<History>::on_erase(Action &&callback) {
+    _target->_subscriptions[_observer]
+        .on_erase2 = ::std::forward<Action>(callback);
 };
 
 template<typename History>
@@ -83,6 +97,19 @@ iterator observable<History>::insert(message message) {
 };
 template<typename History>
 template<typename Client>
+iterator observable<History>::erase(iterator pos) {
+    for (auto const &observer_n_subscription : _subscriptions) {
+        ::std::type_info const *observer{ observer_n_subscription.first };
+        subscription const &subscription{ observer_n_subscription.second };
+        if (observer == &typeid(Client)) {
+            continue;
+        }
+        subscription.on_erase1(pos);
+    }
+    return History::erase(first, last);
+};
+template<typename History>
+template<typename Client>
 iterator observable<History>::erase(iterator first, iterator last) {
     for (auto const &observer_n_subscription : _subscriptions) {
         ::std::type_info const *observer{ observer_n_subscription.first };
@@ -90,7 +117,7 @@ iterator observable<History>::erase(iterator first, iterator last) {
         if (observer == &typeid(Client)) {
             continue;
         }
-        subscription.on_erase(first, last);
+        subscription.on_erase2(first, last);
     }
     return History::erase(first, last);
 };

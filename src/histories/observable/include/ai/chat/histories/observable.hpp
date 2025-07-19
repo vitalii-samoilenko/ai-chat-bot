@@ -1,6 +1,7 @@
 #ifndef AI_CHAT_HISTORIES_OBSERVABLE_HPP
 #define AI_CHAT_HISTORIES_OBSERVABLE_HPP
 
+#include <type_traits>
 #include <typeinfo>
 #include <unordered_map>
 
@@ -25,7 +26,15 @@ public:
 
     template<typename Action>
     void on_message(Action &&callback);
-    template<typename Action>
+    template<typename Action,
+        ::std::enable_if_t<
+            ::std::is_invocable_v<Action, iterator>,
+            bool> = true>
+    void on_erase(Action &&callback);
+    template<typename Action,
+        ::std::enable_if_t<
+            ::std::is_invocable_v<Action, iterator, iterator>,
+            bool> = true>
     void on_erase(Action &&callback);
 
 private:
@@ -58,8 +67,12 @@ public:
     using History::begin;
     using History::end;
 
+    using History::lower_bound;
+
     template<typename Client>
     iterator insert(message message);
+    template<typename Client>
+    iterator erase(iterator pos);
     template<typename Client>
     iterator erase(iterator first, iterator last);
 

@@ -200,6 +200,14 @@ iterator openai::complete(::std::string_view model, ::std::string_view key) {
     push_back(::boost::json::value_to<::ai::chat::adapters::message>(_message));
     return end() + -1;
 };
+iterator openai::erase(iterator pos) {
+    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
+        _context._tracer->StartSpan("erase")
+    };
+    ::boost::json::value &messages{ _context._completion.at("messages") };
+    ::boost::json::array &array{ messages.as_array() };
+    return iterator{ array.erase(pos._target._pos) };
+};
 iterator openai::erase(iterator first, iterator last) {
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
         _context._tracer->StartSpan("erase")
