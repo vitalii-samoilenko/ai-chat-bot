@@ -411,11 +411,11 @@ void connection::on_insert_message_tag(::std::chrono::nanoseconds timestamp, ::s
             tag_value.data(),
             static_cast<int>(tag_value.size()),
             SQLITE_STATIC));
+    ::esqlite3_ensure_success(
+        ::sqlite3_step(_s_tag_value_id));
     ::sqlite3_int64 tag_value_id{ ::sqlite3_column_int64(_s_tag_value_id, 0) };
     ::esqlite3_ensure_success(
         ::sqlite3_reset(_s_tag_value_id));
-    ::esqlite3_ensure_success(
-        ::sqlite3_step(_s_tag_value_id));
     ::esqlite3_ensure_success(
         ::sqlite3_bind_int64(_i_message_tag,
             ::sqlite3_bind_parameter_index(_i_message_tag, "@TIMESTAMP"),
