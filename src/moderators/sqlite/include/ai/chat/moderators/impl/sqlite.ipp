@@ -26,7 +26,7 @@ iterator sqlite::is_allowed(::std::string_view username1, ::std::string_view use
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
         _controller._tracer->StartSpan("is_allowed")
     };
-    auto now = ::std::chrono::steady_clock::now();
+    auto now = ::std::chrono::utc_clock::now();
     return _controller.on_is_allowed(username1, username2, detail::connection::role::interlocutor,
         ::std::chrono::duration_cast<::std::chrono::seconds>(now.time_since_epoch()).count(),
         span);

@@ -6,7 +6,7 @@ find_package(ESQLite3 REQUIRED)
 find_package(SQLite3 REQUIRED)
 
 add_library(ai_chat_moderators_sqlite INTERFACE)
-target_compile_features(ai_chat_moderators_sqlite INTERFACE cxx_std_17)
+target_compile_features(ai_chat_moderators_sqlite INTERFACE cxx_std_20)
 target_link_libraries(ai_chat_moderators_sqlite
   INTERFACE
     ESQLite::esqlite3

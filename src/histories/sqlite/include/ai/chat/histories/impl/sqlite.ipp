@@ -163,7 +163,7 @@ iterator sqlite::insert(message value) {
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
         _chat._tracer->StartSpan("insert")
     };
-    auto now = ::std::chrono::steady_clock::now();
+    auto now = ::std::chrono::utc_clock::now();
     iterator pos{ _chat._database };
     ::std::tie(pos._target._commit, pos._target._rollback) = _chat.on_insert_begin(
         span);

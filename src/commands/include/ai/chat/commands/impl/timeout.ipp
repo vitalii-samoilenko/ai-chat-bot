@@ -24,7 +24,7 @@ template<typename Moderator>
             &username, &hours, &minutes, &seconds)) {
         return ::std::string_view{};
     }
-    auto until = ::std::chrono::steady_clock::now();
+    auto until = ::std::chrono::utc_clock::now();
     until += ::std::chrono::hours{ hours };
     until += ::std::chrono::minutes{ minutes };
     until += ::std::chrono::seconds{ seconds };

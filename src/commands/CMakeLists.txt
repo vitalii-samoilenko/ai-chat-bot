@@ -5,7 +5,7 @@ project(AI.Chat.Commands VERSION 0.1 LANGUAGES CXX)
 find_package(re2 REQUIRED)
 
 add_library(ai_chat_commands INTERFACE)
-target_compile_features(ai_chat_commands INTERFACE cxx_std_17)
+target_compile_features(ai_chat_commands INTERFACE cxx_std_20)
 target_link_libraries(ai_chat_commands
   INTERFACE
     AI::Chat::Histories
