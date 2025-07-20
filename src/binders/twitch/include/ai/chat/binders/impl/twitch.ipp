@@ -24,7 +24,7 @@ twitch<History>::binding twitch<History>::bind(::ai::chat::histories::observable
     ::ai::chat::histories::slot<History> s_history{ history.template subscribe<::ai::chat::clients::observable<::ai::chat::clients::twitch>>() };
     s_history.on_message([&client,
         botname = ::std::string{ botname }
-    ](::ai::chat::histories::iterator history_pos)->void {
+    ](::ai::chat::histories::observable_iterator<History> history_pos)->void {
         ::ai::chat::histories::message history_message{ *history_pos };
         ::ai::chat::histories::tag const *username_tag{ nullptr };
         ::ai::chat::histories::tag const *channel_tag{ nullptr };
