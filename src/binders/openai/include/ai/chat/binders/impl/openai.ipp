@@ -100,7 +100,7 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
             tags.emplace_back("channel", channel_tag->value);
         }
         history.template insert<::ai::chat::adapters::openai>(::ai::chat::histories::message{
-            {},
+            ::std::chrono::nanoseconds{},
             content,
             tags
         });

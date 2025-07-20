@@ -22,7 +22,8 @@ twitch<History>::binding twitch<History>::bind(::ai::chat::histories::observable
     Moderator &moderator, ::ai::chat::commands::executor<Commands...> &executor,
     ::std::string_view botname) {
     ::ai::chat::histories::slot<History> s_history{ history.template subscribe<::ai::chat::clients::observable<::ai::chat::clients::twitch>>() };
-    s_history.on_message([&client
+    s_history.on_message([&client,
+        botname = ::std::string{ botname }
     ](::ai::chat::histories::iterator history_pos)->void {
         ::ai::chat::histories::message history_message{ *history_pos };
         ::ai::chat::histories::tag const *username_tag{ nullptr };
@@ -34,7 +35,10 @@ twitch<History>::binding twitch<History>::bind(::ai::chat::histories::observable
                 channel_tag = &tag;
             }
         }
-        if (!channel_tag) {
+        if (!(channel_tag && username_tag)) {
+            return;
+        }
+        if (!(botname == username_tag->value)) {
             return;
         }
         client.send(::ai::chat::clients::message{
@@ -58,7 +62,7 @@ twitch<History>::binding twitch<History>::bind(::ai::chat::histories::observable
         tags.emplace_back("user.name", client_message.username);
         tags.emplace_back("channel", client_message.channel);
         history.template insert<::ai::chat::clients::observable<::ai::chat::clients::twitch>>(::ai::chat::histories::message{
-            {},
+            ::std::chrono::nanoseconds{},
             client_message.content,
             tags
         });
