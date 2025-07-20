@@ -25,7 +25,7 @@ template<typename History>
     if (timestamp < pos) {
         return ::std::string_view{};
     }
-    pos = content;
+    pos.template operator=<edit>(content);
     return edit::name;
 };
 
