@@ -15,8 +15,7 @@
 #include "ai/chat/moderators/sqlite.hpp"
 #include "ai/chat/binders/twitch.hpp"
 #include "ai/chat/binders/openai.hpp"
-#include "ai/chat/commands/join.hpp"
-#include "ai/chat/commands/executor.hpp"
+#include "ai/chat/commands.hpp"
 
 #include "opentelemetry/exporters/otlp/otlp_grpc_log_record_exporter_factory.h"
 #include "opentelemetry/sdk/logs/simple_log_record_processor_factory.h"
@@ -179,8 +178,8 @@ int main(int argc, char* argv[]) {
             static_cast<size_t>(config.at("adapter").at("limit").as_int64())
         };
         {
-            ::ai::chat::histories::iterator current{ history.begin() };
-            ::ai::chat::histories::iterator last{ history.end() };
+            ::ai::chat::histories::observable_iterator<::ai::chat::histories::sqlite> current{ history.begin() };
+            ::ai::chat::histories::observable_iterator<::ai::chat::histories::sqlite> last{ history.end() };
             adapter.reserve(static_cast<size_t>(last - current));
             for (; !(current == last); ++current) {
                 ::ai::chat::histories::message message{ *current };
@@ -201,7 +200,6 @@ int main(int argc, char* argv[]) {
                 });
             }
         }
-
 
         ::ai::chat::clients::auth auth{
             config.at("client").at("auth").at("address").as_string(),
@@ -239,8 +237,36 @@ int main(int argc, char* argv[]) {
         }
 
         ::ai::chat::commands::executor<
-        ::ai::chat::commands::join<decltype(client)>
-        > executor{ client };
+        ::ai::chat::commands::allow<::ai::chat::moderators::sqlite>,
+        ::ai::chat::commands::ban<::ai::chat::moderators::sqlite>,
+        ::ai::chat::commands::content<::ai::chat::histories::sqlite>,
+        ::ai::chat::commands::deny<::ai::chat::moderators::sqlite>,
+        ::ai::chat::commands::edit<::ai::chat::histories::sqlite>,
+        ::ai::chat::commands::find<::ai::chat::histories::sqlite, 25>,
+        ::ai::chat::commands::instruct<::ai::chat::histories::sqlite>,
+        ::ai::chat::commands::join<::ai::chat::clients::twitch>,
+        ::ai::chat::commands::leave<::ai::chat::clients::twitch>,
+        ::ai::chat::commands::mod<::ai::chat::moderators::sqlite>,
+        ::ai::chat::commands::remove<::ai::chat::histories::sqlite>,
+        ::ai::chat::commands::timeout<::ai::chat::moderators::sqlite>,
+        ::ai::chat::commands::unban<::ai::chat::moderators::sqlite>,
+        ::ai::chat::commands::unmod<::ai::chat::moderators::sqlite>
+        > executor{
+            moderator,
+            moderator,
+            history,
+            moderator,
+            history,
+            history,
+            history,
+            client,
+            client,
+            moderator,
+            history,
+            moderator,
+            moderator,
+            moderator
+        };
 
         auto client_binding = ::ai::chat::binders::twitch<::ai::chat::histories::sqlite>::bind(history, client,
             moderator, executor,

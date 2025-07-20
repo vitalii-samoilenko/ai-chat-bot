@@ -5,13 +5,13 @@ namespace ai {
 namespace chat {
 namespace commands {
 
-template<typename Client>
-leave<Client>::leave(Client &client)
+template<template <typename> class Client>
+leave<Client>::leave(::ai::chat::clients::observable<Client> &client)
     : _client{ client } {
 
 };
 
-template<typename Client>
+template<template <typename> Client>
 ::std::string_view leave<Client>::execute(::std::string_view args) {
     if (!args.empty()) {
         return ::std::string_view{};

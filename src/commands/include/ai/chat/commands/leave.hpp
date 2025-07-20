@@ -3,11 +3,13 @@
 
 #include <string_view>
 
+#include "ai/chat/clients/observable.hpp"
+
 namespace ai {
 namespace chat {
 namespace commands {
 
-template<typename Client>
+template<template <typename> class Client>
 class leave {
 public:
     static char constexpr name[]{ "leave" };
@@ -21,12 +23,12 @@ public:
     leave & operator=(leave const &other) = delete;
     leave & operator=(leave &&other) = delete;
 
-    explicit leave(Client &client);
+    explicit leave(::ai::chat::clients::observable<Client> &client);
 
     ::std::string_view execute(::std::string_view args);
 
 private:
-    Client &_client;
+    ::ai::chat::clients::observable<Client> &_client;
 };
 
 } // commands

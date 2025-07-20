@@ -5,11 +5,13 @@
 
 #include "re2/re2.h"
 
+#include "ai/chat/clients/observable.hpp"
+
 namespace ai {
 namespace chat {
 namespace commands {
 
-template<typename Client>
+template<template <typename> class Client>
 class join {
 public:
     static char constexpr name[]{ "join" };
@@ -23,12 +25,12 @@ public:
     join & operator=(join const &other) = delete;
     join & operator=(join &&other) = delete;
 
-    explicit join(Client &client);
+    explicit join(::ai::chat::clients::observable<Client> &client);
 
     ::std::string_view execute(::std::string_view args);
 
 private:
-    Client &_client;
+    ::ai::chat::clients::observable<Client> &_client;
     ::RE2 _parser;
 };
 

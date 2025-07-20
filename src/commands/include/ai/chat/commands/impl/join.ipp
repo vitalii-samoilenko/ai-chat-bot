@@ -5,14 +5,14 @@ namespace ai {
 namespace chat {
 namespace commands {
 
-template<typename Client>
-join<Client>::join(Client &client)
+template<template <typename> class Client>
+join<Client>::join(::ai::chat::clients::observable<Client> &client)
     : _client{ client }
     , _parser{ R"([a-z0-9_]+)" } {
 
 };
 
-template<typename Client>
+template<template <typename> class Client>
 ::std::string_view join<Client>::execute(::std::string_view args) {
     if (!::RE2::FullMatch(args, _parser)) {
         return ::std::string_view{};
