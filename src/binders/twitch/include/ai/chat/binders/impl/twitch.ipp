@@ -77,9 +77,13 @@ twitch<History>::binding twitch<History>::bind(::ai::chat::histories::observable
         if (!moderator.is_moderator(client_command.username)) {
             return;
         }
+        ::std::string_view result{ executor.execute(client_command.name, client_command.args) };
+        if (result.empty()) {
+            return;
+        }
         client.send(::ai::chat::clients::message{
             botname,
-            executor.execute(client_command.name, client_command.args),
+            result,
             client_command.channel
         });
     });

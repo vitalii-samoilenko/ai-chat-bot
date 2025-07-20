@@ -50,6 +50,8 @@ public:
     iterator operator+(ptrdiff_t rhs) const;
     ptrdiff_t operator-(iterator rhs) const;
 
+    iterator & operator=(::std::string_view rhs);
+
 private:
     friend openai;
 

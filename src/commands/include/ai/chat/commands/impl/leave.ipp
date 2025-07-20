@@ -17,7 +17,7 @@ template<typename Client>
         return ::std::string_view{};
     }
     _client.leave();
-    return ::std::string_view{ "ack" };
+    return leave::name;
 };
 
 } // commands

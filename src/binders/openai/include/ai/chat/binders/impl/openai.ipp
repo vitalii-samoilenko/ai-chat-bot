@@ -68,9 +68,9 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
         for (size_t left{ retries }; ;) {
             ::ai::chat::adapters::iterator adapter_pos{ adapter.complete(model, key) };
             if (adapter_pos == adapter.end()) {
-                ::ai::chat::histories::iterator history_begin{ history.begin() };
-                ::ai::chat::histories::iterator history_first{ history_begin + skip };
-                ::ai::chat::histories::iterator history_last{ history_first + range };
+                ::ai::chat::histories::observable_iterator<History> history_begin{ history.begin() };
+                ::ai::chat::histories::observable_iterator<History> history_first{ history_begin + skip };
+                ::ai::chat::histories::observable_iterator<History> history_last{ history_first + range };
                 ::ai::chat::adapters::iterator adapter_begin{ adapter.begin() };
                 ::ai::chat::adapters::iterator adapter_first{ adapter_begin + (history_first - history_begin) };
                 ::ai::chat::adapters::iterator adapter_last{ adapter_begin + (history_last - history_begin) };
@@ -106,19 +106,27 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
         });
     });
     s_history.on_erase([&history, &adapter
-    ](::ai::chat::histories::iterator history_pos)->void {
-        ::ai::chat::histories::iterator history_begin{ history.begin() };
+    ](::ai::chat::histories::observable_iterator<History> history_pos)->void {
+        ::ai::chat::histories::observable_iterator<History> history_begin{ history.begin() };
         ::ai::chat::adapters::iterator adapter_begin{ adapter.begin() };
         ::ai::chat::adapters::iterator adapter_pos{ adapter_begin + (history_pos - history_begin) };
         adapter.erase(adapter_pos);
     });
     s_history.on_erase([&history, &adapter
-    ](::ai::chat::histories::iterator history_first, ::ai::chat::histories::iterator history_last)->void {
-        ::ai::chat::histories::iterator history_begin{ history.begin() };
+    ](::ai::chat::histories::observable_iterator<History> history_first, ::ai::chat::histories::observable_iterator<History> history_last)->void {
+        ::ai::chat::histories::observable_iterator<History> history_begin{ history.begin() };
         ::ai::chat::adapters::iterator adapter_begin{ adapter.begin() };
         ::ai::chat::adapters::iterator adapter_first{ adapter_begin + (history_first - history_begin) };
         ::ai::chat::adapters::iterator adapter_last{ adapter_begin + (history_last - history_begin) };
         adapter.erase(adapter_first, adapter_last);
+    });
+    s_history.on_update([&history, &adapter
+    ](::ai::chat::histories::observable_iterator<History> history_pos)->void {
+        ::ai::chat::histories::observable_iterator<History> history_begin{ history.begin() };
+        ::ai::chat::adapters::iterator adapter_begin{ adapter.begin() };
+        ::ai::chat::adapters::iterator adapter_pos{ adapter_begin + (history_pos - history_begin) };
+        ::ai::chat::histories::message history_message{ *history_pos };
+        adapter_pos = history_message.content;
     });
     return binding{ ::std::move(s_history) };
 };

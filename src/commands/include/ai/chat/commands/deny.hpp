@@ -1,9 +1,9 @@
 #ifndef AI_CHAT_COMMANDS_DENY_HPP
 #define AI_CHAT_COMMANDS_DENY_HPP
 
-#include "re2/re2.h"
-
 #include <string_view>
+
+#include "re2/re2.h"
 
 namespace ai {
 namespace chat {

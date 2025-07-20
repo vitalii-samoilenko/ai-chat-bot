@@ -18,7 +18,7 @@ template<typename Moderator>
         return ::std::string_view{};
     }
     _moderator.unban(args);
-    return args;
+    return unban::name;
 };
 
 } // commands

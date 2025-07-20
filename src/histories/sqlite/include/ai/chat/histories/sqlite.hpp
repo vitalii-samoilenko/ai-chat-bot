@@ -33,6 +33,9 @@ namespace ai {
 namespace chat {
 namespace histories {
 
+bool operator<(iterator const &lhs, ::std::chrono::nanoseconds rhs);
+bool operator<(::std::chrono::nanoseconds lhs, iterator const &rhs);
+
 class iterator {
 public:
     iterator() = delete;
@@ -54,8 +57,12 @@ public:
 
     iterator & operator&=(tag rhs);
 
+    iterator & operator=(::std::string_view rhs);
+
 private:
     friend sqlite;
+    friend bool operator<(iterator const &lhs, ::std::chrono::nanoseconds rhs);
+    friend bool operator<(::std::chrono::nanoseconds lhs, iterator const &rhs);
 
     template<typename... Args>
     explicit iterator(Args &&...args);

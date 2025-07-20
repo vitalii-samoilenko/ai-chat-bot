@@ -2,6 +2,8 @@
 #define AI_CHAT_HISTORIES_DETAIL_SCOPE_IPP
 
 #include <limits>
+#include <tuple>
+#include <utility>
 
 #include "esqlite3.hpp"
 
@@ -28,6 +30,8 @@ scope::scope(::sqlite3 *database)
     , _s_count{ nullptr }
     , _s_tag_name_id{ nullptr }
     , _s_tag_value_id{ nullptr }
+    , _u_begin{ nullptr }
+    , _u_message_content{ nullptr }
     , _state{ state::create }
     , _exceptions{}
     , _offset{}
@@ -250,7 +254,7 @@ ptrdiff_t scope::on_count(::std::chrono::nanoseconds last) const {
         ? count
         : -count;
 };
-void scope::on_append(tag filter) {
+void scope::on_filter(tag tag) {
     if (state::create < _state) {
         ::esqlite3_ensure_success(
             ::sqlite3_finalize(_s_message));
@@ -260,8 +264,8 @@ void scope::on_append(tag filter) {
     ::esqlite3_ensure_success(
         ::sqlite3_bind_text(_s_tag_name_id,
             ::sqlite3_bind_parameter_index(_s_tag_name_id, "@NAME"),
-            filter.name.data(),
-            static_cast<int>(filter.name.size()),
+            tag.name.data(),
+            static_cast<int>(tag.name.size()),
             SQLITE_STATIC));
     int error_code{ ::sqlite3_step(_s_tag_name_id) };
     if (error_code == SQLITE_ROW) {
@@ -279,8 +283,8 @@ void scope::on_append(tag filter) {
     ::esqlite3_ensure_success(
         ::sqlite3_bind_text(_s_tag_value_id,
             ::sqlite3_bind_parameter_index(_s_tag_value_id, "@VALUE"),
-            filter.value.data(),
-            static_cast<int>(filter.value.size()),
+            tag.value.data(),
+            static_cast<int>(tag.value.size()),
             SQLITE_STATIC));
     error_code = ::sqlite3_step(_s_tag_value_id);
     if (error_code == SQLITE_ROW) {
@@ -293,6 +297,49 @@ void scope::on_append(tag filter) {
     }
     ::esqlite3_ensure_success(
         ::sqlite3_reset(_s_tag_value_id));
+};
+void scope::on_update_begin() {
+    if (_commit) {
+        return;
+    }
+    ::esqlite3_ensure_success(
+        ::sqlite3_step(_u_begin));
+    ::esqlite3_ensure_success(
+        ::sqlite3_reset(_u_begin));
+    char const UPDATE_COMMIT[]{
+        "RELEASE SAVEPOINT update_message"
+    };
+    ::esqlite3_ensure_success(
+        ::sqlite3_prepare_v2(_database, UPDATE_COMMIT,
+            static_cast<int>(::std::size(UPDATE_COMMIT) - 1),
+            &_commit, nullptr));
+    char const UPDATE_ROLLBACK[]{
+        "ROLLBACK TO SAVEPOINT update_message"
+    };
+    ::esqlite3_ensure_success(
+        ::sqlite3_prepare_v2(_database, UPDATE_ROLLBACK,
+            static_cast<int>(::std::size(UPDATE_ROLLBACK) - 1),
+            &_rollback, nullptr));
+};
+void scope::on_update(::std::string_view content) {
+    ::esqlite3_ensure_success(
+        ::sqlite3_bind_int64(_u_message_content,
+            ::sqlite3_bind_parameter_index(_u_message_content, "@TIMESTAMP"),
+            _timestamp.count()));
+    ::esqlite3_ensure_success(
+        ::sqlite3_bind_text(_u_message_content,
+            ::sqlite3_bind_parameter_index(_u_message_content, "@CONTENT"),
+            content.data(),
+            static_cast<int>(content.size()),
+            SQLITE_STATIC));
+    ::esqlite3_ensure_success(
+        ::sqlite3_step(_u_message_content));
+    ::esqlite3_ensure_success(
+        ::sqlite3_reset(_u_message_content));
+    _exceptions = ::std::uncaught_exceptions();
+    if (state::cursor < _state) {
+        _content = content;
+    }
 };
 
 } // detail

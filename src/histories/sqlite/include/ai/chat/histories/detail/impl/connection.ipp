@@ -32,6 +32,8 @@ connection::connection()
     , _s_count{ nullptr }
     , _s_tag_name_id{ nullptr }
     , _s_tag_value_id{ nullptr }
+    , _u_begin{ nullptr }
+    , _u_message_content{ nullptr }
     , _tracer{
         ::opentelemetry::trace::Provider::GetTracerProvider()
             ->GetTracer("ai_chat_histories_sqlite")
@@ -40,6 +42,8 @@ connection::connection()
 };
 
 connection::~connection() {
+    ::sqlite3_finalize(_u_message_content);
+    ::sqlite3_finalize(_u_begin);
     ::sqlite3_finalize(_s_tag_value_id);
     ::sqlite3_finalize(_s_tag_name_id);
     ::sqlite3_finalize(_s_count);
@@ -305,8 +309,24 @@ void connection::on_init() {
         ::sqlite3_prepare_v2(_database, SELECT_TAG_VALUE_ID,
             static_cast<int>(::std::size(SELECT_TAG_VALUE_ID) - 1),
             &_s_tag_value_id, nullptr));
+    char const UPDATE_BEGIN[]{
+        "SAVEPOINT update_message"
+    };
+    ::esqlite3_ensure_success(
+        ::sqlite3_prepare_v2(_database, UPDATE_BEGIN,
+            static_cast<int>(::std::size(UPDATE_BEGIN) - 1),
+            &_u_begin, nullptr));
+    char const UPDATE_MESSAGE_CONTENT[]{
+        "UPDATE message_content"
+        " SET content = @CONTENT"
+        " WHERE timestamp = @TIMESTAMP"
+    };
+    ::esqlite3_ensure_success(
+        ::sqlite3_prepare_v2(_database, UPDATE_MESSAGE_CONTENT,
+            static_cast<int>(::std::size(UPDATE_MESSAGE_CONTENT) - 1),
+            &_u_message_content, nullptr));
 };
-::std::pair<::sqlite3_stmt *, ::sqlite3_stmt *> connection::on_insert_begin(
+void connection::on_insert_begin(::sqlite3_stmt **commit, ::sqlite3_stmt **rollback,
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root) {
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
         _tracer->StartSpan("on_insert_begin", ::opentelemetry::trace::StartSpanOptions{
@@ -315,25 +335,23 @@ void connection::on_init() {
         })
     };
     ::esqlite3_ensure_success(
+        ::sqlite3_step(_i_begin));
+    ::esqlite3_ensure_success(
         ::sqlite3_reset(_i_begin));
-    ::std::pair<::sqlite3_stmt *, ::sqlite3_stmt *> commit_n_rollback{};
     char const INSERT_COMMIT[]{
         "RELEASE SAVEPOINT insert_message"
     };
     ::esqlite3_ensure_success(
         ::sqlite3_prepare_v2(_database, INSERT_COMMIT,
             static_cast<int>(::std::size(INSERT_COMMIT) - 1),
-            &commit_n_rollback.first, nullptr));
+            commit, nullptr));
     char const INSERT_ROLLBACK[]{
         "ROLLBACK TO SAVEPOINT insert_message"
     };
     ::esqlite3_ensure_success(
         ::sqlite3_prepare_v2(_database, INSERT_ROLLBACK,
             static_cast<int>(::std::size(INSERT_ROLLBACK) - 1),
-            &commit_n_rollback.second, nullptr));
-    ::esqlite3_ensure_success(
-        ::sqlite3_step(_i_begin));
-    return commit_n_rollback;
+            rollback, nullptr));
 };
 void connection::on_insert_message(::std::chrono::nanoseconds timestamp, ::std::string_view content,
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root) {
@@ -433,7 +451,7 @@ void connection::on_insert_message_tag(::std::chrono::nanoseconds timestamp, ::s
     ::esqlite3_ensure_success(
         ::sqlite3_reset(_i_message_tag));
 };
-::std::pair<::sqlite3_stmt *, ::sqlite3_stmt *> connection::on_erase_begin(
+void connection::on_erase_begin(::sqlite3_stmt **commit, ::sqlite3_stmt **rollback,
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root) {
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
         _tracer->StartSpan("on_erase_begin", ::opentelemetry::trace::StartSpanOptions{
@@ -441,6 +459,8 @@ void connection::on_insert_message_tag(::std::chrono::nanoseconds timestamp, ::s
             root->GetContext()
         })
     };
+    ::esqlite3_ensure_success(
+        ::sqlite3_step(_d_begin));
     ::esqlite3_ensure_success(
         ::sqlite3_reset(_d_begin));
     ::std::pair<::sqlite3_stmt *, ::sqlite3_stmt *> commit_n_rollback{};
@@ -450,17 +470,14 @@ void connection::on_insert_message_tag(::std::chrono::nanoseconds timestamp, ::s
     ::esqlite3_ensure_success(
         ::sqlite3_prepare_v2(_database, INSERT_COMMIT,
             static_cast<int>(::std::size(INSERT_COMMIT) - 1),
-            &commit_n_rollback.first, nullptr));
+            commit, nullptr));
     char const INSERT_ROLLBACK[]{
         "ROLLBACK TO SAVEPOINT delete_message"
     };
     ::esqlite3_ensure_success(
         ::sqlite3_prepare_v2(_database, INSERT_ROLLBACK,
             static_cast<int>(::std::size(INSERT_ROLLBACK) - 1),
-            &commit_n_rollback.second, nullptr));
-    ::esqlite3_ensure_success(
-        ::sqlite3_step(_d_begin));
-    return commit_n_rollback;
+            rollback, nullptr));
 };
 void connection::on_erase_message(::std::chrono::nanoseconds first, ::std::chrono::nanoseconds last,
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root) {

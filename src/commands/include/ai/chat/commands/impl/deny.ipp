@@ -18,7 +18,7 @@ template<typename Moderator>
         return ::std::string_view{};
     }
     _moderator.deny(args)
-    return args;
+    return deny::name;
 };
 
 } // commands

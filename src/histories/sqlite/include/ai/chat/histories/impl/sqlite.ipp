@@ -2,7 +2,6 @@
 #define AI_CHAT_HISTORIES_SQLITE_IPP
 
 #include <limits>
-#include <tuple>
 #include <utility>
 
 namespace ai {
@@ -20,6 +19,8 @@ iterator::iterator(iterator const &other)
     _target._s_count = other._target._s_count;
     _target._s_tag_name_id = other._target._s_tag_name_id;
     _target._s_tag_value_id = other._target._s_tag_value_id;
+    _target._u_begin = other._target._u_begin;
+    _target._u_message_content = other._target._u_message_content;
     _target._offset = other._target._offset;
     _target._name_ids = other._target._name_ids;
     _target._value_ids = other._target._value_ids;    
@@ -39,6 +40,8 @@ iterator::iterator(iterator &&other)
     _target._s_count = other._target._s_count;
     _target._s_tag_name_id = other._target._s_tag_name_id;
     _target._s_tag_value_id = other._target._s_tag_value_id;
+    _target._u_begin = other._target._u_begin;
+    _target._u_message_content = other._target._u_message_content;
     _target._state = other._target._state;
     _target._exceptions = other._target._exceptions;
     _target._offset = other._target._offset;
@@ -105,8 +108,17 @@ ptrdiff_t iterator::operator-(iterator rhs) const {
 
 iterator & iterator::operator&=(tag rhs) {
     // _target.on_upgrade(detail::scope::state::create);
-    _target.on_append(rhs);
+    _target.on_filter(rhs);
     return *this;
+};
+
+bool operator<(iterator const &lhs, ::std::chrono::nanoseconds rhs) {
+    lhs._target.on_upgrade(detail::scope::state::cursor);
+    return lhs._target._timestamp < rhs;
+};
+bool operator<(::std::chrono::nanoseconds lhs, iterator const &rhs) {
+    rhs._target.on_upgrade(detail::scope::state::cursor);
+    return lhs < rhs._target._timestamp;
 };
 
 template<typename... Args>
@@ -130,6 +142,8 @@ iterator sqlite::begin() {
     pos._target._s_count = _chat._s_count;
     pos._target._s_tag_name_id = _chat._s_tag_name_id;
     pos._target._s_tag_value_id = _chat._s_tag_value_id;
+    pos._target._u_begin = _chat._u_begin;
+    pos._target._u_message_content = _chat._u_message_content;
     pos._target._timestamp = ::std::numeric_limits<::std::chrono::nanoseconds>::min();
     return pos;
 };
@@ -142,6 +156,8 @@ iterator sqlite::end() {
     pos._target._s_count = _chat._s_count;
     pos._target._s_tag_name_id = _chat._s_tag_name_id;
     pos._target._s_tag_value_id = _chat._s_tag_value_id;
+    pos._target._u_begin = _chat._u_begin;
+    pos._target._u_message_content = _chat._u_message_content;
     pos._target._timestamp = ::std::numeric_limits<::std::chrono::nanoseconds>::max();
     return pos;
 };
@@ -155,6 +171,8 @@ iterator sqlite::lower_bound(::std::chrono::nanoseconds timestamp) {
     pos._target._s_count = _chat._s_count;
     pos._target._s_tag_name_id = _chat._s_tag_name_id;
     pos._target._s_tag_value_id = _chat._s_tag_value_id;
+    pos._target._u_begin = _chat._u_begin;
+    pos._target._u_message_content = _chat._u_message_content;
     pos._target._timestamp = timestamp;
     return pos;
 };
@@ -165,7 +183,7 @@ iterator sqlite::insert(message value) {
     };
     auto now = ::std::chrono::utc_clock::now();
     iterator pos{ _chat._database };
-    ::std::tie(pos._target._commit, pos._target._rollback) = _chat.on_insert_begin(
+    _chat.on_insert_begin(&pos._target._commit, &pos._target._rollback,
         span);
     pos._target._s_message_content = _chat._s_message_content;
     pos._target._s_message_tag = _chat._s_message_tag;
@@ -174,6 +192,8 @@ iterator sqlite::insert(message value) {
     pos._target._s_count = _chat._s_count;
     pos._target._s_tag_name_id = _chat._s_tag_name_id;
     pos._target._s_tag_value_id = _chat._s_tag_value_id;
+    pos._target._u_begin = _chat._u_begin;
+    pos._target._u_message_content = _chat._u_message_content;
     pos._target._exceptions = ::std::uncaught_exceptions();
     pos._target._timestamp = now.time_since_epoch();
     _chat.on_insert_message(pos._target._timestamp, value.content,
@@ -190,7 +210,7 @@ iterator sqlite::erase(iterator pos) {
     };
     pos._target.on_upgrade(detail::scope::state::cursor);
     iterator next{ _chat._database };
-    ::std::tie(next._target._commit, next._target._rollback) = _chat.on_erase_begin(
+    _chat.on_erase_begin(&next._target._commit, &next._target._rollback,
         span);
     next._target._s_message_content = _chat._s_message_content;
     next._target._s_message_tag = _chat._s_message_tag;
@@ -199,6 +219,8 @@ iterator sqlite::erase(iterator pos) {
     next._target._s_count = _chat._s_count;
     next._target._s_tag_name_id = _chat._s_tag_name_id;
     next._target._s_tag_value_id = _chat._s_tag_value_id;
+    next._target._u_begin = _chat._u_begin;
+    next._target._u_message_content = _chat._u_message_content;
     next._target._exceptions = ::std::uncaught_exceptions();
     next._target._timestamp = pos._target._timestamp + ::std::chrono::nanoseconds{ 1 };
     _chat.on_erase_message(pos._target._timestamp, next._target._timestamp,
@@ -212,7 +234,7 @@ iterator sqlite::erase(iterator first, iterator last) {
     first._target.on_upgrade(detail::scope::state::cursor);
     last._target.on_upgrade(detail::scope::state::cursor);
     iterator next{ _chat._database };
-    ::std::tie(next._target._commit, next._target._rollback) = _chat.on_erase_begin(
+    _chat.on_erase_begin(&next._target._commit, &next._target._rollback,
         span);
     next._target._s_message_content = _chat._s_message_content;
     next._target._s_message_tag = _chat._s_message_tag;
@@ -221,6 +243,8 @@ iterator sqlite::erase(iterator first, iterator last) {
     next._target._s_count = _chat._s_count;
     next._target._s_tag_name_id = _chat._s_tag_name_id;
     next._target._s_tag_value_id = _chat._s_tag_value_id;
+    next._target._u_begin = _chat._u_begin;
+    next._target._u_message_content = _chat._u_message_content;
     next._target._exceptions = ::std::uncaught_exceptions();
     next._target._timestamp = last._target._timestamp;
     _chat.on_erase_message(first._target._timestamp, next._target._timestamp,

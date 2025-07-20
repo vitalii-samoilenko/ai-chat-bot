@@ -41,7 +41,9 @@ private:
     void on_advance(ptrdiff_t dist);
     void on_advance(::std::chrono::nanoseconds dist);
     ptrdiff_t on_count(::std::chrono::nanoseconds last) const;
-    void on_append(tag filter);
+    void on_filter(tag tag);
+    void on_update_begin();
+    void on_update(::std::string_view content);
 
     ::sqlite3 *_database;
     ::sqlite3_stmt *_commit;
@@ -54,6 +56,8 @@ private:
     ::sqlite3_stmt *_s_count;
     ::sqlite3_stmt *_s_tag_name_id;
     ::sqlite3_stmt *_s_tag_value_id;
+    ::sqlite3_stmt *_u_begin;
+    ::sqlite3_stmt *_u_message_content;
     state mutable _state;
     int _exceptions;
     ::sqlite3_int64 mutable _offset;

@@ -2,7 +2,6 @@
 #define AI_CHAT_HISTORIES_DETAIL_CONNECTION_HPP
 
 #include <string>
-#include <utility>
 
 #include "opentelemetry/trace/provider.h"
 #include "sqlite3.h"
@@ -31,13 +30,13 @@ private:
     connection & operator=(connection &&other) = delete;
 
     void on_init();
-    ::std::pair<::sqlite3_stmt *, ::sqlite3_stmt *> on_insert_begin(
+    void on_insert_begin(::sqlite3_stmt **commit, ::sqlite3_stmt **rollback,
         ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
     void on_insert_message(::std::chrono::nanoseconds timestamp, ::std::string_view content,
         ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
     void on_insert_message_tag(::std::chrono::nanoseconds timestamp, ::std::string_view tag_name, ::std::string_view tag_value,
         ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
-    ::std::pair<::sqlite3_stmt *, ::sqlite3_stmt *> on_erase_begin(
+    void on_erase_begin(::sqlite3_stmt **commit, ::sqlite3_stmt **rollback,
         ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
     void on_erase_message(::std::chrono::nanoseconds first, ::std::chrono::nanoseconds last,
         ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
@@ -65,6 +64,8 @@ private:
     ::sqlite3_stmt *_s_count;
     ::sqlite3_stmt *_s_tag_name_id;
     ::sqlite3_stmt *_s_tag_value_id;
+    ::sqlite3_stmt *_u_begin;
+    ::sqlite3_stmt *_u_message_content;
     ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Tracer> _tracer;
 };
 

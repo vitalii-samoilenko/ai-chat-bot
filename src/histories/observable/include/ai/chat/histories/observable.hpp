@@ -10,7 +10,17 @@ namespace chat {
 namespace histories {
 
 template<typename History>
+class observable_iterator;
+template<typename History>
 class observable;
+
+} // histories
+} // chat
+} // ai
+
+namespace ai {
+namespace chat {
+namespace histories {
 
 template<typename History>
 class slot {
@@ -28,14 +38,16 @@ public:
     void on_message(Action &&callback);
     template<typename Action,
         ::std::enable_if_t<
-            ::std::is_invocable_v<Action, iterator>,
+            ::std::is_invocable_v<Action, observable_iterator<History>>,
             bool> = true>
     void on_erase(Action &&callback);
     template<typename Action,
         ::std::enable_if_t<
-            ::std::is_invocable_v<Action, iterator, iterator>,
+            ::std::is_invocable_v<Action, observable_iterator<History>, observable_iterator<History>>,
             bool> = true>
     void on_erase(Action &&callback);
+    template<typename Action>
+    void on_update(Action &&callback);
 
 private:
     friend observable<History>;
@@ -45,6 +57,49 @@ private:
     ::std::type_info const *_observer;
     observable<History> *_target;
 };
+
+template<typename History>
+bool operator<(observable_iterator<History> const &lhs, ::std::chrono::nanoseconds rhs);
+template<typename History>
+bool operator<(::std::chrono::nanoseconds lhs, observable_iterator<History> const &rhs);
+
+template<typename History>
+class observable_iterator : private iterator {
+public:
+    observable_iterator() = delete;
+    observable_iterator(observable_iterator const &other);
+    observable_iterator(observable_iterator &&other);
+
+    ~observable_iterator();
+
+    observable_iterator & operator=(observable_iterator const &other) = delete;
+    observable_iterator & operator=(observable_iterator &&other) = delete;
+
+    message operator*();
+    observable_iterator & operator++();
+    bool operator==(observable_iterator const &rhs) const;
+
+    observable_iterator operator+(ptrdiff_t rhs) const;
+    observable_iterator operator+(::std::chrono::nanoseconds rhs) const;
+    ptrdiff_t operator-(observable_iterator rhs) const;
+
+    observable_iterator & operator&=(tag rhs);
+
+    template<typename Client>
+    observable_iterator & operator=(::std::string_view rhs);
+
+private:
+    friend observable<History>;
+    friend bool operator<(observable_iterator const &lhs, ::std::chrono::nanoseconds rhs);
+    friend bool operator<(::std::chrono::nanoseconds lhs, observable_iterator const &rhs);
+
+    template<typename... Args>
+    explicit observable_iterator(observable<History> *target,
+        Args &&...args);
+
+    observable<History> *_target;
+};
+
 
 template<typename History>
 class observable : private History {
@@ -64,20 +119,21 @@ public:
     template<typename Observer>
     slot<History> subscribe();
 
-    using History::begin;
-    using History::end;
+    observable_iterator<History> begin();
+    observable_iterator<History> end();
 
-    using History::lower_bound;
+    observable_iterator<History> lower_bound(::std::chrono::nanoseconds timestamp);
 
     template<typename Client>
-    iterator insert(message message);
+    observable_iterator<History> insert(message message);
     template<typename Client>
-    iterator erase(iterator pos);
+    observable_iterator<History> erase(observable_iterator<History> pos);
     template<typename Client>
-    iterator erase(iterator first, iterator last);
+    observable_iterator<History> erase(observable_iterator<History> first, observable_iterator<History> last);
 
 private:
     friend slot<History>;
+    friend observable_iterator<History>;
 
     class subscription;
 

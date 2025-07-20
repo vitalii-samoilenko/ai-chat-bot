@@ -18,7 +18,7 @@ template<typename Client>
         return ::std::string_view{};
     }
     _client.join(args);
-    return args;
+    return join::name;
 };
 
 } // commands

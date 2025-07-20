@@ -24,12 +24,12 @@ template<typename Moderator>
             &username, &hours, &minutes, &seconds)) {
         return ::std::string_view{};
     }
-    auto until = ::std::chrono::utc_clock::now();
-    until += ::std::chrono::hours{ hours };
-    until += ::std::chrono::minutes{ minutes };
-    until += ::std::chrono::seconds{ seconds };
+    auto until = ::std::chrono::utc_clock::now()
+        + ::std::chrono::hours{ hours }
+        + ::std::chrono::minutes{ minutes }
+        + ::std::chrono::seconds{ seconds };
     moderator.timeout(username, until);
-    return args;
+    return timeout::name;
 };
 
 } // commands

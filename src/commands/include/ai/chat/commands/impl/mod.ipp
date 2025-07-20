@@ -18,7 +18,7 @@ template<typename Moderator>
         return ::std::string_view{};
     }
     _moderator.mod(args)
-    return args;
+    return mod::name;
 };
 
 } // commands
