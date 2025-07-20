@@ -94,6 +94,7 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
             break;
         }
         ::std::vector<::ai::chat::histories::tag> tags{};
+        tags.emplace_back("source", "openai");
         tags.emplace_back("user.name", botname);
         if (channel_tag) {
             tags.emplace_back("channel", channel_tag->value);

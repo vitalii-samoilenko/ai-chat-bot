@@ -53,10 +53,10 @@ twitch<History>::binding twitch<History>::bind(::ai::chat::histories::observable
         if (!moderator.is_allowed(botname, client_message.username)) {
             return;
         }
-        ::std::vector<::ai::chat::histories::tag> tags{
-            ::ai::chat::histories::tag{ "user.name", client_message.username },
-            ::ai::chat::histories::tag{ "channel", client_message.channel },
-        };
+        ::std::vector<::ai::chat::histories::tag> tags{};
+        tags.emplace_back("source", "twitch");
+        tags.emplace_back("user.name", client_message.username);
+        tags.emplace_back("channel", client_message.channel);
         history.template insert<::ai::chat::clients::observable<::ai::chat::clients::twitch>>(::ai::chat::histories::message{
             {},
             client_message.content,
