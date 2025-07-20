@@ -70,7 +70,7 @@ public:
     observable_iterator(observable_iterator const &other);
     observable_iterator(observable_iterator &&other);
 
-    ~observable_iterator();
+    ~observable_iterator() = default;
 
     observable_iterator & operator=(observable_iterator const &other) = delete;
     observable_iterator & operator=(observable_iterator &&other) = delete;
