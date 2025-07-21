@@ -8,7 +8,7 @@ namespace chat {
 namespace commands {
 
 template<typename History>
-instruct<History>::deny(::ai::chat::histories::observable<History> &history)
+instruct<History>::instruct(::ai::chat::histories::observable<History> &history)
     : _history{ history } {
 
 };

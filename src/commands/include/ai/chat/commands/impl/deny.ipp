@@ -17,7 +17,7 @@ template<typename Moderator>
     if (!::RE2::FullMatch(args, _parser)) {
         return ::std::string_view{};
     }
-    _moderator.deny(args)
+    _moderator.deny(args);
     return deny::name;
 };
 

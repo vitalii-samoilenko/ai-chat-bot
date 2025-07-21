@@ -46,7 +46,7 @@ void slot<History>::on_message(Action &&callback) {
 template<typename History>
 template<typename Action,
     ::std::enable_if_t<
-        ::std::is_invocable_v<Action, iterator>,
+        ::std::is_invocable_v<Action, observable_iterator<History>>,
         bool>>
 void slot<History>::on_erase(Action &&callback) {
     _target->_subscriptions[_observer]
@@ -55,7 +55,7 @@ void slot<History>::on_erase(Action &&callback) {
 template<typename History>
 template<typename Action,
     ::std::enable_if_t<
-        ::std::is_invocable_v<Action, iterator, iterator>,
+        ::std::is_invocable_v<Action, observable_iterator<History>, observable_iterator<History>>,
         bool>>
 void slot<History>::on_erase(Action &&callback) {
     _target->_subscriptions[_observer]
@@ -86,13 +86,13 @@ bool operator<(::std::chrono::nanoseconds lhs, observable_iterator<History> cons
 
 template<typename History>
 observable_iterator<History>::observable_iterator(observable_iterator const &other)
-    : iterator{ other }
+    : iterator{ static_cast<iterator const &>(other) }
     , _target{ other._target } {
 
 };
 template<typename History>
 observable_iterator<History>::observable_iterator(observable_iterator &&other)
-    : iterator{ ::std::move(other) }
+    : iterator{ static_cast<iterator &&>(other) }
     , _target{ other._target } {
     other._target = nullptr;
 };
@@ -126,7 +126,7 @@ ptrdiff_t observable_iterator<History>::operator-(observable_iterator rhs) const
 
 template<typename History>
 observable_iterator<History> & observable_iterator<History>::operator&=(tag rhs) {
-    iterator::operator&=(tag);
+    iterator::operator&=(rhs);
     return *this;
 };
 
@@ -136,7 +136,7 @@ observable_iterator<History> & observable_iterator<History>::operator=(::std::st
     iterator::operator=(rhs);
     for (auto const &observer_n_subscription : _target->_subscriptions) {
         ::std::type_info const *observer{ observer_n_subscription.first };
-        subscription const &subscription{ observer_n_subscription.second };
+        typename observable<History>::subscription const &subscription{ observer_n_subscription.second };
         if (observer == &typeid(Client)) {
             continue;
         }

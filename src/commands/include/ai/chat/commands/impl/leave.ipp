@@ -11,7 +11,7 @@ leave<Client>::leave(::ai::chat::clients::observable<Client> &client)
 
 };
 
-template<template <typename> Client>
+template<template <typename> class Client>
 ::std::string_view leave<Client>::execute(::std::string_view args) {
     if (!args.empty()) {
         return ::std::string_view{};

@@ -52,7 +52,7 @@ template<typename History, size_t Limit>
     ::ai::chat::histories::observable_iterator<History> pos{ _history.lower_bound(from) };
     ::std::string_view tag_name{};
     ::std::string_view tag_value{};
-    while (::RE2::Consume(tags,
+    while (::RE2::Consume(&tags, _tag_parser,
             &tag_name, &tag_value)) {
         pos &= ::ai::chat::histories::tag{
             tag_name,
@@ -63,10 +63,10 @@ template<typename History, size_t Limit>
     size_t i{ 0 };
     for (; i < Limit && pos < to; ++i) {
         ::ai::chat::histories::message message{ *pos };
-        _buffer += "-" + ::to_string(message.timestamp.count());
+        _buffer += "-" + ::std::to_string(message.timestamp.count());
     }
     if (i == Limit || _buffer.empty()) {
-        _buffer += "-"
+        _buffer += "-";
     }
     return ::std::string_view{
         _buffer.data() + 1,

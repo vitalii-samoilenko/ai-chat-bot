@@ -17,7 +17,7 @@ template<typename Moderator>
     if (!::RE2::FullMatch(args, _parser)) {
         return ::std::string_view{};
     }
-    _moderator.ban(args)
+    _moderator.ban(args);
     return ban::name;
 };
 

@@ -17,7 +17,7 @@ template<typename History>
     long long representation{};
     ::std::string_view content{};
     if (!::RE2::FullMatch(args, _parser,
-            &representation, content)) {
+            &representation, &content)) {
         return ::std::string_view{};
     }
     ::std::chrono::nanoseconds timestamp{ representation };

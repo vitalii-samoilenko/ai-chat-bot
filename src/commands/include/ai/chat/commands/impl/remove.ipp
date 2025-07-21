@@ -51,11 +51,11 @@ template<typename History>
     } else if (::RE2::FullMatch(args, _timestamp_parser,
             &representation)) {
         ::std::chrono::nanoseconds timestamp{ representation };
-        ::ai::chat::histories::observable_iterator<History> current{ _history.lower_bound(timestamp) };
+        ::ai::chat::histories::observable_iterator<History> pos{ _history.lower_bound(timestamp) };
         if (timestamp < pos) {
             return ::std::string_view{};
         }
-        _history.template erase<remove>(current);
+        _history.template erase<remove>(pos);
         return remove::name;
     } else {
         return ::std::string_view{};

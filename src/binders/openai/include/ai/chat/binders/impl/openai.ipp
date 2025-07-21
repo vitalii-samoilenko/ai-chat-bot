@@ -34,7 +34,7 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
             pos_p_username = pattern.find(USERNAME), pos_p_content = pattern.find(CONTENT), pos_a_username = apology.find(USERNAME),
             USERNAME_SIZE = ::std::size(USERNAME), CONTENT_SIZE = ::std::size(CONTENT),
         botname = ::std::string{ botname }
-    ](::ai::chat::histories::iterator history_pos)->void {
+    ](::ai::chat::histories::observable_iterator<History> history_pos)->void {
         ::ai::chat::histories::message history_message{ *history_pos };
         ::ai::chat::histories::tag const *username_tag{ nullptr };
         ::ai::chat::histories::tag const *channel_tag{ nullptr };

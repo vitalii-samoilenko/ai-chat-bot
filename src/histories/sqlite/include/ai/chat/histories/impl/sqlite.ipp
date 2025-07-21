@@ -123,7 +123,7 @@ bool operator<(::std::chrono::nanoseconds lhs, iterator const &rhs) {
 
 template<typename... Args>
 iterator::iterator(Args &&...args)
-    : _target{ ::std::move<Args>(args)... } {
+    : _target{ ::std::forward<Args>(args)... } {
     // _target.on_upgrade(detail::scope::state::create);
 };
 

@@ -15,6 +15,8 @@ class scope {
 private:
     friend iterator;
     friend sqlite;
+    friend bool ::ai::chat::histories::operator<(iterator const &lhs, ::std::chrono::nanoseconds rhs);
+    friend bool ::ai::chat::histories::operator<(::std::chrono::nanoseconds lhs, iterator const &rhs);
 
     enum class state {
         create,

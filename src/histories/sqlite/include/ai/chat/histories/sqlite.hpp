@@ -22,6 +22,9 @@ struct message {
 class iterator;
 class sqlite;
 
+bool operator<(iterator const &lhs, ::std::chrono::nanoseconds rhs);
+bool operator<(::std::chrono::nanoseconds lhs, iterator const &rhs);
+
 } // histories
 } // chat
 } // ai
@@ -32,9 +35,6 @@ class sqlite;
 namespace ai {
 namespace chat {
 namespace histories {
-
-bool operator<(iterator const &lhs, ::std::chrono::nanoseconds rhs);
-bool operator<(::std::chrono::nanoseconds lhs, iterator const &rhs);
 
 class iterator {
 public:

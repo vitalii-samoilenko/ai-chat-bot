@@ -6,7 +6,7 @@ namespace chat {
 namespace commands {
 
 template<typename Moderator>
-unmod<Moderator>::mod(Moderator &moderator)
+unmod<Moderator>::unmod(Moderator &moderator)
     : _moderator{ moderator }
     , _parser{ R"([a-z0-9_]+)" } {
 
@@ -17,7 +17,7 @@ template<typename Moderator>
     if (!::RE2::FullMatch(args, _parser)) {
         return ::std::string_view{};
     }
-    _moderator.unmod(args)
+    _moderator.unmod(args);
     return unmod::name;
 };
 
