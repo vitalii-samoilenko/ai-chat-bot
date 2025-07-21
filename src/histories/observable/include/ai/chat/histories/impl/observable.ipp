@@ -77,11 +77,11 @@ slot<History>::slot(::std::type_info const *observer, observable<History> *targe
 
 template<typename History>
 bool operator<(observable_iterator<History> const &lhs, ::std::chrono::nanoseconds rhs) {
-    return operator<(static_cast<iterator const>(lhs), rhs);
+    return operator<(static_cast<iterator const &>(lhs), rhs);
 };
 template<typename History>
 bool operator<(::std::chrono::nanoseconds lhs, observable_iterator<History> const &rhs) {
-    return operator<(lhs, static_cast<iterator const>(rhs));
+    return operator<(lhs, static_cast<iterator const &>(rhs));
 };
 
 template<typename History>

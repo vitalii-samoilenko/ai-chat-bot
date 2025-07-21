@@ -112,6 +112,13 @@ iterator & iterator::operator&=(tag rhs) {
     return *this;
 };
 
+iterator & iterator::operator=(::std::string_view rhs) {
+    _target.on_upgrade(detail::scope::state::cursor);
+    _target.on_update_begin();
+    _target.on_update(rhs);
+    return *this;
+};
+
 bool operator<(iterator const &lhs, ::std::chrono::nanoseconds rhs) {
     lhs._target.on_upgrade(detail::scope::state::cursor);
     return lhs._target._timestamp < rhs;

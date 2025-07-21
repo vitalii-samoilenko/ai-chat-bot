@@ -10,9 +10,16 @@ namespace chat {
 namespace histories {
 
 template<typename History>
+class slot;
+template<typename History>
 class observable_iterator;
 template<typename History>
 class observable;
+
+template<typename History>
+bool operator<(observable_iterator<History> const &lhs, ::std::chrono::nanoseconds rhs);
+template<typename History>
+bool operator<(::std::chrono::nanoseconds lhs, observable_iterator<History> const &rhs);
 
 } // histories
 } // chat
@@ -59,11 +66,6 @@ private:
 };
 
 template<typename History>
-bool operator<(observable_iterator<History> const &lhs, ::std::chrono::nanoseconds rhs);
-template<typename History>
-bool operator<(::std::chrono::nanoseconds lhs, observable_iterator<History> const &rhs);
-
-template<typename History>
 class observable_iterator : private iterator {
 public:
     observable_iterator() = delete;
@@ -90,8 +92,8 @@ public:
 
 private:
     friend observable<History>;
-    friend bool operator<(observable_iterator const &lhs, ::std::chrono::nanoseconds rhs);
-    friend bool operator<(::std::chrono::nanoseconds lhs, observable_iterator const &rhs);
+    friend bool ::ai::chat::histories::operator<(observable_iterator<History> const &lhs, ::std::chrono::nanoseconds rhs);
+    friend bool ::ai::chat::histories::operator<(::std::chrono::nanoseconds lhs, observable_iterator<History> const &rhs);
 
     template<typename... Args>
     explicit observable_iterator(observable<History> *target,
@@ -99,7 +101,6 @@ private:
 
     observable<History> *_target;
 };
-
 
 template<typename History>
 class observable : private History {

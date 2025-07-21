@@ -102,6 +102,11 @@ ptrdiff_t iterator::operator-(iterator rhs) const {
     return _target._pos - rhs._target._pos;
 };
 
+iterator & iterator::operator=(::std::string_view rhs) {
+    _target._pos->as_string() = rhs;
+    return *this;
+};
+
 template<typename... Args>
 iterator::iterator(Args &&...args)
     : _target{ ::std::forward<Args>(args)... } {
