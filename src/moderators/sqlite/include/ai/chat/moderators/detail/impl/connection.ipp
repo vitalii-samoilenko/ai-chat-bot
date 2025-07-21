@@ -234,7 +234,7 @@ iterator connection::on_is_allowed(::std::string_view username1, ::sqlite3_int64
     ::esqlite3_ensure_success(
         ::sqlite3_bind_int64(_is_allowed1,
             ::sqlite3_bind_parameter_index(_is_allowed1, "@ROLE"),
-            role::moderator));
+            role));
     ::esqlite3_ensure_success(
         ::sqlite3_bind_int64(_is_allowed1,
             ::sqlite3_bind_parameter_index(_is_allowed1, "@SINCE"),

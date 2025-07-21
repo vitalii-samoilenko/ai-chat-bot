@@ -130,6 +130,17 @@ openai::openai(::std::string_view address, ::std::chrono::milliseconds timeout,
     _context.on_init();
 };
 
+message openai::front() {
+    ::boost::json::value &messages{ _context._completion.at("messages") };
+    ::boost::json::array &array{ messages.as_array() };
+    return ::boost::json::value_to<message>(array.front());
+};
+message openai::back() {
+    ::boost::json::value &messages{ _context._completion.at("messages") };
+    ::boost::json::array &array{ messages.as_array() };
+    return ::boost::json::value_to<message>(array.back());
+};
+
 iterator openai::begin() {
     ::boost::json::value &messages{ _context._completion.at("messages") };
     ::boost::json::array &array{ messages.as_array() };

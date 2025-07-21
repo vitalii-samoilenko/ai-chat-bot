@@ -75,6 +75,9 @@ public:
     openai(::std::string_view address, ::std::chrono::milliseconds timeout,
         ::std::chrono::milliseconds delay, size_t limit);
 
+    message front();
+    message back();
+
     iterator begin();
     iterator end();
 

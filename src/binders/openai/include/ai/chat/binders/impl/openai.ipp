@@ -64,7 +64,6 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
             });
             return;
         }
-        ::std::string content{};
         for (size_t left{ retries }; ;) {
             ::ai::chat::adapters::iterator adapter_pos{ adapter.complete(model, key) };
             if (adapter_pos == adapter.end()) {
@@ -80,17 +79,19 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
             }
             ::ai::chat::adapters::message adapter_message{ *adapter_pos };
             if (moderator.is_filtered(adapter_message.content)) {
+                adapter.pop_back();
                 if (left--) {
-                    adapter.pop_back();
                     continue;
                 }
-                content = apology;
+                ::std::string content{ apology };
                 if (!(pos_a_username == ::std::string::npos)) {
                     content.replace(pos_a_username, USERNAME_SIZE - 1, username_tag->value);
                 }
-                break;
+                adapter.push_back(::ai::chat::adapters::message{
+                    ::ai::chat::adapters::role::assistant,
+                    content
+                });
             }
-            content = adapter_message.content;
             break;
         }
         ::std::vector<::ai::chat::histories::tag> tags{};
@@ -99,9 +100,10 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
         if (channel_tag) {
             tags.emplace_back("channel", channel_tag->value);
         }
+        ::ai::chat::adapters::message adapter_message{ adapter.back() };
         history.template insert<::ai::chat::adapters::openai>(::ai::chat::histories::message{
             ::std::chrono::nanoseconds{},
-            content,
+            adapter_message.content,
             tags
         });
     });
