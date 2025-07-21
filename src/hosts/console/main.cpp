@@ -163,8 +163,8 @@ int main(int argc, char* argv[]) {
                         tag.at("name").as_string(),
                         tag.at("value").as_string());
                 }
-                history.insert<decltype(main)>(::ai::chat::histories::message{
-                    {},
+                history.template insert<decltype(main)>(::ai::chat::histories::message{
+                    ::std::chrono::nanoseconds{},
                     message.at("content").as_string(),
                     tags
                 });
@@ -178,11 +178,11 @@ int main(int argc, char* argv[]) {
             static_cast<size_t>(config.at("adapter").at("limit").as_int64())
         };
         {
-            ::ai::chat::histories::observable_iterator<::ai::chat::histories::sqlite> current{ history.begin() };
-            ::ai::chat::histories::observable_iterator<::ai::chat::histories::sqlite> last{ history.end() };
-            adapter.reserve(static_cast<size_t>(last - current));
-            for (; !(current == last); ++current) {
-                ::ai::chat::histories::message message{ *current };
+            ::ai::chat::histories::observable_iterator<::ai::chat::histories::sqlite> pos{ history.begin() };
+            ::ai::chat::histories::observable_iterator<::ai::chat::histories::sqlite> end{ history.end() };
+            adapter.reserve(static_cast<size_t>(end - pos));
+            for (; !(pos == end); ++pos) {
+                ::ai::chat::histories::message message{ *pos };
                 ::ai::chat::histories::tag const *username_tag{ nullptr };
                 for (::ai::chat::histories::tag const &tag : message.tags) {
                     if (tag.name == "user.name") {

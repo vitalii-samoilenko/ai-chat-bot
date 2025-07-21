@@ -56,7 +56,7 @@ void scope::on_rollback() {
 void scope::on_upgrade(state to) const {
     switch (_state) {
     case state::create:
-        if (!(to < state::init)) {
+        if (to < state::init) {
             break;
         }
     {
@@ -120,7 +120,7 @@ void scope::on_upgrade(state to) const {
                 static_cast<::sqlite3_int64>(_name_ids.size())));
     }
     case state::init:
-        if (!(to < state::cursor)) {
+        if (to < state::cursor) {
             break;
         }
     {
@@ -134,7 +134,7 @@ void scope::on_upgrade(state to) const {
                 _offset));
         int error_code{ ::sqlite3_step(_s_message) };
         if (error_code == SQLITE_DONE) {
-            _timestamp = ::std::numeric_limits<::std::chrono::nanoseconds>::max();
+            _timestamp = ::std::chrono::nanoseconds{ ::std::numeric_limits<long long>::max() };
         } else {
             ::esqlite3_ensure_success(
                 error_code);
@@ -143,7 +143,7 @@ void scope::on_upgrade(state to) const {
         _offset = 0;
     }
     case state::cursor:
-        if (!(to < state::data)) {
+        if (to < state::data) {
             break;
         }
     {
@@ -209,7 +209,7 @@ void scope::on_advance() {
     _state = state::cursor;
     int error_code{ ::sqlite3_step(_s_message) };
     if (error_code == SQLITE_DONE) {
-        _timestamp = ::std::numeric_limits<::std::chrono::nanoseconds>::max();
+        _timestamp = ::std::chrono::nanoseconds{ ::std::numeric_limits<long long>::max() };
     } else {
         ::esqlite3_ensure_success(
             error_code);
@@ -232,8 +232,8 @@ void scope::on_advance(::std::chrono::nanoseconds dist) {
     }
     _timestamp += dist;
 };
-ptrdiff_t scope::on_count(::std::chrono::nanoseconds last) const {
-    ::std::chrono::nanoseconds first{ _timestamp };
+ptrdiff_t scope::on_count(::std::chrono::nanoseconds first) const {
+    ::std::chrono::nanoseconds last{ _timestamp };
     if (last < first) {
         ::std::swap(first, last);
     }
@@ -250,7 +250,7 @@ ptrdiff_t scope::on_count(::std::chrono::nanoseconds last) const {
     ptrdiff_t count{ ::sqlite3_column_int64(_s_count, 0) };
     ::esqlite3_ensure_success(
         ::sqlite3_reset(_s_count));
-    return _timestamp == first
+    return _timestamp == last
         ? count
         : -count;
 };
@@ -273,7 +273,7 @@ void scope::on_filter(tag tag) {
     } else {
         ::esqlite3_ensure_success(
             error_code);
-        _timestamp = ::std::numeric_limits<::std::chrono::nanoseconds>::max();
+        _timestamp = ::std::chrono::nanoseconds{ ::std::numeric_limits<long long>::max() };
     }
     ::esqlite3_ensure_success(
         ::sqlite3_reset(_s_tag_name_id));
@@ -293,7 +293,7 @@ void scope::on_filter(tag tag) {
         _name_ids.pop_back();
         ::esqlite3_ensure_success(
             error_code);
-        _timestamp = ::std::numeric_limits<::std::chrono::nanoseconds>::max();
+        _timestamp = ::std::chrono::nanoseconds{ ::std::numeric_limits<long long>::max() };
     }
     ::esqlite3_ensure_success(
         ::sqlite3_reset(_s_tag_value_id));

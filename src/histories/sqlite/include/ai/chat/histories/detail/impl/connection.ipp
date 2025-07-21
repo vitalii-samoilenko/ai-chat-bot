@@ -140,7 +140,7 @@ void connection::on_init() {
             ", name_id INTEGER CONSTRAINT FK_message_tag_name REFERENCES tag_name(id)"
             ", value_id INTEGER CONSTRAINT FK_message_tag_value REFERENCES tag_value(id)"
             ", CONSTRAINT PK_message PRIMARY KEY(timestamp, name_id, value_id)"
-        ") WITHOUT ROWID"
+        ")"
     };
     ::esqlite3_ensure_success(
         ::sqlite3_prepare_v2(_database, INIT_MESSAGE,
@@ -201,7 +201,7 @@ void connection::on_init() {
             static_cast<int>(::std::size(INSERT_TAG_VALUE) - 1),
             &_i_tag_value, nullptr));
     char const INSERT_MESSAGE[]{
-        "INSERT OR IGNORE INTO message"
+        "INSERT INTO message"
         "("
             "timestamp"
         ")"
@@ -215,7 +215,7 @@ void connection::on_init() {
             static_cast<int>(::std::size(INSERT_MESSAGE) - 1),
             &_i_message, nullptr));
     char const INSERT_MESSAGE_TAG[]{
-        "INSERT OR IGNORE INTO message"
+        "INSERT INTO message"
         "("
             "timestamp, name_id, value_id"
         ")"
@@ -258,7 +258,7 @@ void connection::on_init() {
     ::esqlite3_ensure_success(
         ::sqlite3_prepare_v2(_database, SELECT_MESSAGE_CONTENT,
             static_cast<int>(::std::size(SELECT_MESSAGE_CONTENT) - 1),
-            &_d_message_content, nullptr));
+            &_s_message_content, nullptr));
     char const SELECT_MESSAGE_TAG[]{
         "SELECT name_id, value_id FROM message"
         " WHERE timestamp = @TIMESTAMP"

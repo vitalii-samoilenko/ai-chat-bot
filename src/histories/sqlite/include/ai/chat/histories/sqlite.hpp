@@ -53,7 +53,7 @@ public:
 
     iterator operator+(ptrdiff_t rhs) const;
     iterator operator+(::std::chrono::nanoseconds rhs) const;
-    ptrdiff_t operator-(iterator rhs) const;
+    ptrdiff_t operator-(iterator const &rhs) const;
 
     iterator & operator&=(tag rhs);
 

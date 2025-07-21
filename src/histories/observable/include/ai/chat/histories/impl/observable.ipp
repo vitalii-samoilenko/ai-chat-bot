@@ -120,7 +120,7 @@ observable_iterator<History> observable_iterator<History>::operator+(::std::chro
     return observable_iterator{ _target, iterator::operator+(rhs) };
 };
 template<typename History>
-ptrdiff_t observable_iterator<History>::operator-(observable_iterator rhs) const {
+ptrdiff_t observable_iterator<History>::operator-(observable_iterator const &rhs) const {
     return iterator::operator-(rhs);
 };
 

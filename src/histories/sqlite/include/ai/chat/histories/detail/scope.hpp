@@ -42,7 +42,7 @@ private:
     void on_advance();
     void on_advance(ptrdiff_t dist);
     void on_advance(::std::chrono::nanoseconds dist);
-    ptrdiff_t on_count(::std::chrono::nanoseconds last) const;
+    ptrdiff_t on_count(::std::chrono::nanoseconds first) const;
     void on_filter(tag tag);
     void on_update_begin();
     void on_update(::std::string_view content);

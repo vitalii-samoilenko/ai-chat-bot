@@ -100,7 +100,7 @@ iterator iterator::operator+(::std::chrono::nanoseconds rhs) const {
     pos._target.on_advance(rhs);
     return pos;
 };
-ptrdiff_t iterator::operator-(iterator rhs) const {
+ptrdiff_t iterator::operator-(iterator const &rhs) const {
     _target.on_upgrade(detail::scope::state::cursor);
     rhs._target.on_upgrade(detail::scope::state::cursor);
     return _target.on_count(rhs._target._timestamp);
@@ -151,7 +151,7 @@ iterator sqlite::begin() {
     pos._target._s_tag_value_id = _chat._s_tag_value_id;
     pos._target._u_begin = _chat._u_begin;
     pos._target._u_message_content = _chat._u_message_content;
-    pos._target._timestamp = ::std::numeric_limits<::std::chrono::nanoseconds>::min();
+    pos._target._timestamp = ::std::chrono::nanoseconds{ ::std::numeric_limits<long long>::min() };
     return pos;
 };
 iterator sqlite::end() {
@@ -165,7 +165,7 @@ iterator sqlite::end() {
     pos._target._s_tag_value_id = _chat._s_tag_value_id;
     pos._target._u_begin = _chat._u_begin;
     pos._target._u_message_content = _chat._u_message_content;
-    pos._target._timestamp = ::std::numeric_limits<::std::chrono::nanoseconds>::max();
+    pos._target._timestamp = ::std::chrono::nanoseconds{ ::std::numeric_limits<long long>::max() };
     return pos;
 };
 
