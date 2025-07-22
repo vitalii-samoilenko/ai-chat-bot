@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.25.1)
 
 project(AI VERSION 0.1)
 
-option(ENABLE_TELEMETRY "Enable telemetry" OFF)
-if(ENABLE_TELEMETRY)
+option(TELEMETRY "Enable telemetry" OFF)
+if(TELEMETRY)
   add_compile_definitions(ENABLE_TELEMETRY)
 endif()
 

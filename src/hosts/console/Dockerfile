@@ -11,6 +11,7 @@ COPY ["src/commands", "src/commands"]
 COPY ["src/histories", "src/histories"]
 COPY ["src/hosts/console", "src/hosts/console"]
 COPY ["src/moderators", "src/moderators"]
+COPY ["src/telemetry", "src/telemetry"]
 COPY ["third_party/abseil", "third_party/abseil"]
 COPY ["third_party/boost", "third_party/boost"]
 COPY ["third_party/cares", "third_party/cares"]
@@ -35,11 +36,13 @@ RUN apk update \
 
 FROM prepare AS configure
 ARG BUILD_CONFIGURATION=Release
+ARG TELEMETRY=ON
 RUN --mount=type=cache,id=build,target=build \
     --mount=type=cache,id=install,target=install \
     cmake -B build -S . \
         -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION \
-        -DCMAKE_INSTALL_PREFIX=install
+        -DCMAKE_INSTALL_PREFIX=install \
+        -DTELEMETRY=$TELEMETRY
 
 FROM configure AS build
 ARG BUILD_CONFIGURATION=Release
