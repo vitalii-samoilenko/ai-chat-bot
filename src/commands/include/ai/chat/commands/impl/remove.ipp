@@ -1,6 +1,8 @@
 #ifndef AI_CHAT_COMMANDS_REMOVE_IPP
 #define AI_CHAT_COMMANDS_REMOVE_IPP
 
+#include <ctime>
+
 namespace ai {
 namespace chat {
 namespace commands {
@@ -23,24 +25,21 @@ remove<History>::remove(::ai::chat::histories::observable<History> &history)
 
 template<typename History>
 ::std::string_view remove<History>::execute(::std::string_view args) {
-    long long f_year{}, f_month{}, f_day{},
-        f_hour{}, f_minute{}, f_second{},
-        t_year{}, t_month{}, t_day{},
-        t_hour{}, t_minute{}, t_second{};
+    static time_t __epoch__{};
+    static ::std::tm __local__epoch__{ *::std::localtime(&__epoch__) };
+    ::std::tm f_tm{}, t_tm{};
     long long representation{};
     if (::RE2::FullMatch(args, _range_parser,
-            &f_year, &f_month, &f_day,
-            &f_hour, &f_minute, &f_second,
-            &t_year, &t_month, &t_day,
-            &t_hour, &t_minute, &t_second)) {
-        ::std::chrono::nanoseconds from{
-            ::std::chrono::years{ f_year - 1970 } + ::std::chrono::months{ f_month } + ::std::chrono::days{ f_day }
-            + ::std::chrono::hours{ f_hour } + ::std::chrono::minutes{ f_minute } + ::std::chrono::seconds{ f_second }
-        };
-        ::std::chrono::nanoseconds to{
-            ::std::chrono::years{ t_year - 1970 } + ::std::chrono::months{ t_month } + ::std::chrono::days{ t_day }
-            + ::std::chrono::hours{ t_hour } + ::std::chrono::minutes{ t_minute } + ::std::chrono::seconds{ t_second }
-        };
+            &f_tm.tm_year, &f_tm.tm_mon, &f_tm.tm_mday,
+            &f_tm.tm_hour, &f_tm.tm_min, &f_tm.tm_sec,
+            &t_tm.tm_year, &t_tm.tm_mon, &t_tm.tm_mday,
+            &t_tm.tm_hour, &t_tm.tm_min, &t_tm.tm_sec)) {
+        f_tm.tm_year -= 1900; f_tm.tm_mon -= 1;
+        t_tm.tm_year -= 1900; t_tm.tm_mon -= 1;
+        f_tm.tm_hour += __local__epoch__.tm_hour; f_tm.tm_min += __local__epoch__.tm_min;
+        t_tm.tm_hour += __local__epoch__.tm_hour; t_tm.tm_min += __local__epoch__.tm_min;
+        ::std::chrono::nanoseconds from{ ::std::mktime(&f_tm) * 1000000000 };
+        ::std::chrono::nanoseconds to{ ::std::mktime(&t_tm) * 1000000000 };
         if (to < from) {
             return ::std::string_view{};
         }

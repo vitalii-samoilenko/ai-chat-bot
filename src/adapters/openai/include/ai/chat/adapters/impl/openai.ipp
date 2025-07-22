@@ -96,14 +96,15 @@ bool iterator::operator==(iterator const &rhs) const {
 };
 
 iterator iterator::operator+(ptrdiff_t rhs) const {
-    return iterator{ (_target._pos) + rhs };
+    return iterator{ _target._pos + rhs };
 };
 ptrdiff_t iterator::operator-(iterator rhs) const {
     return _target._pos - rhs._target._pos;
 };
 
 iterator & iterator::operator=(::std::string_view rhs) {
-    _target._pos->as_string() = rhs;
+    ::boost::json::value &content{ _target._pos->at("content") };
+    content.as_string() = rhs;
     return *this;
 };
 

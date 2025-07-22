@@ -14,8 +14,12 @@ private:
     friend observable;
     friend slot<Client>;
 
-    ::std::function<void(message)> on_message;
-    ::std::function<void(command)> on_command;
+    ::std::function<void(message)> on_message{
+        [](message)->void {}
+    };
+    ::std::function<void(command)> on_command{
+        [](command)->void {}
+    };
 };
 
 template<template <typename> class Client>

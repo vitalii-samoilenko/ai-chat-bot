@@ -15,10 +15,18 @@ private:
     friend slot<History>;
     friend observable_iterator<History>;
 
-    ::std::function<void(observable_iterator<History>)> on_message;
-    ::std::function<void(observable_iterator<History>)> on_erase1;
-    ::std::function<void(observable_iterator<History>, observable_iterator<History>)> on_erase2;
-    ::std::function<void(observable_iterator<History>)> on_update;
+    ::std::function<void(observable_iterator<History>)> on_message{
+        [](observable_iterator<History>)->void {}
+    };
+    ::std::function<void(observable_iterator<History>)> on_erase1{
+        [](observable_iterator<History>)->void {}
+    };
+    ::std::function<void(observable_iterator<History>, observable_iterator<History>)> on_erase2{
+        [](observable_iterator<History>, observable_iterator<History>)->void {}
+    };
+    ::std::function<void(observable_iterator<History>)> on_update{
+        [](observable_iterator<History>)->void {}
+    };
 };
 
 template<typename History>
