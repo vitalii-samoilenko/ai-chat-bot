@@ -16,7 +16,7 @@ if(MSVC)
   endif()
   #add_compile_options(/GR-)
 elseif(LINUX)
-  set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
+  set(CMAKE_EXE_LINKER_FLAGS "--static -static-libgcc -static-libstdc++")
 endif()
 
 add_subdirectory(third_party)
