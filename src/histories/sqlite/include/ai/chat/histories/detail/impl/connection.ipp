@@ -34,10 +34,7 @@ connection::connection()
     , _s_tag_value_id{ nullptr }
     , _u_begin{ nullptr }
     , _u_message_content{ nullptr }
-    , _tracer{
-        ::opentelemetry::trace::Provider::GetTracerProvider()
-            ->GetTracer("ai_chat_histories_sqlite")
-    } {
+    INIT_TRACER("ai_chat_histories_sqlite") {
 
 };
 
@@ -326,14 +323,9 @@ void connection::on_init() {
             static_cast<int>(::std::size(UPDATE_MESSAGE_CONTENT) - 1),
             &_u_message_content, nullptr));
 };
-void connection::on_insert_begin(::sqlite3_stmt **commit, ::sqlite3_stmt **rollback,
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _tracer->StartSpan("on_insert_begin", ::opentelemetry::trace::StartSpanOptions{
-            {}, {},
-            root->GetContext()
-        })
-    };
+void connection::on_insert_begin(::sqlite3_stmt **commit, ::sqlite3_stmt **rollback
+    DECLARE_SPAN(root)) {
+    START_SUBSPAN(span, "on_insert_begin", root, (*this))
     ::esqlite3_ensure_success(
         ::sqlite3_step(_i_begin));
     ::esqlite3_ensure_success(
@@ -353,14 +345,9 @@ void connection::on_insert_begin(::sqlite3_stmt **commit, ::sqlite3_stmt **rollb
             static_cast<int>(::std::size(INSERT_ROLLBACK) - 1),
             rollback, nullptr));
 };
-void connection::on_insert_message(::std::chrono::nanoseconds timestamp, ::std::string_view content,
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _tracer->StartSpan("on_insert_message", ::opentelemetry::trace::StartSpanOptions{
-            {}, {},
-            root->GetContext()
-        })
-    };
+void connection::on_insert_message(::std::chrono::nanoseconds timestamp, ::std::string_view content
+    DECLARE_SPAN(root)) {
+    START_SUBSPAN(span, "on_insert_message", root, (*this))
     ::esqlite3_ensure_success(
         ::sqlite3_bind_int64(_i_message_content,
             ::sqlite3_bind_parameter_index(_i_message_content, "@TIMESTAMP"),
@@ -384,14 +371,9 @@ void connection::on_insert_message(::std::chrono::nanoseconds timestamp, ::std::
     ::esqlite3_ensure_success(
         ::sqlite3_reset(_i_message));
 };
-void connection::on_insert_message_tag(::std::chrono::nanoseconds timestamp, ::std::string_view tag_name, ::std::string_view tag_value,
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _tracer->StartSpan("on_insert_message_tag", ::opentelemetry::trace::StartSpanOptions{
-            {}, {},
-            root->GetContext()
-        })
-    };
+void connection::on_insert_message_tag(::std::chrono::nanoseconds timestamp, ::std::string_view tag_name, ::std::string_view tag_value
+    DECLARE_SPAN(root)) {
+    START_SUBSPAN(span, "on_insert_message_tag", root, (*this))
     ::esqlite3_ensure_success(
         ::sqlite3_bind_text(_i_tag_name,
             ::sqlite3_bind_parameter_index(_i_tag_name, "@NAME"),
@@ -451,14 +433,9 @@ void connection::on_insert_message_tag(::std::chrono::nanoseconds timestamp, ::s
     ::esqlite3_ensure_success(
         ::sqlite3_reset(_i_message_tag));
 };
-void connection::on_erase_begin(::sqlite3_stmt **commit, ::sqlite3_stmt **rollback,
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _tracer->StartSpan("on_erase_begin", ::opentelemetry::trace::StartSpanOptions{
-            {}, {},
-            root->GetContext()
-        })
-    };
+void connection::on_erase_begin(::sqlite3_stmt **commit, ::sqlite3_stmt **rollback
+    DECLARE_SPAN(root)) {
+    START_SUBSPAN(span, "on_erase_begin", root, (*this))
     ::esqlite3_ensure_success(
         ::sqlite3_step(_d_begin));
     ::esqlite3_ensure_success(
@@ -479,14 +456,9 @@ void connection::on_erase_begin(::sqlite3_stmt **commit, ::sqlite3_stmt **rollba
             static_cast<int>(::std::size(INSERT_ROLLBACK) - 1),
             rollback, nullptr));
 };
-void connection::on_erase_message(::std::chrono::nanoseconds first, ::std::chrono::nanoseconds last,
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _tracer->StartSpan("on_erase_message", ::opentelemetry::trace::StartSpanOptions{
-            {}, {},
-            root->GetContext()
-        })
-    };
+void connection::on_erase_message(::std::chrono::nanoseconds first, ::std::chrono::nanoseconds last
+    DECLARE_SPAN(root)) {
+    START_SUBSPAN(span, "on_erase_message", root, (*this))
     ::esqlite3_ensure_success(
         ::sqlite3_bind_int64(_d_message,
             ::sqlite3_bind_parameter_index(_d_message, "@FIRST"),

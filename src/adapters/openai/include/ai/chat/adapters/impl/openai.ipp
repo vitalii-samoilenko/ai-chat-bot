@@ -160,27 +160,21 @@ void openai::reserve(size_t capacity) {
 };
 
 void openai::push_back(message value) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _context._tracer->StartSpan("push_back")
-    };
-    _context._logger->Info(::opentelemetry::nostd::string_view{ value.content.data(), value.content.size() }, span->GetContext());
+    START_SPAN(span, "push_back", _context)
+    LOG_INFO(value.content.data(), value.content.size(), span, _context)
     ::boost::json::value &messages{ _context._completion.at("messages") };
     ::boost::json::array &array{ messages.as_array() };
     ::boost::json::value_from(value, array.emplace_back(nullptr));
 };
 void openai::pop_back() {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _context._tracer->StartSpan("pop_back")
-    };
+    START_SPAN(span, "pop_back", _context)
     ::boost::json::value &messages{ _context._completion.at("messages") };
     ::boost::json::array &array{ messages.as_array() };
     array.pop_back();
 };
 
 iterator openai::complete(::std::string_view model, ::std::string_view key) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _context._tracer->StartSpan("complete")
-    };
+    START_SPAN(span, "complete", _context)
     _context._completion.at("model") = model;
     _context._h_bearer.resize(::std::size("Bearer ") - 1);
     _context._h_bearer += key;
@@ -196,17 +190,17 @@ iterator openai::complete(::std::string_view model, ::std::string_view key) {
         _context._io_context.restart();
         _context._stream_reset();
     });
-    _context.on_send(request, response,
-        span);
+    _context.on_send(request, response
+        PROPAGATE_SPAN(span));
     _context._io_context.run();
     ::boost::json::value &_usage{ response.body().at("usage") };
     ::ai::chat::adapters::usage usage{ ::boost::json::value_to<::ai::chat::adapters::usage>(_usage) };
-    _context._m_context->Record(static_cast<int64_t>(usage.completion_tokens), {
-        {"type", "completion"}
-    });
-    _context._m_context->Record(static_cast<int64_t>(usage.prompt_tokens), {
-        {"type", "prompt"}
-    });
+    RECORD_GAUGE(_context._m_context, usage.completion_tokens, {
+        TAG("type", "completion")
+    })
+    RECORD_GAUGE(_context._m_context, usage.prompt_tokens, {
+        TAG("type", "prompt")
+    })
     if (_context._limit < usage.total_tokens) {
         return end();
     }
@@ -218,17 +212,13 @@ iterator openai::complete(::std::string_view model, ::std::string_view key) {
     return end() + -1;
 };
 iterator openai::erase(iterator pos) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _context._tracer->StartSpan("erase")
-    };
+    START_SPAN(span, "erase", _context)
     ::boost::json::value &messages{ _context._completion.at("messages") };
     ::boost::json::array &array{ messages.as_array() };
     return iterator{ array.erase(pos._target._pos) };
 };
 iterator openai::erase(iterator first, iterator last) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _context._tracer->StartSpan("erase")
-    };
+    START_SPAN(span, "erase", _context)
     ::boost::json::value &messages{ _context._completion.at("messages") };
     ::boost::json::array &array{ messages.as_array() };
     return iterator{ array.erase(first._target._pos, last._target._pos) };

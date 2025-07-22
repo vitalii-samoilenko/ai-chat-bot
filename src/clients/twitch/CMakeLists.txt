@@ -12,6 +12,7 @@ add_library(ai_chat_clients_twitch INTERFACE)
 target_compile_features(ai_chat_clients_twitch INTERFACE cxx_std_17)
 target_link_libraries(ai_chat_clients_twitch
   INTERFACE
+    AI::Chat::Telemetry
     Boost::asio
     Boost::beast
     EBoost::eboost

@@ -15,99 +15,73 @@ sqlite::sqlite(::std::string_view filename, size_t length)
 };
 
 iterator sqlite::is_moderator(::std::string_view username) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _controller._tracer->StartSpan("is_moderator")
-    };
+    START_SPAN(span, "is_moderator", _controller)
     return _controller.on_is_allowed(username, detail::connection::role::moderator | detail::connection::role::administrator,
-        ::std::numeric_limits<::sqlite3_int64>::max(),
-        span);
+        ::std::numeric_limits<::sqlite3_int64>::max()
+        PROPAGATE_SPAN(span));
 };
 iterator sqlite::is_allowed(::std::string_view username1, ::std::string_view username2) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _controller._tracer->StartSpan("is_allowed")
-    };
+    START_SPAN(span, "is_allowed", _controller)
     auto now = ::std::chrono::utc_clock::now();
     return _controller.on_is_allowed(username1, username2, detail::connection::role::interlocutor,
-        ::std::chrono::duration_cast<::std::chrono::seconds>(now.time_since_epoch()).count(),
-        span);
+        ::std::chrono::duration_cast<::std::chrono::seconds>(now.time_since_epoch()).count()
+        PROPAGATE_SPAN(span));
 };
 iterator sqlite::is_filtered(::std::string_view content) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _controller._tracer->StartSpan("is_filtered")
-    };
-    return _controller.on_is_filtered(content,
-        span);
+    START_SPAN(span, "is_filtered", _controller)
+    return _controller.on_is_filtered(content
+        PROPAGATE_SPAN(span));
 };
 
 iterator sqlite::admin(::std::string_view username) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _controller._tracer->StartSpan("admin")
-    };
-    return _controller.on_promote(username, detail::connection::role::administrator,
-        span);
+    START_SPAN(span, "admin", _controller)
+    return _controller.on_promote(username, detail::connection::role::administrator
+        PROPAGATE_SPAN(span));
 };
 iterator sqlite::mod(::std::string_view username) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _controller._tracer->StartSpan("mod")
-    };
-    return _controller.on_promote(username, detail::connection::role::moderator,
-        span);
+    START_SPAN(span, "mod", _controller)
+    return _controller.on_promote(username, detail::connection::role::moderator
+        PROPAGATE_SPAN(span));
 };
 iterator sqlite::unmod(::std::string_view username) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _controller._tracer->StartSpan("unmod")
-    };
-    return _controller.on_demote(username, detail::connection::role::moderator,
-        span);
+    START_SPAN(span, "unmod", _controller)
+    return _controller.on_demote(username, detail::connection::role::moderator
+        PROPAGATE_SPAN(span));
 };
 iterator sqlite::allow(::std::string_view username) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _controller._tracer->StartSpan("allow")
-    };
-    return _controller.on_promote(username, detail::connection::role::interlocutor,
-        span);
+    START_SPAN(span, "allow", _controller)
+    return _controller.on_promote(username, detail::connection::role::interlocutor
+        PROPAGATE_SPAN(span));
 };
 iterator sqlite::deny(::std::string_view username) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _controller._tracer->StartSpan("deny")
-    };
-    return _controller.on_demote(username, detail::connection::role::interlocutor,
-        span);
+    START_SPAN(span, "deny", _controller)
+    return _controller.on_demote(username, detail::connection::role::interlocutor
+        PROPAGATE_SPAN(span));
 };
 iterator sqlite::timeout(::std::string_view username, ::std::chrono::seconds until) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _controller._tracer->StartSpan("timeout")
-    };
-    return _controller.on_timeout(username, until.count(),
-        span);
+    START_SPAN(span, "timeout", _controller)
+    return _controller.on_timeout(username, until.count()
+        PROPAGATE_SPAN(span));
 };
 iterator sqlite::ban(::std::string_view username) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _controller._tracer->StartSpan("ban")
-    };
-    return _controller.on_timeout(username, ::std::numeric_limits<::sqlite3_int64>::max(),
-        span);
+    START_SPAN(span, "ban", _controller)
+    return _controller.on_timeout(username, ::std::numeric_limits<::sqlite3_int64>::max()
+        PROPAGATE_SPAN(span));
 };
 iterator sqlite::unban(::std::string_view username) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _controller._tracer->StartSpan("unban")
-    };
-    return _controller.on_timeout(username, 0,
-        span);
+    START_SPAN(span, "unban", _controller)
+    return _controller.on_timeout(username, 0
+        PROPAGATE_SPAN(span));
 };
 iterator sqlite::filter(::std::string_view name, ::std::string_view pattern) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _controller._tracer->StartSpan("filter")
-    };
-    return _controller.on_filter(name, pattern,
-        span);
+    START_SPAN(span, "filter", _controller)
+    return _controller.on_filter(name, pattern
+        PROPAGATE_SPAN(span));
 };
 iterator sqlite::discard(::std::string_view name) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _controller._tracer->StartSpan("discard")
-    };
-    return _controller.on_discard(name,
-        span);
+    START_SPAN(span, "discard", _controller)
+    return _controller.on_discard(name
+        PROPAGATE_SPAN(span));
 };
 
 } // moderators

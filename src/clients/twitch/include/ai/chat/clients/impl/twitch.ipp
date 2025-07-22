@@ -29,71 +29,63 @@ twitch<Handler>::twitch(::std::string_view address, ::std::chrono::milliseconds 
 
 template<typename Handler>
 void twitch<Handler>::connect(::std::string_view username, ::std::string_view access_token) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _channel._tracer->StartSpan("connect")
-    };
+    START_SPAN(span, "connect", _channel)
     ::boost::asio::post(_channel._io_context, [this,
         username = ::std::string{ username },
-        access_token = ::std::string{ access_token },
-        span]()->void {
+        access_token = ::std::string{ access_token }
+        PROPAGATE_SPAN(span)]()->void {
     _channel._username = ::std::move(username);
     _channel._access_token = ::std::move(access_token);
     _channel.on_connect(
-        span);
+        PROPAGATE_ONLY_SPAN(span));
 
     }); // post
 };
 template<typename Handler>
 void twitch<Handler>::disconnect() {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _channel._tracer->StartSpan("disconnect")
-    };
-    ::boost::asio::post(_channel._io_context, [this, span]()->void {
+    START_SPAN(span, "disconnect", _channel)
+    ::boost::asio::post(_channel._io_context, [this
+        PROPAGATE_SPAN(span)]()->void {
     _channel.on_disconnect(
-        span);
+        PROPAGATE_ONLY_SPAN(span));
 
     }); // post
     _channel._io_context.wait();
 };
 template<typename Handler>
 void twitch<Handler>::send(message message) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _channel._tracer->StartSpan("send")
-    };
+    START_SPAN(span, "send", _channel)
     ::boost::asio::post(_channel._io_context, [this,
         message_content = ::std::string{ message.content },
-        message_channel = ::std::string{ message.channel },
-        span]()->void {
+        message_channel = ::std::string{ message.channel }
+        PROPAGATE_SPAN(span)]()->void {
     _channel._message_content = ::std::move(message_content);
     _channel._message_channel = ::std::move(message_channel);
     _channel.on_send(
-        span);
+        PROPAGATE_ONLY_SPAN(span));
 
     }); // post
 };
 
 template<typename Handler>
 void twitch<Handler>::join(::std::string_view channel) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _channel._tracer->StartSpan("join")
-    };
+    START_SPAN(span, "join", _channel)
     ::boost::asio::post(_channel._io_context, [this,
-        channel = ::std::string{ channel },
-        span]()->void {
+        channel = ::std::string{ channel }
+        PROPAGATE_SPAN(span)]()->void {
     _channel._channel = ::std::move(channel);
     _channel.on_join(
-        span);
+        PROPAGATE_ONLY_SPAN(span));
 
     }); // post
 };
 template<typename Handler>
 void twitch<Handler>::leave() {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _channel._tracer->StartSpan("leave")
-    };
-    ::boost::asio::post(_channel._io_context, [this, span]()->void {
+    START_SPAN(span, "leave", _channel)
+    ::boost::asio::post(_channel._io_context, [this
+        PROPAGATE_SPAN(span)]()->void {
     _channel.on_leave(
-        span);
+        PROPAGATE_ONLY_SPAN(span));
     _channel._channel.clear();
 
     }); // post

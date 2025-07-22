@@ -3,8 +3,9 @@
 
 #include <string>
 
-#include "opentelemetry/trace/provider.h"
 #include "sqlite3.h"
+
+#include "ai/chat/telemetry.hpp"
 
 namespace ai {
 namespace chat {
@@ -33,22 +34,22 @@ private:
     connection & operator=(connection &&other) = delete;
 
     void on_init();
-    iterator on_is_allowed(::std::string_view username1, ::sqlite3_int64 role, ::sqlite3_int64 since,
-        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
-    iterator on_is_allowed(::std::string_view username1, ::std::string_view username2, role role, ::sqlite3_int64 since,
-        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
-    iterator on_is_filtered(::std::string_view content,
-        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
-    iterator on_promote(::std::string_view username, role role,
-        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
-    iterator on_demote(::std::string_view username, role role,
-        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
-    iterator on_timeout(::std::string_view username, ::sqlite3_int64 since,
-        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
-    iterator on_filter(::std::string_view name, ::std::string_view pattern,
-        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
-    iterator on_discard(::std::string_view name,
-        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
+    iterator on_is_allowed(::std::string_view username1, ::sqlite3_int64 role, ::sqlite3_int64 since
+        DECLARE_SPAN(root));
+    iterator on_is_allowed(::std::string_view username1, ::std::string_view username2, role role, ::sqlite3_int64 since
+        DECLARE_SPAN(root));
+    iterator on_is_filtered(::std::string_view content
+        DECLARE_SPAN(root));
+    iterator on_promote(::std::string_view username, role role
+        DECLARE_SPAN(root));
+    iterator on_demote(::std::string_view username, role role
+        DECLARE_SPAN(root));
+    iterator on_timeout(::std::string_view username, ::sqlite3_int64 since
+        DECLARE_SPAN(root));
+    iterator on_filter(::std::string_view name, ::std::string_view pattern
+        DECLARE_SPAN(root));
+    iterator on_discard(::std::string_view name
+        DECLARE_SPAN(root));
 
     ::std::string _filename;
     ::sqlite3_int64 _length;
@@ -64,7 +65,8 @@ private:
     ::sqlite3_stmt* _timeout;
     ::sqlite3_stmt* _filter;
     ::sqlite3_stmt* _discard;
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Tracer> _tracer;
+
+    DELCARE_TRACER()
 };
 
 } // detail

@@ -184,13 +184,11 @@ iterator sqlite::lower_bound(::std::chrono::nanoseconds timestamp) {
 };
 
 iterator sqlite::insert(message value) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _chat._tracer->StartSpan("insert")
-    };
+    START_SPAN(span, "insert", _chat)
     auto now = ::std::chrono::utc_clock::now();
     iterator pos{ _chat._database };
-    _chat.on_insert_begin(&pos._target._commit, &pos._target._rollback,
-        span);
+    _chat.on_insert_begin(&pos._target._commit, &pos._target._rollback
+        PROPAGATE_SPAN(span));
     pos._target._s_message_content = _chat._s_message_content;
     pos._target._s_message_tag = _chat._s_message_tag;
     pos._target._s_tag_name = _chat._s_tag_name;
@@ -202,22 +200,20 @@ iterator sqlite::insert(message value) {
     pos._target._u_message_content = _chat._u_message_content;
     pos._target._exceptions = ::std::uncaught_exceptions();
     pos._target._timestamp = now.time_since_epoch();
-    _chat.on_insert_message(pos._target._timestamp, value.content,
-        span);
+    _chat.on_insert_message(pos._target._timestamp, value.content
+        PROPAGATE_SPAN(span));
     for (tag const &tag : value.tags) {
-        _chat.on_insert_message_tag(pos._target._timestamp, tag.name, tag.value,
-            span);
+        _chat.on_insert_message_tag(pos._target._timestamp, tag.name, tag.value
+            PROPAGATE_SPAN(span));
     }
     return pos;
 };
 iterator sqlite::erase(iterator pos) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _chat._tracer->StartSpan("erase")
-    };
+    START_SPAN(span, "erase", _chat)
     pos._target.on_upgrade(detail::scope::state::cursor);
     iterator next{ _chat._database };
-    _chat.on_erase_begin(&next._target._commit, &next._target._rollback,
-        span);
+    _chat.on_erase_begin(&next._target._commit, &next._target._rollback
+        PROPAGATE_SPAN(span));
     next._target._s_message_content = _chat._s_message_content;
     next._target._s_message_tag = _chat._s_message_tag;
     next._target._s_tag_name = _chat._s_tag_name;
@@ -229,19 +225,17 @@ iterator sqlite::erase(iterator pos) {
     next._target._u_message_content = _chat._u_message_content;
     next._target._exceptions = ::std::uncaught_exceptions();
     next._target._timestamp = pos._target._timestamp + ::std::chrono::nanoseconds{ 1 };
-    _chat.on_erase_message(pos._target._timestamp, next._target._timestamp,
-        span);
+    _chat.on_erase_message(pos._target._timestamp, next._target._timestamp
+        PROPAGATE_SPAN(span));
     return next;
 };
 iterator sqlite::erase(iterator first, iterator last) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _chat._tracer->StartSpan("erase")
-    };
+    START_SPAN(span, "erase", _chat)
     first._target.on_upgrade(detail::scope::state::cursor);
     last._target.on_upgrade(detail::scope::state::cursor);
     iterator next{ _chat._database };
-    _chat.on_erase_begin(&next._target._commit, &next._target._rollback,
-        span);
+    _chat.on_erase_begin(&next._target._commit, &next._target._rollback
+        PROPAGATE_SPAN(span));
     next._target._s_message_content = _chat._s_message_content;
     next._target._s_message_tag = _chat._s_message_tag;
     next._target._s_tag_name = _chat._s_tag_name;
@@ -253,8 +247,8 @@ iterator sqlite::erase(iterator first, iterator last) {
     next._target._u_message_content = _chat._u_message_content;
     next._target._exceptions = ::std::uncaught_exceptions();
     next._target._timestamp = last._target._timestamp;
-    _chat.on_erase_message(first._target._timestamp, next._target._timestamp,
-        span);
+    _chat.on_erase_message(first._target._timestamp, next._target._timestamp
+        PROPAGATE_SPAN(span));
     return next;
 };
 

@@ -8,9 +8,8 @@
 #include "boost/beast.hpp"
 #include "boost/json.hpp"
 #include "eboost/beast.hpp"
-#include "opentelemetry/logs/provider.h"
-#include "opentelemetry/metrics/provider.h"
-#include "opentelemetry/trace/provider.h"
+
+#include "ai/chat/telemetry.hpp"
 
 namespace ai {
 namespace chat {
@@ -37,8 +36,8 @@ private:
 
     void on_init();
     template<typename Request, typename Response>
-    void on_send(Request &request, Response &response,
-        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
+    void on_send(Request &request, Response &response
+        DECLARE_SPAN(root));
     void _stream_reset();
 
     ::boost::asio::io_context _io_context;
@@ -47,11 +46,6 @@ private:
     ::boost::asio::ssl::stream<::eboost::beast::metered_tcp_stream<connection>> _stream;
     ::boost::beast::flat_buffer _buffer;
     ::boost::json::value _completion;
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::logs::Logger> _logger;
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Tracer> _tracer;
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::metrics::Meter> _meter;
-    ::opentelemetry::nostd::unique_ptr<::opentelemetry::metrics::Gauge<int64_t>> _m_context;
-    ::opentelemetry::nostd::unique_ptr<::opentelemetry::metrics::Counter<uint64_t>> _m_network;
     ::std::string _host;
     ::std::string _port;
     ::std::string _t_completions;
@@ -60,6 +54,12 @@ private:
     ::std::chrono::milliseconds _delay;
     ::std::chrono::nanoseconds _next;
     size_t _limit;
+
+    DECLARE_LOGGER()
+    DELCARE_TRACER()
+    DECLARE_METER()
+    DECLARE_GAUGE(_m_context)
+    DECLARE_COUNTER(_m_network)
 };
 
 } // detail

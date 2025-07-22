@@ -3,16 +3,13 @@
 
 #include <string>
 
-#include "opentelemetry/trace/provider.h"
 #include "sqlite3.h"
+
+#include "ai/chat/telemetry.hpp"
 
 namespace ai {
 namespace chat {
 namespace histories {
-
-class iterator;
-class sqlite;
-
 namespace detail {
 
 class connection {
@@ -30,16 +27,16 @@ private:
     connection & operator=(connection &&other) = delete;
 
     void on_init();
-    void on_insert_begin(::sqlite3_stmt **commit, ::sqlite3_stmt **rollback,
-        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
-    void on_insert_message(::std::chrono::nanoseconds timestamp, ::std::string_view content,
-        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
-    void on_insert_message_tag(::std::chrono::nanoseconds timestamp, ::std::string_view tag_name, ::std::string_view tag_value,
-        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
-    void on_erase_begin(::sqlite3_stmt **commit, ::sqlite3_stmt **rollback,
-        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
-    void on_erase_message(::std::chrono::nanoseconds first, ::std::chrono::nanoseconds last,
-        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
+    void on_insert_begin(::sqlite3_stmt **commit, ::sqlite3_stmt **rollback
+        DECLARE_SPAN(root));
+    void on_insert_message(::std::chrono::nanoseconds timestamp, ::std::string_view content
+        DECLARE_SPAN(root));
+    void on_insert_message_tag(::std::chrono::nanoseconds timestamp, ::std::string_view tag_name, ::std::string_view tag_value
+        DECLARE_SPAN(root));
+    void on_erase_begin(::sqlite3_stmt **commit, ::sqlite3_stmt **rollback
+        DECLARE_SPAN(root));
+    void on_erase_message(::std::chrono::nanoseconds first, ::std::chrono::nanoseconds last
+        DECLARE_SPAN(root));
 
     ::std::string _filename;
     ::sqlite3 *_database;
@@ -66,7 +63,8 @@ private:
     ::sqlite3_stmt *_s_tag_value_id;
     ::sqlite3_stmt *_u_begin;
     ::sqlite3_stmt *_u_message_content;
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Tracer> _tracer;
+    
+    DELCARE_TRACER()
 };
 
 } // detail

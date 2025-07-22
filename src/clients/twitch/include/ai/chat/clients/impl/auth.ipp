@@ -40,9 +40,7 @@ auth::auth(::std::string_view address, ::std::chrono::milliseconds timeout)
 };
 
 bool auth::validate_token(::std::string_view token) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _service._tracer->StartSpan("validate_token")
-    };
+    START_SPAN(span, "validate_token", _service)
     _service._h_oauth.resize(::std::size("OAuth ") - 1);
     _service._h_oauth += token;
     ::boost::beast::http::request<::boost::beast::http::empty_body> request{
@@ -54,15 +52,13 @@ bool auth::validate_token(::std::string_view token) {
         _service._io_context.restart();
         _service._stream_reset();
     });
-    _service.on_send(request, response,
-        span);
+    _service.on_send(request, response
+        PROPAGATE_SPAN(span));
     _service._io_context.run();
     return response.result() == ::boost::beast::http::status::ok;
 };
 token_context auth::refresh_token(::std::string_view client_id, ::std::string_view client_secret, ::std::string_view refresh_token) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _service._tracer->StartSpan("refresh_token")
-    };
+    START_SPAN(span, "refresh_token", _service)
     _service._t_token.resize(_service._path.size() + ::std::size("token") - 1);
     using form_body_collection = ::std::array<::std::pair<::std::string_view, ::std::string_view>, 4>;
     ::boost::beast::http::request<::eboost::beast::http::form_body<form_body_collection>> request{
@@ -81,17 +77,15 @@ token_context auth::refresh_token(::std::string_view client_id, ::std::string_vi
         _service._io_context.restart();
         _service._stream_reset();
     });
-    _service.on_send(request, response,
-        span);
+    _service.on_send(request, response
+        PROPAGATE_SPAN(span));
     _service._io_context.run();
     _service._context = ::std::move(response.body());
     return ::boost::json::value_to<token_context>(_service._context);
 };
 
 token_context auth::issue_token(::std::string_view client_id, ::std::string_view device_code, ::std::string_view scopes) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _service._tracer->StartSpan("issue_token")
-    };
+    START_SPAN(span, "issue_token", _service)
     _service._t_token.resize(_service._path.size() + ::std::size("token") - 1);
     _service._t_token += "?grant_type=urn:ietf:params:oauth:grant-type:device_code&client_id=";
     _service._t_token += client_id;
@@ -107,17 +101,15 @@ token_context auth::issue_token(::std::string_view client_id, ::std::string_view
         _service._io_context.restart();
         _service._stream_reset();
     });
-    _service.on_send(request, response,
-        span);
+    _service.on_send(request, response
+        PROPAGATE_SPAN(span));
     _service._io_context.run();
     _service._context = ::std::move(response.body());
     return ::boost::json::value_to<token_context>(_service._context);
 };
 
 access_context auth::request_access(::std::string_view client_id, ::std::string_view scopes) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _service._tracer->StartSpan("request_access")
-    };
+    START_SPAN(span, "request_access", _service)
     _service._t_device.resize(_service._path.size() + ::std::size("device") - 1);
     _service._t_device += "?client_id=";
     _service._t_device += client_id;
@@ -131,8 +123,8 @@ access_context auth::request_access(::std::string_view client_id, ::std::string_
         _service._io_context.restart();
         _service._stream_reset();
     });
-    _service.on_send(request, response,
-        span);
+    _service.on_send(request, response
+        PROPAGATE_SPAN(span));
     _service._io_context.run();
     _service._context = ::std::move(response.body());
     return ::boost::json::value_to<access_context>(_service._context);

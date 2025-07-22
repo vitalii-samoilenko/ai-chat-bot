@@ -1,7 +1,6 @@
 #include <fstream>
 #include <iostream>
 #include <exception>
-#include <utility>
 #include <vector>
 
 #include "boost/json.hpp"
@@ -16,26 +15,7 @@
 #include "ai/chat/binders/twitch.hpp"
 #include "ai/chat/binders/openai.hpp"
 #include "ai/chat/commands.hpp"
-
-#include "opentelemetry/exporters/otlp/otlp_grpc_log_record_exporter_factory.h"
-#include "opentelemetry/sdk/logs/simple_log_record_processor_factory.h"
-#include "opentelemetry/sdk/logs/logger_provider_factory.h"
-#include "opentelemetry/logs/provider.h"
-
-#include "opentelemetry/exporters/otlp/otlp_grpc_metric_exporter_factory.h"
-#include "opentelemetry/sdk/metrics/export/periodic_exporting_metric_reader_factory.h"
-#include "opentelemetry/sdk/metrics/view/view_registry_factory.h"
-#include "opentelemetry/sdk/metrics/meter_context_factory.h"
-#include "opentelemetry/sdk/metrics/meter_provider_factory.h"
-#include "opentelemetry/metrics/provider.h"
-
-#include "opentelemetry/exporters/otlp/otlp_grpc_exporter_factory.h"
-#include "opentelemetry/sdk/trace/simple_processor_factory.h"
-#include "opentelemetry/sdk/trace/tracer_provider_factory.h"
-#include "opentelemetry/trace/provider.h"
-
-#include "eboost/system/cpu.hpp"
-#include "eboost/system/memory.hpp"
+#include "ai/chat/telemetry.hpp"
 
 #include "sqlite3.h"
 
@@ -54,77 +34,7 @@ void init_config(::std::string_view filename) {
     config = parser.release();
 };
 
-void init_logger(::std::string_view endpoint) {
-    ::opentelemetry::exporter::otlp::OtlpGrpcLogRecordExporterOptions options{};
-    options.endpoint = endpoint;
-    auto exporter = ::opentelemetry::exporter::otlp::OtlpGrpcLogRecordExporterFactory::Create(options);
-    auto processor = ::opentelemetry::sdk::logs::SimpleLogRecordProcessorFactory::Create(::std::move(exporter));
-    auto resource = ::opentelemetry::sdk::resource::Resource::Create(
-        {
-            {"service.name", "ai_chat_hosts_console"}
-        });
-    auto sdk_provider = ::opentelemetry::sdk::logs::LoggerProviderFactory::Create(::std::move(processor), resource);
-    ::std::shared_ptr<::opentelemetry::logs::LoggerProvider> api_provider{ ::std::move(sdk_provider) };
-    ::opentelemetry::logs::Provider::SetLoggerProvider(api_provider);
-};
-void init_meter(::std::string_view endpoint) {
-    ::opentelemetry::exporter::otlp::OtlpGrpcMetricExporterOptions options{};
-    options.endpoint = endpoint;
-    auto exporter = ::opentelemetry::exporter::otlp::OtlpGrpcMetricExporterFactory::Create(options);
-    auto reader = ::opentelemetry::sdk::metrics::PeriodicExportingMetricReaderFactory::Create(::std::move(exporter),
-        ::opentelemetry::sdk::metrics::PeriodicExportingMetricReaderOptions{
-            ::std::chrono::milliseconds{ 1000 },
-            ::std::chrono::milliseconds{ 500 }
-        });
-    auto views = ::opentelemetry::sdk::metrics::ViewRegistryFactory::Create();
-    auto resource = ::opentelemetry::sdk::resource::Resource::Create(
-        {
-            {"service.name", "ai_chat_hosts_console"}
-        });
-    auto context = ::opentelemetry::sdk::metrics::MeterContextFactory::Create(::std::move(views), resource);
-    context->AddMetricReader(::std::move(reader));
-    auto sdk_provider = ::opentelemetry::sdk::metrics::MeterProviderFactory::Create(::std::move(context));
-    ::std::shared_ptr<::opentelemetry::metrics::MeterProvider> api_provider{ ::std::move(sdk_provider) };
-    ::opentelemetry::metrics::Provider::SetMeterProvider(api_provider);
-};
-void init_tracer(::std::string_view endpoint) {
-    ::opentelemetry::exporter::otlp::OtlpGrpcExporterOptions options{};
-    options.endpoint = endpoint;
-    auto exporter  = ::opentelemetry::exporter::otlp::OtlpGrpcExporterFactory::Create(options);
-    auto processor = ::opentelemetry::sdk::trace::SimpleSpanProcessorFactory::Create(std::move(exporter));
-    auto resource = ::opentelemetry::sdk::resource::Resource::Create(
-        {
-            {"service.name", "ai_chat_hosts_console"}
-        });
-    auto sdk_provider = ::opentelemetry::sdk::trace::TracerProviderFactory::Create(std::move(processor), resource);
-    ::std::shared_ptr<::opentelemetry::trace::TracerProvider> api_provider{ ::std::move(sdk_provider) };
-    ::opentelemetry::trace::Provider::SetTracerProvider(api_provider);
-};
-
-void on_cpu_total(::opentelemetry::metrics::ObserverResult observer_result, void *state) {
-    auto usage = ::eboost::system::cpu::get_usage();
-    auto gauge = ::opentelemetry::nostd::get<
-        ::opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(
-        observer_result);
-    gauge->Observe(usage.system, {
-        {"mode", "system"}
-    });
-    gauge->Observe(usage.user, {
-        {"mode", "user"}
-    });
-};
-void on_memory_total(::opentelemetry::metrics::ObserverResult observer_result, void *state) {
-    auto usage = ::eboost::system::memory::get_usage();
-    auto gauge = ::opentelemetry::nostd::get<
-        ::opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(
-        observer_result);
-    gauge->Observe(usage.anonymous, {
-        {"type", "anonymous"}
-    });
-    gauge->Observe(usage.shared, {
-        {"type", "shared"}
-    });
-};
+SYSTEM_CALLBACKS()
 
 int main(int argc, char* argv[]) {
     try {
@@ -132,15 +42,10 @@ int main(int argc, char* argv[]) {
             ? argv[1]
             : "config.json");
 
-        init_logger(config.at("telemetry").at("endpoint").as_string());
-        init_meter(config.at("telemetry").at("endpoint").as_string());
-        init_tracer(config.at("telemetry").at("endpoint").as_string());
-        auto meter = ::opentelemetry::metrics::Provider::GetMeterProvider()
-            ->GetMeter("ai_chat_hosts_console");
-        auto m_cpu_total = meter->CreateInt64ObservableGauge("ai_chat_hosts_console_cpu_total");
-        m_cpu_total->AddCallback(on_cpu_total, nullptr);
-        auto m_memory_total = meter->CreateInt64ObservableGauge("ai_chat_hosts_console_memory_total");
-        m_memory_total->AddCallback(on_memory_total, nullptr);
+        #ifdef ENABLE_TELEMETRY
+        ::boost::json::string &endpoint{ config.at("telemetry").at("endpoint").as_string() };
+        INIT_TELEMETRY(endpoint, "ai_chat_hosts_console")
+        #endif
 
         auto on_exit = ::boost::scope::make_scope_exit([]()->void {
             ::sqlite3_shutdown();
@@ -292,7 +197,7 @@ int main(int argc, char* argv[]) {
         ::std::cout << "Waiting for shutdown signal..." << ::std::endl;
         client.attach();
     }
-    catch(const ::std::exception& e) {
+    catch(::std::exception const &e) {
         ::std::cerr << "Error: " << e.what() << ::std::endl;
         return EXIT_FAILURE;
     }

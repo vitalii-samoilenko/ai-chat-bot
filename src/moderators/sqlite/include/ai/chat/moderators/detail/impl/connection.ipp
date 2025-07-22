@@ -23,10 +23,7 @@ connection::connection()
     , _timeout{ nullptr }
     , _filter{ nullptr }
     , _discard{ nullptr }
-    , _tracer{
-        ::opentelemetry::trace::Provider::GetTracerProvider()
-            ->GetTracer("ai_chat_moderators_sqlite")
-    } {
+    INIT_TRACER("ai_chat_moderators_sqlite") {
 
 };
 
@@ -217,14 +214,9 @@ void connection::on_init() {
             static_cast<int>(::std::size(DISCARD) - 1),
             &_discard, nullptr));
 };
-iterator connection::on_is_allowed(::std::string_view username1, ::sqlite3_int64 role, ::sqlite3_int64 since,
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _tracer->StartSpan("on_is_allowed", ::opentelemetry::trace::StartSpanOptions{
-            {}, {},
-            root->GetContext()
-        })
-    };
+iterator connection::on_is_allowed(::std::string_view username1, ::sqlite3_int64 role, ::sqlite3_int64 since
+    DECLARE_SPAN(root)) {
+    START_SUBSPAN(span, "on_is_allowed", root, (*this))
     ::esqlite3_ensure_success(
         ::sqlite3_bind_text(_is_allowed1,
             ::sqlite3_bind_parameter_index(_is_allowed1, "@USERNAME1"),
@@ -246,14 +238,9 @@ iterator connection::on_is_allowed(::std::string_view username1, ::sqlite3_int64
         ::sqlite3_reset(_is_allowed1));
     return count;
 };
-iterator connection::on_is_allowed(::std::string_view username1, ::std::string_view username2, role role, ::sqlite3_int64 since,
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _tracer->StartSpan("on_is_allowed", ::opentelemetry::trace::StartSpanOptions{
-            {}, {},
-            root->GetContext()
-        })
-    };
+iterator connection::on_is_allowed(::std::string_view username1, ::std::string_view username2, role role, ::sqlite3_int64 since
+    DECLARE_SPAN(root)) {
+    START_SUBSPAN(span, "on_is_allowed", root, (*this))
     ::esqlite3_ensure_success(
         ::sqlite3_bind_text(_is_allowed2,
             ::sqlite3_bind_parameter_index(_is_allowed2, "@USERNAME1"),
@@ -281,14 +268,9 @@ iterator connection::on_is_allowed(::std::string_view username1, ::std::string_v
         ::sqlite3_reset(_is_allowed2));
     return count;
 };
-iterator connection::on_is_filtered(::std::string_view content,
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _tracer->StartSpan("on_is_filtered", ::opentelemetry::trace::StartSpanOptions{
-            {}, {},
-            root->GetContext()
-        })
-    };
+iterator connection::on_is_filtered(::std::string_view content
+    DECLARE_SPAN(root)) {
+    START_SUBSPAN(span, "on_is_filtered", root, (*this))
     ::esqlite3_ensure_success(
         ::sqlite3_bind_text(_is_filtered,
             ::sqlite3_bind_parameter_index(_is_filtered, "@CONTENT"),
@@ -302,14 +284,9 @@ iterator connection::on_is_filtered(::std::string_view content,
         ::sqlite3_reset(_is_filtered));
     return count;
 };
-iterator connection::on_promote(::std::string_view username, role role,
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _tracer->StartSpan("on_promote", ::opentelemetry::trace::StartSpanOptions{
-            {}, {},
-            root->GetContext()
-        })
-    };
+iterator connection::on_promote(::std::string_view username, role role
+    DECLARE_SPAN(root)) {
+    START_SUBSPAN(span, "on_promote", root, (*this))
     ::esqlite3_ensure_success(
         ::sqlite3_bind_text(_promote,
             ::sqlite3_bind_parameter_index(_promote, "@USERNAME"),
@@ -326,14 +303,9 @@ iterator connection::on_promote(::std::string_view username, role role,
         ::sqlite3_reset(_promote));
     return 1;
 };
-iterator connection::on_demote(::std::string_view username, role role,
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _tracer->StartSpan("on_demote", ::opentelemetry::trace::StartSpanOptions{
-            {}, {},
-            root->GetContext()
-        })
-    };
+iterator connection::on_demote(::std::string_view username, role role
+    DECLARE_SPAN(root)) {
+    START_SUBSPAN(span, "on_demote", root, (*this))
     ::esqlite3_ensure_success(
         ::sqlite3_bind_text(_demote,
             ::sqlite3_bind_parameter_index(_demote, "@USERNAME"),
@@ -350,14 +322,9 @@ iterator connection::on_demote(::std::string_view username, role role,
         ::sqlite3_reset(_demote));
     return 1;
 };
-iterator connection::on_timeout(::std::string_view username, ::sqlite3_int64 since,
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _tracer->StartSpan("on_timeout", ::opentelemetry::trace::StartSpanOptions{
-            {}, {},
-            root->GetContext()
-        })
-    };
+iterator connection::on_timeout(::std::string_view username, ::sqlite3_int64 since
+    DECLARE_SPAN(root)) {
+    START_SUBSPAN(span, "on_timeout", root, (*this))
     ::esqlite3_ensure_success(
         ::sqlite3_bind_text(_timeout,
             ::sqlite3_bind_parameter_index(_timeout, "@USERNAME"),
@@ -374,14 +341,9 @@ iterator connection::on_timeout(::std::string_view username, ::sqlite3_int64 sin
         ::sqlite3_reset(_timeout));
     return 1;
 };
-iterator connection::on_filter(::std::string_view name, ::std::string_view pattern,
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _tracer->StartSpan("on_filter", ::opentelemetry::trace::StartSpanOptions{
-            {}, {},
-            root->GetContext()
-        })
-    };
+iterator connection::on_filter(::std::string_view name, ::std::string_view pattern
+    DECLARE_SPAN(root)) {
+    START_SUBSPAN(span, "on_filter", root, (*this))
     ::esqlite3_ensure_success(
         ::sqlite3_bind_text(_filter,
             ::sqlite3_bind_parameter_index(_filter, "@NAME"),
@@ -400,14 +362,9 @@ iterator connection::on_filter(::std::string_view name, ::std::string_view patte
         ::sqlite3_reset(_filter));
     return 1;
 };
-iterator connection::on_discard(::std::string_view name,
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root) {
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> span{
-        _tracer->StartSpan("on_discard", ::opentelemetry::trace::StartSpanOptions{
-            {}, {},
-            root->GetContext()
-        })
-    };
+iterator connection::on_discard(::std::string_view name
+    DECLARE_SPAN(root)) {
+    START_SUBSPAN(span, "on_discard", root, (*this))
     ::esqlite3_ensure_success(
         ::sqlite3_bind_text(_discard,
             ::sqlite3_bind_parameter_index(_discard, "@NAME"),

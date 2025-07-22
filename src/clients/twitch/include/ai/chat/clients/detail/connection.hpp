@@ -10,10 +10,9 @@
 #include "boost/beast.hpp"
 #include "boost/json.hpp"
 #include "eboost/beast.hpp"
-#include "opentelemetry/logs/provider.h"
-#include "opentelemetry/metrics/provider.h"
-#include "opentelemetry/trace/provider.h"
 #include "re2/re2.h"
+
+#include "ai/chat/telemetry.hpp"
 
 namespace ai {
 namespace chat {
@@ -42,20 +41,20 @@ private:
 
     void on_init();
     void on_connect(
-        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
+        DECLARE_ONLY_SPAN(root));
     void on_read();
-    void on_push(::std::string &&request,
-        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
+    void on_push(::std::string &&request
+        DECLARE_SPAN(root));
     void on_write(
-        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
+        DECLARE_ONLY_SPAN(root));
     void on_disconnect(
-        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
+        DECLARE_ONLY_SPAN(root));
     void on_send(
-        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
+        DECLARE_ONLY_SPAN(root));
     void on_join(
-        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
+        DECLARE_ONLY_SPAN(root));
     void on_leave(
-        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
+        DECLARE_ONLY_SPAN(root));
 
     ::boost::asio::io_context _io_context;
     ::boost::asio::thread_pool _io_run_context;
@@ -65,10 +64,6 @@ private:
     ::boost::beast::websocket::stream<::boost::asio::ssl::stream<::eboost::beast::metered_tcp_stream<connection>>> _stream;
     ::boost::asio::signal_set _signals;
     twitch<Handler>& _handler;
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::logs::Logger> _logger;
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Tracer> _tracer;
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::metrics::Meter> _meter;
-    ::opentelemetry::nostd::unique_ptr<::opentelemetry::metrics::Counter<uint64_t>> _m_network;
     ::std::string _host;
     ::std::string _port;
     ::std::string _path;
@@ -90,6 +85,11 @@ private:
     ::RE2 _re_message;
     ::RE2 _re_ping;
     ::RE2 _re_reconnect;
+
+    DECLARE_LOGGER()
+    DELCARE_TRACER()
+    DECLARE_METER()
+    DECLARE_COUNTER(_m_network)
 };
 
 } // detail

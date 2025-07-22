@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.25.1)
 
 project(AI VERSION 0.1)
 
+option(ENABLE_TELEMETRY "Enable telemetry" OFF)
+if(ENABLE_TELEMETRY)
+  add_compile_definitions(ENABLE_TELEMETRY)
+endif()
+
 if(MSVC)
   add_compile_options(/bigobj)
   if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
@@ -16,6 +21,7 @@ endif()
 
 add_subdirectory(third_party)
 
+add_subdirectory(src/telemetry)
 add_subdirectory(src/clients)
 add_subdirectory(src/adapters)
 add_subdirectory(src/histories)

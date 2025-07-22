@@ -8,8 +8,8 @@
 #include "boost/beast.hpp"
 #include "boost/json.hpp"
 #include "eboost/beast.hpp"
-#include "opentelemetry/metrics/provider.h"
-#include "opentelemetry/trace/provider.h"
+
+#include "ai/chat/telemetry.hpp"
 
 namespace ai {
 namespace chat {
@@ -35,8 +35,8 @@ private:
 
     void on_init();
     template<typename Request, typename Response>
-    void on_send(Request &request, Response &response,
-        ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> root);
+    void on_send(Request &request, Response &response
+        DECLARE_SPAN(root));
     void _stream_reset();
 
     ::boost::asio::io_context _io_context;
@@ -45,9 +45,6 @@ private:
     ::boost::asio::ssl::stream<::eboost::beast::metered_tcp_stream<auth_connection>> _stream;
     ::boost::beast::flat_buffer _buffer;
     ::boost::json::value _context;
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Tracer> _tracer;
-    ::opentelemetry::nostd::shared_ptr<::opentelemetry::metrics::Meter> _meter;
-    ::opentelemetry::nostd::unique_ptr<::opentelemetry::metrics::Counter<uint64_t>> _m_network;
     ::std::string _host;
     ::std::string _port;
     ::std::string _path;
@@ -56,6 +53,10 @@ private:
     ::std::string _t_device;
     ::std::string _h_oauth;
     ::std::chrono::milliseconds _timeout;
+
+    DELCARE_TRACER()
+    DECLARE_METER()
+    DECLARE_COUNTER(_m_network)
 };
 
 } // detail

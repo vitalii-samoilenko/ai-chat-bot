@@ -9,6 +9,7 @@ add_library(ai_chat_moderators_sqlite INTERFACE)
 target_compile_features(ai_chat_moderators_sqlite INTERFACE cxx_std_20)
 target_link_libraries(ai_chat_moderators_sqlite
   INTERFACE
+    AI::Chat::Telemetry
     ESQLite::esqlite3
     SQLite::SQLite3
 )
