@@ -1,11 +1,10 @@
-dashboards
-commands
-
 opentelemetry macro library
 release
 google free tier host
 
 http server / browser client
+
+dashboards
 
 sqlite optimizations
 openssl optimizations
