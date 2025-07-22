@@ -298,7 +298,7 @@ block()
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
       COMMAND_ERROR_IS_FATAL ANY
     )
-    execute_process(COMMAND git checkout 2025-06-26b
+    execute_process(COMMAND git checkout 2025-07-17
       WORKING_DIRECTORY ${RE2_SOURCE_DIR}
       COMMAND_ERROR_IS_FATAL ANY
     )
