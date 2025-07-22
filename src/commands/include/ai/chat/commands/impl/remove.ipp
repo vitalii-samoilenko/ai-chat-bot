@@ -51,7 +51,7 @@ template<typename History>
             &representation)) {
         ::std::chrono::nanoseconds timestamp{ representation };
         ::ai::chat::histories::observable_iterator<History> pos{ _history.lower_bound(timestamp) };
-        if (timestamp < pos) {
+        if (pos > timestamp) {
             return ::std::string_view{};
         }
         _history.template erase<remove>(pos);

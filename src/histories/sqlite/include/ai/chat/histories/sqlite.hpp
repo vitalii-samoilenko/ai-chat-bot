@@ -22,9 +22,6 @@ struct message {
 class iterator;
 class sqlite;
 
-bool operator<(iterator const &lhs, ::std::chrono::nanoseconds rhs);
-bool operator<(::std::chrono::nanoseconds lhs, iterator const &rhs);
-
 } // histories
 } // chat
 } // ai
@@ -50,6 +47,8 @@ public:
     message operator*();
     iterator & operator++();
     bool operator==(iterator const &rhs) const;
+    bool operator<(::std::chrono::nanoseconds rhs) const;
+    bool operator>(::std::chrono::nanoseconds rhs) const;
 
     iterator operator+(ptrdiff_t rhs) const;
     iterator operator+(::std::chrono::nanoseconds rhs) const;
@@ -61,8 +60,6 @@ public:
 
 private:
     friend sqlite;
-    friend bool operator<(iterator const &lhs, ::std::chrono::nanoseconds rhs);
-    friend bool operator<(::std::chrono::nanoseconds lhs, iterator const &rhs);
 
     template<typename... Args>
     explicit iterator(Args &&...args);

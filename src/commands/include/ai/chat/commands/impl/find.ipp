@@ -60,7 +60,7 @@ template<typename History, size_t Limit>
     }
     _buffer.clear();
     size_t i{ 0 };
-    for (; i < Limit && ::ai::chat::histories::operator<(pos, to); ++i, ++pos) {
+    for (; i < Limit && pos < to; ++i, ++pos) {
         ::ai::chat::histories::message message{ *pos };
         _buffer += "-" + ::std::to_string(message.timestamp.count());
     }

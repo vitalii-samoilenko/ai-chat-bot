@@ -16,11 +16,6 @@ class observable_iterator;
 template<typename History>
 class observable;
 
-template<typename History>
-bool operator<(observable_iterator<History> const &lhs, ::std::chrono::nanoseconds rhs);
-template<typename History>
-bool operator<(::std::chrono::nanoseconds lhs, observable_iterator<History> const &rhs);
-
 } // histories
 } // chat
 } // ai
@@ -80,6 +75,8 @@ public:
     message operator*();
     observable_iterator & operator++();
     bool operator==(observable_iterator const &rhs) const;
+    bool operator<(::std::chrono::nanoseconds rhs) const;
+    bool operator>(::std::chrono::nanoseconds rhs) const;
 
     observable_iterator operator+(ptrdiff_t rhs) const;
     observable_iterator operator+(::std::chrono::nanoseconds rhs) const;
@@ -92,8 +89,6 @@ public:
 
 private:
     friend observable<History>;
-    friend bool ::ai::chat::histories::operator<(observable_iterator<History> const &lhs, ::std::chrono::nanoseconds rhs);
-    friend bool ::ai::chat::histories::operator<(::std::chrono::nanoseconds lhs, observable_iterator<History> const &rhs);
 
     template<typename... Args>
     explicit observable_iterator(observable<History> *target,

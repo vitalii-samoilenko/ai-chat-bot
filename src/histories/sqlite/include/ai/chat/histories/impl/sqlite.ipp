@@ -87,6 +87,14 @@ bool iterator::operator==(iterator const &rhs) const {
     return _target._database == rhs._target._database
         && _target._timestamp == rhs._target._timestamp;
 };
+bool iterator::operator<(::std::chrono::nanoseconds rhs) const {
+    _target.on_upgrade(detail::scope::state::cursor);
+    return _target._timestamp < rhs;
+};
+bool iterator::operator>(::std::chrono::nanoseconds rhs) const {
+    _target.on_upgrade(detail::scope::state::cursor);
+    return rhs < _target._timestamp;
+};
 
 iterator iterator::operator+(ptrdiff_t rhs) const {
     // _target.on_upgrade(detail::scope::state::create);
@@ -117,15 +125,6 @@ iterator & iterator::operator=(::std::string_view rhs) {
     _target.on_update_begin();
     _target.on_update(rhs);
     return *this;
-};
-
-bool operator<(iterator const &lhs, ::std::chrono::nanoseconds rhs) {
-    lhs._target.on_upgrade(detail::scope::state::cursor);
-    return lhs._target._timestamp < rhs;
-};
-bool operator<(::std::chrono::nanoseconds lhs, iterator const &rhs) {
-    rhs._target.on_upgrade(detail::scope::state::cursor);
-    return lhs < rhs._target._timestamp;
 };
 
 template<typename... Args>

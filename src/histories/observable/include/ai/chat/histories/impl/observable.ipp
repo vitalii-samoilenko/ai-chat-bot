@@ -84,15 +84,6 @@ slot<History>::slot(::std::type_info const *observer, observable<History> *targe
 };
 
 template<typename History>
-bool operator<(observable_iterator<History> const &lhs, ::std::chrono::nanoseconds rhs) {
-    return operator<(static_cast<iterator const &>(lhs), rhs);
-};
-template<typename History>
-bool operator<(::std::chrono::nanoseconds lhs, observable_iterator<History> const &rhs) {
-    return operator<(lhs, static_cast<iterator const &>(rhs));
-};
-
-template<typename History>
 observable_iterator<History>::observable_iterator(observable_iterator const &other)
     : iterator{ static_cast<iterator const &>(other) }
     , _target{ other._target } {
@@ -117,6 +108,14 @@ observable_iterator<History> & observable_iterator<History>::operator++() {
 template<typename History>
 bool observable_iterator<History>::operator==(observable_iterator const &rhs) const {
     return iterator::operator==(rhs);
+};
+template<typename History>
+bool observable_iterator<History>::operator<(::std::chrono::nanoseconds rhs) const {
+    return iterator::operator<(rhs);
+};
+template<typename History>
+bool observable_iterator<History>::operator>(::std::chrono::nanoseconds rhs) const {
+    return iterator::operator>(rhs);
 };
 
 template<typename History>
