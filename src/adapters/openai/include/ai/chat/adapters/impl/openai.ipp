@@ -166,14 +166,7 @@ void openai::push_back(message value) {
     ::boost::json::array &array{ messages.as_array() };
     ::boost::json::value_from(value, array.emplace_back(nullptr));
 };
-void openai::pop_back() {
-    START_SPAN(span, "pop_back", _context)
-    ::boost::json::value &messages{ _context._completion.at("messages") };
-    ::boost::json::array &array{ messages.as_array() };
-    array.pop_back();
-};
-
-iterator openai::complete(::std::string_view model, ::std::string_view key) {
+void openai::complete(::std::string_view model, ::std::string_view key) {
     START_SPAN(span, "complete", _context)
     _context._completion.at("model") = model;
     _context._h_bearer.resize(::std::size("Bearer ") - 1);
@@ -202,15 +195,21 @@ iterator openai::complete(::std::string_view model, ::std::string_view key) {
         TAG("type", "prompt")
     })
     if (_context._limit < usage.total_tokens) {
-        return end();
+        throw ::std::overflow_error{ "context limit is reached" };
     }
     ::boost::json::value &_choices{ response.body().at("choices") };
     ::boost::json::array &_array{ _choices.as_array() };
     ::boost::json::value &_choice{ _array[0] };
     ::boost::json::value &_message{ _choice.at("message") };
     push_back(::boost::json::value_to<::ai::chat::adapters::message>(_message));
-    return end() + -1;
 };
+void openai::pop_back() {
+    START_SPAN(span, "pop_back", _context)
+    ::boost::json::value &messages{ _context._completion.at("messages") };
+    ::boost::json::array &array{ messages.as_array() };
+    array.pop_back();
+};
+
 iterator openai::erase(iterator pos) {
     START_SPAN(span, "erase", _context)
     ::boost::json::value &messages{ _context._completion.at("messages") };

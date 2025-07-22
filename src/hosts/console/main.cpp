@@ -37,169 +37,180 @@ void init_config(::std::string_view filename) {
 SYSTEM_CALLBACKS()
 
 int main(int argc, char* argv[]) {
-    try {
-        init_config(argc == 2
-            ? argv[1]
-            : "config.json");
-
-        #ifdef ENABLE_TELEMETRY
-        ::boost::json::string &endpoint{ config.at("telemetry").at("endpoint").as_string() };
-        INIT_TELEMETRY(endpoint, "ai_chat_hosts_console")
-        #endif
-
-        auto on_exit = ::boost::scope::make_scope_exit([]()->void {
-            ::sqlite3_shutdown();
-        });
-        ::sqlite3_initialize();
-
-        bool history_exists{ false };
-        {
-            ::std::ifstream file{ config.at("history").at("filename").as_string().c_str() };
-            history_exists = file.is_open();
-        }
-        ::ai::chat::histories::observable<::ai::chat::histories::sqlite> history{
-            config.at("history").at("filename").as_string()
-        };
-        if (!history_exists) {
-            for (::boost::json::value const &message : config.at("context").as_array()) {
-                ::std::vector<::ai::chat::histories::tag> tags{};
-                for (::boost::json::value const &tag : message.at("tags").as_array()) {
-                    tags.emplace_back(
-                        tag.at("name").as_string(),
-                        tag.at("value").as_string());
-                }
-                history.template insert<decltype(main)>(::ai::chat::histories::message{
-                    ::std::chrono::nanoseconds{},
-                    message.at("content").as_string(),
-                    tags
-                });
+    ::std::set_terminate([]()->void {
+        try {
+            ::std::exception_ptr e{ ::std::current_exception() };
+            if (e) {
+                ::std::rethrow_exception(e);
             }
         }
-
-        ::ai::chat::adapters::openai adapter{
-            config.at("adapter").at("address").as_string(),
-            ::std::chrono::milliseconds{ config.at("adapter").at("timeout").as_int64() },
-            ::std::chrono::milliseconds{ config.at("adapter").at("delay").as_int64() },
-            static_cast<size_t>(config.at("adapter").at("limit").as_int64())
-        };
-        {
-            ::ai::chat::histories::observable_iterator<::ai::chat::histories::sqlite> pos{ history.begin() };
-            ::ai::chat::histories::observable_iterator<::ai::chat::histories::sqlite> end{ history.end() };
-            adapter.reserve(static_cast<size_t>(end - pos));
-            for (; !(pos == end); ++pos) {
-                ::ai::chat::histories::message message{ *pos };
-                ::ai::chat::histories::tag const *username_tag{ nullptr };
-                for (::ai::chat::histories::tag const &tag : message.tags) {
-                    if (tag.name == "user.name") {
-                        username_tag = &tag;
-                        break;
-                    }
-                }
-                adapter.push_back(::ai::chat::adapters::message{
-                    username_tag
-                        ? username_tag->value == config.at("botname").as_string()
-                            ? ::ai::chat::adapters::role::assistant
-                            : ::ai::chat::adapters::role::user
-                        : ::ai::chat::adapters::role::system,
-                    message.content
-                });
-            }
+        catch (::std::exception const &e) {
+            ::std::cerr << "Exception: " << e.what() << ::std::endl;
         }
-
-        ::ai::chat::clients::auth auth{
-            config.at("client").at("auth").at("address").as_string(),
-            ::std::chrono::milliseconds{ config.at("client").at("auth").at("timeout").as_int64() },
-        };
-        ::ai::chat::clients::observable<::ai::chat::clients::twitch> client{
-            config.at("client").at("address").as_string(),
-            ::std::chrono::milliseconds{ config.at("client").at("timeout").as_int64() },
-            ::std::chrono::milliseconds{ config.at("client").at("delay").as_int64() },
-            0
-        };
-
-        bool moderator_exists{ false };
-        {
-            ::std::ifstream file{ config.at("moderator").at("filename").as_string().c_str() };
-            moderator_exists = file.is_open();
+        catch (...) {
+            ::std::cerr << "Exception: unknown" << ::std::endl;
         }
-        ::ai::chat::moderators::sqlite moderator{
-            config.at("moderator").at("filename").as_string(),
-            static_cast<size_t>(config.at("moderator").at("length").as_int64()),
-        };
-        if (!moderator_exists) {
-            for (::boost::json::value const &username : config.at("administrators").as_array()) {
-                moderator.admin(username.as_string());
-            }
-            for (::boost::json::value const &username : config.at("allowed").as_array()) {
-                moderator.allow(username.as_string());
-            }
-            for (::boost::json::value const &filter : config.at("filters").as_array()) {
-                moderator.filter(
-                    filter.at("name").as_string(),
-                    filter.at("pattern").as_string()
-                );
-            }
-        }
+        ::std::exit(EXIT_FAILURE);
+    });
 
-        ::ai::chat::commands::executor<
-        ::ai::chat::commands::allow<::ai::chat::moderators::sqlite>,
-        ::ai::chat::commands::ban<::ai::chat::moderators::sqlite>,
-        ::ai::chat::commands::content<::ai::chat::histories::sqlite>,
-        ::ai::chat::commands::deny<::ai::chat::moderators::sqlite>,
-        ::ai::chat::commands::edit<::ai::chat::histories::sqlite>,
-        ::ai::chat::commands::find<::ai::chat::histories::sqlite, 25>,
-        ::ai::chat::commands::instruct<::ai::chat::histories::sqlite>,
-        ::ai::chat::commands::join<::ai::chat::clients::twitch>,
-        ::ai::chat::commands::leave<::ai::chat::clients::twitch>,
-        ::ai::chat::commands::mod<::ai::chat::moderators::sqlite>,
-        ::ai::chat::commands::remove<::ai::chat::histories::sqlite>,
-        ::ai::chat::commands::timeout<::ai::chat::moderators::sqlite>,
-        ::ai::chat::commands::unban<::ai::chat::moderators::sqlite>,
-        ::ai::chat::commands::unmod<::ai::chat::moderators::sqlite>
-        > executor{
-            moderator,
-            moderator,
-            history,
-            moderator,
-            history,
-            history,
-            history,
-            client,
-            client,
-            moderator,
-            history,
-            moderator,
-            moderator,
-            moderator
-        };
+    init_config(argc == 2
+        ? argv[1]
+        : "config.json");
 
-        auto client_binding = ::ai::chat::binders::twitch<::ai::chat::histories::sqlite>::bind(history, client,
-            moderator, executor,
-            config.at("botname").as_string());
-        auto adapter_binding = ::ai::chat::binders::openai<::ai::chat::histories::sqlite>::bind(history, adapter,
-            moderator,
-            config.at("adapter").at("model").as_string(), config.at("adapter").at("key").as_string(),
-            static_cast<size_t>(config.at("adapter").at("skip").as_int64()), ::std::chrono::hours{ config.at("adapter").at("range").as_int64() },
-            config.at("pattern").as_string(), static_cast<size_t>(config.at("retries").as_int64()), config.at("apology").as_string(),
-            config.at("botname").as_string());
+    #ifdef ENABLE_TELEMETRY
+    ::boost::json::string &endpoint{ config.at("telemetry").at("endpoint").as_string() };
+    INIT_TELEMETRY(endpoint, "ai_chat_hosts_console")
+    #endif
 
-        ::ai::chat::clients::token_context access_context{
-            auth.refresh_token(
-                config.at("client").at("auth").at("client_id").as_string(),
-                config.at("client").at("auth").at("client_secret").as_string(),
-                config.at("client").at("auth").at("refresh_token").as_string())
-        };
-        client.connect(
-            config.at("botname").as_string(),
-            access_context.access_token);
-        config.emplace_null();
-        buffer.release();
-        ::std::cout << "Waiting for shutdown signal..." << ::std::endl;
-        client.attach();
+    auto on_exit = ::boost::scope::make_scope_exit([]()->void {
+        ::sqlite3_shutdown();
+    });
+    ::sqlite3_initialize();
+
+    bool history_exists{ false };
+    {
+        ::std::ifstream file{ config.at("history").at("filename").as_string().c_str() };
+        history_exists = file.is_open();
     }
-    catch(::std::exception const &e) {
-        ::std::cerr << "Error: " << e.what() << ::std::endl;
-        return EXIT_FAILURE;
+    ::ai::chat::histories::observable<::ai::chat::histories::sqlite> history{
+        config.at("history").at("filename").as_string()
+    };
+    if (!history_exists) {
+        for (::boost::json::value const &message : config.at("context").as_array()) {
+            ::std::vector<::ai::chat::histories::tag> tags{};
+            for (::boost::json::value const &tag : message.at("tags").as_array()) {
+                tags.emplace_back(
+                    tag.at("name").as_string(),
+                    tag.at("value").as_string());
+            }
+            history.template insert<decltype(main)>(::ai::chat::histories::message{
+                ::std::chrono::nanoseconds{},
+                message.at("content").as_string(),
+                tags
+            });
+        }
     }
+
+    ::ai::chat::adapters::openai adapter{
+        config.at("adapter").at("address").as_string(),
+        ::std::chrono::milliseconds{ config.at("adapter").at("timeout").as_int64() },
+        ::std::chrono::milliseconds{ config.at("adapter").at("delay").as_int64() },
+        static_cast<size_t>(config.at("adapter").at("limit").as_int64())
+    };
+    {
+        ::ai::chat::histories::observable_iterator<::ai::chat::histories::sqlite> pos{ history.begin() };
+        ::ai::chat::histories::observable_iterator<::ai::chat::histories::sqlite> end{ history.end() };
+        adapter.reserve(static_cast<size_t>(end - pos));
+        for (; !(pos == end); ++pos) {
+            ::ai::chat::histories::message message{ *pos };
+            ::ai::chat::histories::tag const *username_tag{ nullptr };
+            for (::ai::chat::histories::tag const &tag : message.tags) {
+                if (tag.name == "user.name") {
+                    username_tag = &tag;
+                    break;
+                }
+            }
+            adapter.push_back(::ai::chat::adapters::message{
+                username_tag
+                    ? username_tag->value == config.at("botname").as_string()
+                        ? ::ai::chat::adapters::role::assistant
+                        : ::ai::chat::adapters::role::user
+                    : ::ai::chat::adapters::role::system,
+                message.content
+            });
+        }
+    }
+
+    ::ai::chat::clients::auth auth{
+        config.at("client").at("auth").at("address").as_string(),
+        ::std::chrono::milliseconds{ config.at("client").at("auth").at("timeout").as_int64() },
+    };
+    ::ai::chat::clients::observable<::ai::chat::clients::twitch> client{
+        config.at("client").at("address").as_string(),
+        ::std::chrono::milliseconds{ config.at("client").at("timeout").as_int64() },
+        ::std::chrono::milliseconds{ config.at("client").at("delay").as_int64() },
+        0
+    };
+
+    bool moderator_exists{ false };
+    {
+        ::std::ifstream file{ config.at("moderator").at("filename").as_string().c_str() };
+        moderator_exists = file.is_open();
+    }
+    ::ai::chat::moderators::sqlite moderator{
+        config.at("moderator").at("filename").as_string(),
+        static_cast<size_t>(config.at("moderator").at("length").as_int64()),
+    };
+    if (!moderator_exists) {
+        for (::boost::json::value const &username : config.at("administrators").as_array()) {
+            moderator.admin(username.as_string());
+        }
+        for (::boost::json::value const &username : config.at("allowed").as_array()) {
+            moderator.allow(username.as_string());
+        }
+        for (::boost::json::value const &filter : config.at("filters").as_array()) {
+            moderator.filter(
+                filter.at("name").as_string(),
+                filter.at("pattern").as_string()
+            );
+        }
+    }
+
+    ::ai::chat::commands::executor<
+    ::ai::chat::commands::allow<::ai::chat::moderators::sqlite>,
+    ::ai::chat::commands::ban<::ai::chat::moderators::sqlite>,
+    ::ai::chat::commands::content<::ai::chat::histories::sqlite>,
+    ::ai::chat::commands::deny<::ai::chat::moderators::sqlite>,
+    ::ai::chat::commands::edit<::ai::chat::histories::sqlite>,
+    ::ai::chat::commands::find<::ai::chat::histories::sqlite, 25>,
+    ::ai::chat::commands::instruct<::ai::chat::histories::sqlite>,
+    ::ai::chat::commands::join<::ai::chat::clients::twitch>,
+    ::ai::chat::commands::leave<::ai::chat::clients::twitch>,
+    ::ai::chat::commands::mod<::ai::chat::moderators::sqlite>,
+    ::ai::chat::commands::remove<::ai::chat::histories::sqlite>,
+    ::ai::chat::commands::timeout<::ai::chat::moderators::sqlite>,
+    ::ai::chat::commands::unban<::ai::chat::moderators::sqlite>,
+    ::ai::chat::commands::unmod<::ai::chat::moderators::sqlite>
+    > executor{
+        moderator,
+        moderator,
+        history,
+        moderator,
+        history,
+        history,
+        history,
+        client,
+        client,
+        moderator,
+        history,
+        moderator,
+        moderator,
+        moderator
+    };
+
+    auto client_binding = ::ai::chat::binders::twitch<::ai::chat::histories::sqlite>::bind(history, client,
+        moderator, executor,
+        config.at("botname").as_string());
+    auto adapter_binding = ::ai::chat::binders::openai<::ai::chat::histories::sqlite>::bind(history, adapter,
+        moderator,
+        config.at("adapter").at("model").as_string(), config.at("adapter").at("key").as_string(),
+        static_cast<size_t>(config.at("adapter").at("skip").as_int64()), ::std::chrono::hours{ config.at("adapter").at("range").as_int64() },
+        config.at("pattern").as_string(), static_cast<size_t>(config.at("retries").as_int64()), config.at("apology").as_string(),
+        config.at("botname").as_string());
+
+    ::ai::chat::clients::token_context access_context{
+        auth.refresh_token(
+            config.at("client").at("auth").at("client_id").as_string(),
+            config.at("client").at("auth").at("client_secret").as_string(),
+            config.at("client").at("auth").at("refresh_token").as_string())
+    };
+    client.connect(
+        config.at("botname").as_string(),
+        access_context.access_token);
+    config.emplace_null();
+    buffer.release();
+    ::std::cout << "Waiting for shutdown signal..." << ::std::endl;
+    client.attach();
+
     return EXIT_SUCCESS;
 };

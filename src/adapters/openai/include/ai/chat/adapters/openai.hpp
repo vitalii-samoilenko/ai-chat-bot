@@ -84,9 +84,9 @@ public:
     void reserve(size_t capacity);
 
     void push_back(message value);
+    void complete(::std::string_view model, ::std::string_view key);
     void pop_back();
 
-    iterator complete(::std::string_view model, ::std::string_view key);
     iterator erase(iterator pos);
     iterator erase(iterator first, iterator last);
 

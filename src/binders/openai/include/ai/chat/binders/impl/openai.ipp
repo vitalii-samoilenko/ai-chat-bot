@@ -64,9 +64,12 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
             });
             return;
         }
+        ::ai::chat::adapters::message adapter_message{};
         for (size_t left{ retries }; ;) {
-            ::ai::chat::adapters::iterator adapter_pos{ adapter.complete(model, key) };
-            if (adapter_pos == adapter.end()) {
+            try {
+                adapter.complete(model, key);
+            }
+            catch (::std::overflow_error const &e) {
                 ::ai::chat::histories::observable_iterator<History> history_begin{ history.begin() };
                 ::ai::chat::histories::observable_iterator<History> history_first{ history_begin + skip };
                 ::ai::chat::histories::observable_iterator<History> history_last{ history_first + range };
@@ -77,21 +80,26 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
                 history.template erase<::ai::chat::adapters::openai>(history_first, history_last);
                 continue;
             }
-            ::ai::chat::adapters::message adapter_message{ *adapter_pos };
-            if (moderator.is_filtered(adapter_message.content)) {
-                adapter.pop_back();
-                if (left--) {
-                    continue;
-                }
-                ::std::string content{ apology };
-                if (!(pos_a_username == ::std::string::npos)) {
-                    content.replace(pos_a_username, USERNAME_SIZE - 1, username_tag->value);
-                }
-                adapter.push_back(::ai::chat::adapters::message{
-                    ::ai::chat::adapters::role::assistant,
-                    content
-                });
+            catch (::std::exception const &e) {
+                goto do_apology;
             }
+            adapter_message = adapter.back();
+            if (!moderator.is_filtered(adapter_message.content)) {
+                break;
+            }
+            adapter.pop_back();
+            if (left--) {
+                continue;
+            }
+do_apology:
+            ::std::string content{ apology };
+            if (!(pos_a_username == ::std::string::npos)) {
+                content.replace(pos_a_username, USERNAME_SIZE - 1, username_tag->value);
+            }
+            adapter.push_back(::ai::chat::adapters::message{
+                ::ai::chat::adapters::role::assistant,
+                content
+            });
             break;
         }
         ::std::vector<::ai::chat::histories::tag> tags{};
@@ -100,7 +108,6 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
         if (channel_tag) {
             tags.emplace_back("channel", channel_tag->value);
         }
-        ::ai::chat::adapters::message adapter_message{ adapter.back() };
         history.template insert<::ai::chat::adapters::openai>(::ai::chat::histories::message{
             ::std::chrono::nanoseconds{},
             adapter_message.content,
