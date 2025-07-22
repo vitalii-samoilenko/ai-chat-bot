@@ -100,6 +100,7 @@ do_apology:
                 ::ai::chat::adapters::role::assistant,
                 content
             });
+            adapter_message = adapter.back();
             break;
         }
         ::std::vector<::ai::chat::histories::tag> tags{};
