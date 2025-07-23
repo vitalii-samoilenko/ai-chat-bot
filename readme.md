@@ -2,6 +2,14 @@
 
 Integrate your favourite AI chat provider into your community
 
+## Limitations
+
+> [!SECURITY ISSUE]
+> Although software will user secure TLS protocol to communicate with endpoints certificate validation IS DISABLED
+
+ - Only HTTPS/WSS protocol support
+ - Bugs (by using this software you are doing so at your own risk)
+
 ## Configuration
 
 Host is configured via config.json
