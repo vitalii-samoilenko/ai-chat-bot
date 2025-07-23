@@ -51,7 +51,7 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
                 content.replace(pos_p_username, USERNAME_SIZE - 1, username_tag->value);
             }
             if (!(pos_p_content == ::std::string::npos)) {
-                content.replace(pos_p_content, CONTENT_SIZE - 1, history_message.content);
+                content.replace(pos_p_content + (username_tag->value.size() - USERNAME_SIZE + 1), CONTENT_SIZE - 1, history_message.content);
             }
             adapter.push_back(::ai::chat::adapters::message{
                 ::ai::chat::adapters::role::user,
