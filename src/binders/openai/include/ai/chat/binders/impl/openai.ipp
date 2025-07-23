@@ -24,11 +24,15 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
     ::std::string_view pattern, size_t retries, ::std::string_view apology,
     ::std::string_view botname) {
     ::ai::chat::histories::slot<History> s_history{ history.template subscribe<::ai::chat::adapters::openai>() };
+    char const USERNAME[]{ "{username}" };
+    char const CONTENT[]{ "{content}" };
     s_history.on_message([&history, &adapter,
         &moderator,
         model = ::std::string{ model }, key = ::std::string{ key },
         skip, range,
         pattern = ::std::string{ pattern }, retries, apology = ::std::string{ apology },
+            pos_p_username = pattern.find(USERNAME), _pos_p_content = pattern.find(CONTENT), pos_a_username = apology.find(USERNAME),
+            USERNAME_SIZE = ::std::size(USERNAME), CONTENT_SIZE = ::std::size(CONTENT),
         botname = ::std::string{ botname }
     ](::ai::chat::histories::observable_iterator<History> history_pos)->void {
         ::ai::chat::histories::message history_message{ *history_pos };
@@ -43,19 +47,15 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
         }
         if (username_tag) {
             ::std::string content{ pattern };
-            {
-                char const USERNAME[]{ "{username}" };
-                size_t pos{ pattern.find(USERNAME) };
-                if (!(pos == ::std::string::npos)) {
-                    content.replace(pos, ::std::size(USERNAME) - 1, username_tag->value);
+            size_t pos_p_content{ _pos_p_content };
+            if (!(pos_p_username == ::std::string::npos)) {
+                content.replace(pos_p_username, USERNAME_SIZE - 1, username_tag->value);
+                if (!(_pos_p_content == ::std::string::npos) && pos_p_username < _pos_p_content) {
+                    pos_p_content += username_tag->value.size() - (USERNAME_SIZE - 1);
                 }
             }
-            {
-                char const CONTENT[]{ "{content}" };
-                size_t pos{ pattern.find(CONTENT) };
-                if (!(pos == ::std::string::npos)) {
-                    content.replace(pos, ::std::size(CONTENT) - 1, history_message.content);
-                }
+            if (!(pos_p_content == ::std::string::npos)) {
+                content.replace(pos_p_content, CONTENT_SIZE - 1, history_message.content);
             }
             adapter.push_back(::ai::chat::adapters::message{
                 ::ai::chat::adapters::role::user,
