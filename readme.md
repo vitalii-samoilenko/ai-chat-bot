@@ -5,7 +5,7 @@ Integrate your favourite AI chat provider into your community
 ## Limitations
 
 > [!CAUTION]
-> SECURITY ISSUE! Although software will user secure TLS protocol to communicate with endpoints certificate validation IS DISABLED
+> SECURITY ISSUE! Although software will use secure TLS protocol to communicate with endpoints certificate validation IS DISABLED
 
  - Only HTTPS/WSS protocol support
  - Bugs (by using this software you are doing so at your own risk)
