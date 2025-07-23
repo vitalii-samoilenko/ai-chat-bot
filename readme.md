@@ -7,6 +7,8 @@ Integrate your favourite AI chat provider into your community
 > [!CAUTION]
 > SECURITY ISSUE! Although software will use secure TLS protocol to communicate with endpoints certificate validation IS DISABLED
 
+ - Incorrect length calculation for unicode messages
+ - Incorrect time range calculation for timezones with negative offsets
  - Only HTTPS/WSS protocol support
  - Bugs (by using this software you are doing so at your own risk)
 
@@ -162,6 +164,16 @@ As of now following history __types__ are supported:
 - SQLite
 
 __filename__ specifies where context data would be stored
+
+### Moderator
+
+As of now following moderator __types__ are supported:
+
+- SQLite
+
+__filename__ specifies where configuration data would be stored
+
+__length__ configures message length filter
 
 ### Adapter
 
