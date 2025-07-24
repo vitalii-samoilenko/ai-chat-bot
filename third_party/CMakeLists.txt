@@ -191,13 +191,13 @@ block()
   if(WIN32)
     set(CONFIGURE_COMMAND perl ${OPENSSL_SOURCE_DIR}/Configure)
     if(MSVC)
-      execute_process(COMMAND "C:/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe"
-          -format value -property installationPath
-        OUTPUT_VARIABLE VS_INSTALLATION_PATH
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        COMMAND_ERROR_IS_FATAL ANY
-      )
-      set(MAKE_COMMAND ${VS_INSTALLATION_PATH}/VC/Auxiliary/Build/vcvarsall.bat x64 && nmake)
+      if(MSVC_TOOLSET_VERSION EQUAL 143)
+        set(BUILD_TOOLS_INSTALLATION_PATH "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools")
+      endif()
+      if(NOT EXISTS ${BUILD_TOOLS_INSTALLATION_PATH})
+        message(FATAL_ERROR "Toolset is not supported")
+      endif()
+      set(MAKE_COMMAND ${BUILD_TOOLS_INSTALLATION_PATH}/VC/Auxiliary/Build/vcvarsall.bat x64 && nmake)
     else()
       message(FATAL_ERROR "Compiler not supported")
     endif()
@@ -677,13 +677,13 @@ block()
   if(WIN32)
     set(CONFIGURE_COMMAND cmake -E touch config.log)
     if(MSVC)
-      execute_process(COMMAND "C:/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe"
-          -format value -property installationPath
-        OUTPUT_VARIABLE VS_INSTALLATION_PATH
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        COMMAND_ERROR_IS_FATAL ANY
-      )
-      set(MAKE_COMMAND ${VS_INSTALLATION_PATH}/VC/Auxiliary/Build/vcvarsall.bat x64 && nmake /F Makefile.msc)
+      if(MSVC_TOOLSET_VERSION EQUAL 143)
+        set(BUILD_TOOLS_INSTALLATION_PATH "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools")
+      endif()
+      if(NOT EXISTS ${BUILD_TOOLS_INSTALLATION_PATH})
+        message(FATAL_ERROR "Toolset is not supported")
+      endif()
+      set(MAKE_COMMAND ${BUILD_TOOLS_INSTALLATION_PATH}/VC/Auxiliary/Build/vcvarsall.bat x64 && nmake /F Makefile.msc)
     else()
       message(FATAL_ERROR "Compiler not supported")
     endif()

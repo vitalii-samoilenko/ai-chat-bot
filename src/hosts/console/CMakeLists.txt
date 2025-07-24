@@ -6,13 +6,13 @@ find_package(Boost CONFIG REQUIRED COMPONENTS scope json)
 
 add_executable(ai-chat-hosts-console main.cpp)
 if(MSVC)
-  execute_process(COMMAND "C:/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe"
-      -format value -property installationPath
-    OUTPUT_VARIABLE VS_INSTALLATION_PATH
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    COMMAND_ERROR_IS_FATAL ANY
-  )
-  execute_process(COMMAND ${VS_INSTALLATION_PATH}/VC/Auxiliary/Build/vcvarsall.bat x64 && rc
+  if(MSVC_TOOLSET_VERSION EQUAL 143)
+    set(BUILD_TOOLS_INSTALLATION_PATH "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools")
+  endif()
+  if(NOT EXISTS ${BUILD_TOOLS_INSTALLATION_PATH})
+    message(FATAL_ERROR "Toolset is not supported")
+  endif()
+  execute_process(COMMAND ${BUILD_TOOLS_INSTALLATION_PATH}/VC/Auxiliary/Build/vcvarsall.bat x64 && rc
       /fo ${CMAKE_CURRENT_BINARY_DIR}/version.res ${PROJECT_SOURCE_DIR}/version.rc
     COMMAND_ERROR_IS_FATAL ANY
   )
