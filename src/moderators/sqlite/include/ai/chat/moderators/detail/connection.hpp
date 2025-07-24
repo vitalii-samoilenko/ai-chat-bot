@@ -52,7 +52,6 @@ private:
         DECLARE_SPAN(root));
 
     ::std::string _filename;
-    ::sqlite3_int64 _length;
     ::sqlite3 *_database;
     ::sqlite3_stmt *_init_wal;
     ::sqlite3_stmt *_init_user;

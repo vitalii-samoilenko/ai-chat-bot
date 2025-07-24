@@ -32,7 +32,7 @@ public:
     sqlite& operator=(sqlite const &other) = delete;
     sqlite& operator=(sqlite &&other) = delete;
 
-    sqlite(::std::string_view filename, size_t length);
+    explicit sqlite(::std::string_view filename);
 
     iterator is_moderator(::std::string_view username);
     iterator is_allowed(::std::string_view username1, ::std::string_view username2);

@@ -22,8 +22,10 @@ target_compile_features(ai-chat-hosts-console PRIVATE cxx_std_20)
 target_link_libraries(ai-chat-hosts-console
   PRIVATE
     AI::Chat::Adapters::OpenAI
-    AI::Chat::Binders::Twitch
+    AI::Chat::Binders::Console
     AI::Chat::Binders::OpenAI
+    AI::Chat::Binders::Twitch
+    AI::Chat::Clients::Console
     AI::Chat::Clients::Twitch
     AI::Chat::Clients::Observable
     AI::Chat::Commands

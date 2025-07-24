@@ -29,6 +29,10 @@ Sample configuration file:
 	],
 	"filters": [
 		{
+			"name": "length",
+			"pattern": ".{200,}"
+		},
+		{
 			"name": "links",
 			"pattern": "(?:http(?:s)?:\/\/)?(?:www\\.)?\\w+\\.\\w+"
 		},
@@ -139,8 +143,7 @@ Sample configuration file:
 	},
 	"moderator": {
 		"type": "sqlite",
-		"filename": "controller",
-		"length": 500
+		"filename": "controller"
 	}
 }
 ```
@@ -172,8 +175,6 @@ As of now following moderator __types__ are supported:
 - SQLite
 
 __filename__ specifies where configuration data would be stored
-
-__length__ configures message length filter
 
 ### Adapter
 

@@ -26,13 +26,40 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
     ::ai::chat::histories::slot<History> s_history{ history.template subscribe<::ai::chat::adapters::openai>() };
     char const USERNAME[]{ "{username}" };
     char const CONTENT[]{ "{content}" };
+    auto format_content = [
+        pattern = ::std::string{ pattern },
+        pos_p_username = pattern.find(USERNAME), _pos_p_content = pattern.find(CONTENT),
+        USERNAME_SIZE = ::std::size(USERNAME), CONTENT_SIZE = ::std::size(CONTENT)
+    ](::std::string_view username, ::std::string_view content)->::std::string {
+        ::std::string formatted_content{ pattern };
+        size_t pos_p_content{ _pos_p_content };
+        if (!(pos_p_username == ::std::string::npos)) {
+            formatted_content.replace(pos_p_username, USERNAME_SIZE - 1, username);
+            if (!(_pos_p_content == ::std::string::npos) && pos_p_username < _pos_p_content) {
+                pos_p_content += username.size() - (USERNAME_SIZE - 1);
+            }
+        }
+        if (!(pos_p_content == ::std::string::npos)) {
+            formatted_content.replace(pos_p_content, CONTENT_SIZE - 1, content);
+        }
+        return formatted_content;
+    };
+    auto format_apology = [
+        apology = ::std::string{ apology },
+        pos_a_username = apology.find(USERNAME),
+        USERNAME_SIZE = ::std::size(USERNAME)
+    ](::std::string_view username)->::std::string {
+        ::std::string content{ apology };
+        if (!(pos_a_username == ::std::string::npos)) {
+            content.replace(pos_a_username, USERNAME_SIZE - 1, username);
+        }
+        return content;
+    };
     s_history.on_message([&history, &adapter,
         &moderator,
         model = ::std::string{ model }, key = ::std::string{ key },
         skip, range,
-        pattern = ::std::string{ pattern }, retries, apology = ::std::string{ apology },
-            pos_p_username = pattern.find(USERNAME), _pos_p_content = pattern.find(CONTENT), pos_a_username = apology.find(USERNAME),
-            USERNAME_SIZE = ::std::size(USERNAME), CONTENT_SIZE = ::std::size(CONTENT),
+        format_content, retries, format_apology,
         botname = ::std::string{ botname }
     ](::ai::chat::histories::observable_iterator<History> history_pos)->void {
         ::ai::chat::histories::message history_message{ *history_pos };
@@ -46,20 +73,9 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
             }
         }
         if (username_tag) {
-            ::std::string content{ pattern };
-            size_t pos_p_content{ _pos_p_content };
-            if (!(pos_p_username == ::std::string::npos)) {
-                content.replace(pos_p_username, USERNAME_SIZE - 1, username_tag->value);
-                if (!(_pos_p_content == ::std::string::npos) && pos_p_username < _pos_p_content) {
-                    pos_p_content += username_tag->value.size() - (USERNAME_SIZE - 1);
-                }
-            }
-            if (!(pos_p_content == ::std::string::npos)) {
-                content.replace(pos_p_content, CONTENT_SIZE - 1, history_message.content);
-            }
             adapter.push_back(::ai::chat::adapters::message{
                 ::ai::chat::adapters::role::user,
-                content
+                format_content(username_tag->value, history_message.content)
             });
         } else {
             adapter.push_back(::ai::chat::adapters::message{
@@ -96,13 +112,9 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
                 continue;
             }
 do_apology:
-            ::std::string content{ apology };
-            if (!(pos_a_username == ::std::string::npos)) {
-                content.replace(pos_a_username, USERNAME_SIZE - 1, username_tag->value);
-            }
             adapter.push_back(::ai::chat::adapters::message{
                 ::ai::chat::adapters::role::assistant,
-                content
+                format_apology(username_tag->value)
             });
             adapter_message = adapter.back();
             break;
@@ -134,13 +146,23 @@ do_apology:
         ::ai::chat::adapters::iterator adapter_last{ adapter_begin + (history_last - history_begin) };
         adapter.erase(adapter_first, adapter_last);
     });
-    s_history.on_update([&history, &adapter
+    s_history.on_update([&history, &adapter,
+        format_content
     ](::ai::chat::histories::observable_iterator<History> history_pos)->void {
         ::ai::chat::histories::observable_iterator<History> history_begin{ history.begin() };
         ::ai::chat::adapters::iterator adapter_begin{ adapter.begin() };
         ::ai::chat::adapters::iterator adapter_pos{ adapter_begin + (history_pos - history_begin) };
         ::ai::chat::histories::message history_message{ *history_pos };
-        adapter_pos = history_message.content;
+        ::ai::chat::histories::tag const *username_tag{ nullptr };
+        for (::ai::chat::histories::tag const &tag : history_message.tags) {
+            if (tag.name == "user.name") {
+                username_tag = &tag;
+                break;
+            }
+        }
+        adapter_pos = username_tag
+            ? format_content(username_tag->value, history_message.content)
+            : history_message.content;
     });
     return binding{ ::std::move(s_history) };
 };

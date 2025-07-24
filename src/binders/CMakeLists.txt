@@ -17,4 +17,11 @@ if(EXISTS ${PROJECT_SOURCE_DIR}/twitch/CMakeLists.txt)
             AI::Chat::Binders::Twitch
     )
 endif()
+if(EXISTS ${PROJECT_SOURCE_DIR}/console/CMakeLists.txt)
+    add_subdirectory(console)
+    target_link_libraries(ai_chat_binders
+        INTERFACE
+            AI::Chat::Binders::Console
+    )
+endif()
 add_library(AI::Chat::Binders ALIAS ai_chat_binders)

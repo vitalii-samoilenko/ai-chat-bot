@@ -40,7 +40,7 @@ private:
 template<template <typename> class Client>
 class observable : public Client<observable<Client>> {
 public:
-    observable() = delete;
+    // observable() = delete;
     observable(observable const &other) = delete;
     observable(observable const &&other) = delete;
 

@@ -7,10 +7,9 @@ namespace ai {
 namespace chat {
 namespace moderators {
 
-sqlite::sqlite(::std::string_view filename, size_t length)
+sqlite::sqlite(::std::string_view filename)
     : _controller{} {
     _controller._filename = filename;
-    _controller._length = static_cast<::sqlite3_int64>(length);
     _controller.on_init();
 };
 

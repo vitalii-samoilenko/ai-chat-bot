@@ -10,7 +10,6 @@ namespace detail {
 
 connection::connection()
     : _filename{}
-    , _length{}
     , _database{ nullptr }
     , _init_wal{ nullptr }
     , _init_user{ nullptr }
@@ -128,19 +127,11 @@ void connection::on_init() {
             "SELECT COUNT(*) FROM filter"
             " WHERE @CONTENT REGEXP pattern"
         ")"
-        " + "
-        "("
-            "SELECT IIF(@LENGTH < LENGTH(@CONTENT), 1, 0)"
-        ")"
     };
     ::esqlite3_ensure_success(
         ::sqlite3_prepare_v2(_database, IS_FILTERED,
             static_cast<int>(::std::size(IS_FILTERED) - 1),
             &_is_filtered, nullptr));
-    ::esqlite3_ensure_success(
-        ::sqlite3_bind_int64(_is_filtered,
-            ::sqlite3_bind_parameter_index(_is_filtered, "@LENGTH"),
-            _length));
     char const PROMOTE[]{
         "INSERT INTO user"
         "("

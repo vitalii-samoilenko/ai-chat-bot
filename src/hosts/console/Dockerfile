@@ -37,12 +37,14 @@ RUN apk update \
 FROM prepare AS configure
 ARG BUILD_CONFIGURATION=Release
 ARG TELEMETRY=ON
+ARG CLIENT=Twitch
 RUN --mount=type=cache,id=build,target=build \
     --mount=type=cache,id=install,target=install \
     cmake -B build -S . \
         -DCMAKE_BUILD_TYPE=$BUILD_CONFIGURATION \
         -DCMAKE_INSTALL_PREFIX=install \
-        -DTELEMETRY=$TELEMETRY
+        -DTELEMETRY=$TELEMETRY \
+        -DCLIENT=$CLIENT
 
 FROM configure AS build
 ARG BUILD_CONFIGURATION=Release

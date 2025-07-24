@@ -5,16 +5,24 @@
 
 #include "boost/json.hpp"
 
+#ifdef CLIENT_TWITCH
 #include "ai/chat/clients/auth.hpp"
 #include "ai/chat/clients/twitch.hpp"
+#else
+#include "ai/chat/clients/console.hpp"
+#endif
 #include "ai/chat/clients/observable.hpp"
 #include "ai/chat/adapters/openai.hpp"
 #include "ai/chat/histories/sqlite.hpp"
 #include "ai/chat/histories/observable.hpp"
 #include "ai/chat/moderators/sqlite.hpp"
-#include "ai/chat/binders/twitch.hpp"
-#include "ai/chat/binders/openai.hpp"
 #include "ai/chat/commands.hpp"
+#ifdef CLIENT_TWITCH
+#include "ai/chat/binders/twitch.hpp"
+#else
+#include "ai/chat/binders/console.hpp"
+#endif
+#include "ai/chat/binders/openai.hpp"
 #include "ai/chat/telemetry.hpp"
 
 #include "sqlite3.h"
@@ -121,6 +129,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    #ifdef CLIENT_TWITCH
     ::ai::chat::clients::auth auth{
         config.at("client").at("auth").at("address").as_string(),
         ::std::chrono::milliseconds{ config.at("client").at("auth").at("timeout").as_int64() },
@@ -131,6 +140,9 @@ int main(int argc, char* argv[]) {
         ::std::chrono::milliseconds{ config.at("client").at("delay").as_int64() },
         0
     };
+    #else
+    ::ai::chat::clients::observable<::ai::chat::clients::console> client{};
+    #endif
 
     bool moderator_exists{ false };
     {
@@ -138,8 +150,7 @@ int main(int argc, char* argv[]) {
         moderator_exists = file.is_open();
     }
     ::ai::chat::moderators::sqlite moderator{
-        config.at("moderator").at("filename").as_string(),
-        static_cast<size_t>(config.at("moderator").at("length").as_int64()),
+        config.at("moderator").at("filename").as_string()
     };
     if (!moderator_exists) {
         for (::boost::json::value const &username : config.at("administrators").as_array()) {
@@ -164,8 +175,10 @@ int main(int argc, char* argv[]) {
     ::ai::chat::commands::edit<::ai::chat::histories::sqlite>,
     ::ai::chat::commands::find<::ai::chat::histories::sqlite, 25>,
     ::ai::chat::commands::instruct<::ai::chat::histories::sqlite>,
+    #ifdef CLIENT_TWITCH
     ::ai::chat::commands::join<::ai::chat::clients::twitch>,
     ::ai::chat::commands::leave<::ai::chat::clients::twitch>,
+    #endif
     ::ai::chat::commands::mod<::ai::chat::moderators::sqlite>,
     ::ai::chat::commands::remove<::ai::chat::histories::sqlite>,
     ::ai::chat::commands::timeout<::ai::chat::moderators::sqlite>,
@@ -179,8 +192,10 @@ int main(int argc, char* argv[]) {
         history,
         history,
         history,
+    #if CLIENT_TWITCH
         client,
         client,
+    #endif
         moderator,
         history,
         moderator,
@@ -188,9 +203,15 @@ int main(int argc, char* argv[]) {
         moderator
     };
 
+    #ifdef CLIENT_TWITCH
     auto client_binding = ::ai::chat::binders::twitch<::ai::chat::histories::sqlite>::bind(history, client,
         moderator, executor,
         config.at("botname").as_string());
+    #else
+    auto client_binding = ::ai::chat::binders::console<::ai::chat::histories::sqlite>::bind(history, client,
+        moderator, executor,
+        config.at("botname").as_string());
+    #endif
     auto adapter_binding = ::ai::chat::binders::openai<::ai::chat::histories::sqlite>::bind(history, adapter,
         moderator,
         config.at("adapter").at("model").as_string(), config.at("adapter").at("key").as_string(),
@@ -198,6 +219,7 @@ int main(int argc, char* argv[]) {
         config.at("pattern").as_string(), static_cast<size_t>(config.at("retries").as_int64()), config.at("apology").as_string(),
         config.at("botname").as_string());
 
+    #ifdef CLIENT_TWITCH
     ::ai::chat::clients::token_context access_context{
         auth.refresh_token(
             config.at("client").at("auth").at("client_id").as_string(),
@@ -207,6 +229,10 @@ int main(int argc, char* argv[]) {
     client.connect(
         config.at("botname").as_string(),
         access_context.access_token);
+    #else
+    client.connect(
+        config.at("client").at("username").as_string());
+    #endif
     config.emplace_null();
     buffer.release();
     ::std::cout << "Waiting for shutdown signal..." << ::std::endl;

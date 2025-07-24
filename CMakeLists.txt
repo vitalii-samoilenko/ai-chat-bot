@@ -3,8 +3,13 @@ cmake_minimum_required(VERSION 3.25.1)
 project(AI VERSION 0.1)
 
 option(TELEMETRY "Enable telemetry" OFF)
+option(CLIENT "Choose client: Twitch, Console" Console)
+
 if(TELEMETRY)
   add_compile_definitions(ENABLE_TELEMETRY)
+endif()
+if(CLIENT STREQUAL Twitch)
+  add_compile_definitions(CLIENT_TWITCH)
 endif()
 
 if(MSVC)

@@ -15,4 +15,11 @@ if(EXISTS ${PROJECT_SOURCE_DIR}/twitch/CMakeLists.txt)
         AI::Chat::Clients::Twitch
     )
 endif()
+if(EXISTS ${PROJECT_SOURCE_DIR}/console/CMakeLists.txt)
+    add_subdirectory(console)
+    target_link_libraries(ai_chat_clients
+      INTERFACE
+        AI::Chat::Clients::Console
+    )
+endif()
 add_library(AI::Chat::Clients ALIAS ai_chat_clients)
