@@ -7,7 +7,6 @@ Integrate your favourite AI chat provider into your community
 > [!CAUTION]
 > SECURITY ISSUE! Although software will use secure TLS protocol to communicate with endpoints certificate validation IS DISABLED
 
- - Incorrect length calculation for unicode messages
  - Incorrect time range calculation for timezones with negative offsets
  - Only HTTPS/WSS protocol support
  - Bugs (by using this software you are doing so at your own risk)
