@@ -68,7 +68,7 @@ Sample configuration file:
 					"value": "johndoe"
 				}
 			],
-			"content": "johndoe: @botusername how is it going?"
+			"content": "@botusername how is it going?"
 		},
 		{
 			"tags": [
@@ -94,7 +94,7 @@ Sample configuration file:
 					"value": "janeparker"
 				}
 			],
-			"content": "janeparker: @botname let's have fun today!"
+			"content": "@botname let's have fun today!"
 		},
 		{
 			"tags": [
@@ -155,9 +155,11 @@ __allowed__ are users allowed to chat with bot
 
 __filters__ are regular expressions used to enforce community rules like prohibiting certain words or posting links. Detailed syntax documentation could be found here: [RE2 Syntax Wiki](https://github.com/google/re2/wiki/Syntax)
 
-__retries__ is the number of times model will be prompted to regenerate reply. If it still fails to do so __apology__ would be used instead
+__pattern__ is used to transform input message into model representation. Supported placeholders are: {username} and {content}
 
-__context__ is the initial data that would be put into history. It is recommended to manually craft context and conversation examples using __pattern__ format for the model to follow it and exclude these records from cleanup process with __adapter__ __skip__ setting
+__retries__ is the number of times model will be prompted to regenerate reply. If it still fails to do so formatted __apology__ would be used instead
+
+__context__ is the initial data that would be put into history. It is recommended to manually craft context and conversation examples for the model to follow it and exclude these records from cleanup process with __adapter__ __skip__ setting
 
 ### History
 

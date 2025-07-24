@@ -99,6 +99,40 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    char const USERNAME[]{ "{username}" };
+    char const CONTENT[]{ "{content}" };
+    auto f_content = [
+        pattern = ::std::string{ config.at("pattern").as_string() },
+        pos_p_username = config.at("pattern").as_string().find(USERNAME), _pos_p_content = config.at("pattern").as_string().find(CONTENT),
+        USERNAME_SIZE = ::std::size(USERNAME), CONTENT_SIZE = ::std::size(CONTENT),
+        formatted_content = ::std::string{}
+    ](::std::string_view username, ::std::string_view content) mutable ->::std::string_view {
+        formatted_content = pattern;
+        size_t pos_p_content{ _pos_p_content };
+        if (!(pos_p_username == ::std::string::npos)) {
+            formatted_content.replace(pos_p_username, USERNAME_SIZE - 1, username);
+            if (!(_pos_p_content == ::std::string::npos) && pos_p_username < _pos_p_content) {
+                pos_p_content += username.size() - (USERNAME_SIZE - 1);
+            }
+        }
+        if (!(pos_p_content == ::std::string::npos)) {
+            formatted_content.replace(pos_p_content, CONTENT_SIZE - 1, content);
+        }
+        return formatted_content;
+    };
+    auto f_apology = [
+        apology = ::std::string{ config.at("apology").as_string() },
+        pos_a_username = config.at("apology").as_string().find(USERNAME),
+        USERNAME_SIZE = ::std::size(USERNAME),
+        formatted_apology = ::std::string{}
+    ](::std::string_view username) mutable ->::std::string_view {
+        formatted_apology = apology;
+        if (!(pos_a_username == ::std::string::npos)) {
+            formatted_apology.replace(pos_a_username, USERNAME_SIZE - 1, username);
+        }
+        return formatted_apology;
+    };
+
     ::ai::chat::adapters::openai adapter{
         config.at("adapter").at("address").as_string(),
         ::std::chrono::milliseconds{ config.at("adapter").at("timeout").as_int64() },
@@ -110,22 +144,32 @@ int main(int argc, char* argv[]) {
         ::ai::chat::histories::observable_iterator<::ai::chat::histories::sqlite> end{ history.end() };
         adapter.reserve(static_cast<size_t>(end - pos));
         for (; !(pos == end); ++pos) {
-            ::ai::chat::histories::message message{ *pos };
+            ::ai::chat::histories::message history_message{ *pos };
             ::ai::chat::histories::tag const *username_tag{ nullptr };
-            for (::ai::chat::histories::tag const &tag : message.tags) {
+            for (::ai::chat::histories::tag const &tag : history_message.tags) {
                 if (tag.name == "user.name") {
                     username_tag = &tag;
                     break;
                 }
             }
-            adapter.push_back(::ai::chat::adapters::message{
-                username_tag
-                    ? username_tag->value == config.at("botname").as_string()
-                        ? ::ai::chat::adapters::role::assistant
-                        : ::ai::chat::adapters::role::user
-                    : ::ai::chat::adapters::role::system,
-                message.content
-            });
+            if (username_tag) {
+                if (username_tag->value == config.at("botname").as_string()) {
+                    adapter.push_back(::ai::chat::adapters::message{
+                        ::ai::chat::adapters::role::assistant,
+                        history_message.content
+                    });
+                } else {
+                    adapter.push_back(::ai::chat::adapters::message{
+                        ::ai::chat::adapters::role::user,
+                        f_content(username_tag->value, history_message.content)
+                    });
+                }
+            } else {
+                adapter.push_back(::ai::chat::adapters::message{
+                    ::ai::chat::adapters::role::system,
+                    history_message.content
+                });
+            }
         }
     }
 
@@ -216,7 +260,7 @@ int main(int argc, char* argv[]) {
         moderator,
         config.at("adapter").at("model").as_string(), config.at("adapter").at("key").as_string(),
         static_cast<size_t>(config.at("adapter").at("skip").as_int64()), ::std::chrono::hours{ config.at("adapter").at("range").as_int64() },
-        config.at("pattern").as_string(), static_cast<size_t>(config.at("retries").as_int64()), config.at("apology").as_string(),
+        f_content, static_cast<size_t>(config.at("retries").as_int64()), f_apology,
         config.at("botname").as_string());
 
     #ifdef CLIENT_TWITCH

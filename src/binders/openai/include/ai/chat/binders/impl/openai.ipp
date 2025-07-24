@@ -16,50 +16,19 @@ openai<History>::binding::binding(::ai::chat::histories::slot<History> &&s_histo
 };
 
 template<typename History>
-template<typename Moderator>
+template<typename Moderator, typename ContentFormatter, typename ApologyFormatter>
 openai<History>::binding openai<History>::bind(::ai::chat::histories::observable<History> &history, ::ai::chat::adapters::openai &adapter,
     Moderator &moderator,
     ::std::string_view model, ::std::string_view key,
     size_t skip, ::std::chrono::hours range,
-    ::std::string_view pattern, size_t retries, ::std::string_view apology,
+    ContentFormatter &f_content, size_t retries, ApologyFormatter &f_apology,
     ::std::string_view botname) {
     ::ai::chat::histories::slot<History> s_history{ history.template subscribe<::ai::chat::adapters::openai>() };
-    char const USERNAME[]{ "{username}" };
-    char const CONTENT[]{ "{content}" };
-    auto format_content = [
-        pattern = ::std::string{ pattern },
-        pos_p_username = pattern.find(USERNAME), _pos_p_content = pattern.find(CONTENT),
-        USERNAME_SIZE = ::std::size(USERNAME), CONTENT_SIZE = ::std::size(CONTENT)
-    ](::std::string_view username, ::std::string_view content)->::std::string {
-        ::std::string formatted_content{ pattern };
-        size_t pos_p_content{ _pos_p_content };
-        if (!(pos_p_username == ::std::string::npos)) {
-            formatted_content.replace(pos_p_username, USERNAME_SIZE - 1, username);
-            if (!(_pos_p_content == ::std::string::npos) && pos_p_username < _pos_p_content) {
-                pos_p_content += username.size() - (USERNAME_SIZE - 1);
-            }
-        }
-        if (!(pos_p_content == ::std::string::npos)) {
-            formatted_content.replace(pos_p_content, CONTENT_SIZE - 1, content);
-        }
-        return formatted_content;
-    };
-    auto format_apology = [
-        apology = ::std::string{ apology },
-        pos_a_username = apology.find(USERNAME),
-        USERNAME_SIZE = ::std::size(USERNAME)
-    ](::std::string_view username)->::std::string {
-        ::std::string content{ apology };
-        if (!(pos_a_username == ::std::string::npos)) {
-            content.replace(pos_a_username, USERNAME_SIZE - 1, username);
-        }
-        return content;
-    };
     s_history.on_message([&history, &adapter,
         &moderator,
         model = ::std::string{ model }, key = ::std::string{ key },
         skip, range,
-        format_content, retries, format_apology,
+        &f_content, retries, &f_apology,
         botname = ::std::string{ botname }
     ](::ai::chat::histories::observable_iterator<History> history_pos)->void {
         ::ai::chat::histories::message history_message{ *history_pos };
@@ -75,7 +44,7 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
         if (username_tag) {
             adapter.push_back(::ai::chat::adapters::message{
                 ::ai::chat::adapters::role::user,
-                format_content(username_tag->value, history_message.content)
+                f_content(username_tag->value, history_message.content)
             });
         } else {
             adapter.push_back(::ai::chat::adapters::message{
@@ -84,7 +53,6 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
             });
             return;
         }
-        ::ai::chat::adapters::message adapter_message{};
         for (size_t left{ retries }; ;) {
             try {
                 adapter.complete(model, key);
@@ -101,9 +69,13 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
                 continue;
             }
             catch (::std::exception const &e) {
-                goto do_apology;
+                adapter.push_back(::ai::chat::adapters::message{
+                    ::ai::chat::adapters::role::assistant,
+                    f_apology(username_tag->value)
+                });
+                break;
             }
-            adapter_message = adapter.back();
+            ::ai::chat::adapters::message adapter_message{ adapter.back() };
             if (!moderator.is_filtered(adapter_message.content)) {
                 break;
             }
@@ -111,12 +83,10 @@ openai<History>::binding openai<History>::bind(::ai::chat::histories::observable
             if (left--) {
                 continue;
             }
-do_apology:
             adapter.push_back(::ai::chat::adapters::message{
                 ::ai::chat::adapters::role::assistant,
-                format_apology(username_tag->value)
+                f_apology(username_tag->value)
             });
-            adapter_message = adapter.back();
             break;
         }
         ::std::vector<::ai::chat::histories::tag> tags{};
@@ -125,6 +95,7 @@ do_apology:
         if (channel_tag) {
             tags.emplace_back("channel", channel_tag->value);
         }
+        ::ai::chat::adapters::message adapter_message{ adapter.back() };
         history.template insert<::ai::chat::adapters::openai>(::ai::chat::histories::message{
             ::std::chrono::nanoseconds{},
             adapter_message.content,
@@ -147,11 +118,9 @@ do_apology:
         adapter.erase(adapter_first, adapter_last);
     });
     s_history.on_update([&history, &adapter,
-        format_content
+        &f_content,
+        botname = ::std::string{ botname }
     ](::ai::chat::histories::observable_iterator<History> history_pos)->void {
-        ::ai::chat::histories::observable_iterator<History> history_begin{ history.begin() };
-        ::ai::chat::adapters::iterator adapter_begin{ adapter.begin() };
-        ::ai::chat::adapters::iterator adapter_pos{ adapter_begin + (history_pos - history_begin) };
         ::ai::chat::histories::message history_message{ *history_pos };
         ::ai::chat::histories::tag const *username_tag{ nullptr };
         for (::ai::chat::histories::tag const &tag : history_message.tags) {
@@ -160,8 +129,11 @@ do_apology:
                 break;
             }
         }
-        adapter_pos = username_tag
-            ? format_content(username_tag->value, history_message.content)
+        ::ai::chat::histories::observable_iterator<History> history_begin{ history.begin() };
+        ::ai::chat::adapters::iterator adapter_begin{ adapter.begin() };
+        ::ai::chat::adapters::iterator adapter_pos{ adapter_begin + (history_pos - history_begin) };
+        adapter_pos = username_tag && !(username_tag->value == botname)
+            ? f_content(username_tag->value, history_message.content)
             : history_message.content;
     });
     return binding{ ::std::move(s_history) };

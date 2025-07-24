@@ -39,12 +39,12 @@ public:
         ::ai::chat::histories::slot<History> _s_history;
     };
 
-    template<typename Moderator>
+    template<typename Moderator, typename ContentFormatter, typename ApologyFormatter>
     static binding bind(::ai::chat::histories::observable<History> &history, ::ai::chat::adapters::openai &adapter,
         Moderator &moderator,
         ::std::string_view model, ::std::string_view key,
         size_t skip, ::std::chrono::hours range,
-        ::std::string_view pattern, size_t retries, ::std::string_view apology,
+        ContentFormatter &f_content, size_t retries, ApologyFormatter &f_apology,
         ::std::string_view botname);
 };
 
