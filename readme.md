@@ -29,7 +29,7 @@ Sample configuration file:
 	"filters": [
 		{
 			"name": "length",
-			"pattern": ".{200,}"
+			"pattern": ".{200}"
 		},
 		{
 			"name": "links",

@@ -2,6 +2,8 @@ string instead of json
 negative time zone
 grant access and get refresh token steps
 
+terminate handler for all threads
+
 release
 google free tier host
 
