@@ -22,7 +22,7 @@ connection::connection()
     , _request{}
     , _response{}
     , _request_serializer{ _request }
-    , _response_parser{ &_buffer[0], RESPONSE_SIZE, true }
+    , _response_parser{}
     , _read_buffer{ &_buffer[RESPONSE_SIZE], READ_SIZE }
     , _request_body{ nullptr }
     , _response_body{ nullptr }
@@ -92,6 +92,7 @@ void connection::on_send(
     ::eboost::beast::ensure_success(error_code);
     ::boost::ignore_unused(bytes_transferred);
     STOP_SPAN(operation)
+    _json_serializer.reset(&_request_body);
     on_write_chunk(
         PROPAGATE_ONLY_SPAN(span));
 
@@ -108,7 +109,7 @@ void connection::on_write_chunk(
     _request.body().size = chunk.size();
     _request.body().more = !_json_serializer.done();
     LOG_INFO(chunk.data(), chunk.size(), operation, (*this));
-    ::boost::beast::http::async_write_some(_ssl_stream, _request_serializer, [this PROPAGATE_SPAN(span) PROPAGATE_SPAN(operation)](::boost::beast::error_code error_code, size_t bytes_transferred) mutable ->void {
+    ::boost::beast::http::async_write(_ssl_stream, _request_serializer, [this PROPAGATE_SPAN(span) PROPAGATE_SPAN(operation)](::boost::beast::error_code error_code, size_t bytes_transferred) mutable ->void {
     if (error_code == ::boost::beast::http::error::need_buffer) {
         STOP_SPAN(operation)
         on_write_chunk(
@@ -122,6 +123,7 @@ void connection::on_write_chunk(
     ::eboost::beast::ensure_success(error_code);
     ::boost::ignore_unused(bytes_transferred);
     STOP_SPAN(operation)
+    _json_parser.reset();
     on_read_chunk(
         PROPAGATE_ONLY_SPAN(span));
 
@@ -131,15 +133,15 @@ void connection::on_write_chunk(
 void connection::on_read_chunk(
     DECLARE_ONLY_SPAN(span)) {
     START_SUBSPAN(operation, "on_read_chunk", span, (*this))
-    ::boost::beast::http::async_read_some(_ssl_stream, _read_buffer, _response_parser, [this PROPAGATE_SPAN(span) PROPAGATE_SPAN(operation)](::boost::beast::error_code error_code, size_t bytes_transferred) mutable ->void {
+    ::boost::beast::http::response<::boost::beast::http::buffer_body> &response{ _response_parser.get() };
+    response.body().data = &_buffer[0];
+    response.body().size = RESPONSE_SIZE;
+    ::boost::beast::http::async_read(_ssl_stream, _read_buffer, _response_parser, [this PROPAGATE_SPAN(span) PROPAGATE_SPAN(operation)](::boost::beast::error_code error_code, size_t bytes_transferred) mutable ->void {
     if (!(error_code == ::boost::beast::http::error::need_buffer)) {
         ::eboost::beast::ensure_success(error_code);
     }
     LOG_INFO(&_buffer[0], bytes_transferred, operation, (*this));
     _json_parser.write_some(&_buffer[0], bytes_transferred);
-    ::boost::beast::http::response<::boost::beast::http::buffer_body> &response{ _response_parser.get() };
-    response.body().data = &_buffer[0];
-    response.body().size = RESPONSE_SIZE;
     STOP_SPAN(operation)
     if (error_code == ::boost::beast::http::error::need_buffer) {
         on_read_chunk(
@@ -169,13 +171,10 @@ void connection::on_reset() {
         _ssl_context
     };
     _request = ::boost::beast::http::request<::boost::beast::http::buffer_body>{};
-    _response = ::boost::beast::http::response<::boost::beast::http::buffer_body>{};
     _request_serializer.~serializer();
     new(&_request_serializer) ::boost::beast::http::request_serializer<::boost::beast::http::buffer_body>{ _request };
     _response_parser.~parser();
-    new(&_response_parser) ::boost::beast::http::response_parser<::boost::beast::http::buffer_body>{ &_buffer[0], RESPONSE_SIZE, true };
-    _json_serializer.reset(&_request_body);
-    _json_parser.reset();
+    new(&_response_parser) ::boost::beast::http::response_parser<::boost::beast::http::buffer_body>{};
 };
 
 } // detail

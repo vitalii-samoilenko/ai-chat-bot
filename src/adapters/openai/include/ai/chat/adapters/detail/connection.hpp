@@ -62,7 +62,7 @@ private:
     ::boost::json::value _request_body;
     ::boost::json::value _response_body;
     ::boost::json::serializer _json_serializer;
-    ::boost::json::parser _json_parser;
+    ::boost::json::stream_parser _json_parser;
     ::std::string _host;
     ::std::string _port;
     ::std::string _t_completions;
