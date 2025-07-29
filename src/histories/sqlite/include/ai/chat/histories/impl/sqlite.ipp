@@ -4,6 +4,8 @@
 #include <limits>
 #include <utility>
 
+#include "ai/chat/histories/sqlite.hpp"
+
 namespace ai {
 namespace chat {
 namespace histories {

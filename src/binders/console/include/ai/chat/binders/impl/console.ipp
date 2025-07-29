@@ -5,6 +5,8 @@
 #include <utility>
 #include <vector>
 
+#include "ai/chat/binders/console.hpp"
+
 namespace ai {
 namespace chat {
 namespace binders {

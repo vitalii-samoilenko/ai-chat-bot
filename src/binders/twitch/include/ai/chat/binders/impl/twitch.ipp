@@ -5,6 +5,8 @@
 #include <utility>
 #include <vector>
 
+#include "ai/chat/binders/twitch.hpp"
+
 namespace ai {
 namespace chat {
 namespace binders {
@@ -48,13 +50,14 @@ twitch<History>::binding twitch<History>::bind(::ai::chat::histories::observable
         });
     });
     ::ai::chat::clients::slot<::ai::chat::clients::twitch> s_client{ client.subscribe<::ai::chat::histories::observable<History>>() };
-    s_client.on_message([&history, &moderator,
-        botname = ::std::string{ botname }
+    s_client.on_message([&history,
+        &moderator,
+        a_botname = ::std::string{ "@" + botname }
     ](::ai::chat::clients::message client_message)->void {
-        if (client_message.content.find("@" + botname) == ::std::string::npos) {
+        if (client_message.content.find(a_botname) == ::std::string::npos) {
             return;
         }
-        if (!moderator.is_allowed(botname, client_message.username)) {
+        if (!moderator.is_allowed(::std::string_view{ a_botname.data() + 1, a_botname.size() - 1 }, client_message.username)) {
             return;
         }
         ::std::vector<::ai::chat::histories::tag> tags{};

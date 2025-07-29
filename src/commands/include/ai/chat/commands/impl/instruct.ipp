@@ -1,7 +1,7 @@
 #ifndef AI_CHAT_COMMANDS_INSTRUCT_IPP
 #define AI_CHAT_COMMANDS_INSTRUCT_IPP
 
-#include <vector>
+#include "ai/chat/commands/instruct.hpp"
 
 namespace ai {
 namespace chat {
@@ -9,8 +9,10 @@ namespace commands {
 
 template<typename History>
 instruct<History>::instruct(::ai::chat::histories::observable<History> &history)
-    : _history{ history } {
-
+    : _history{ history }
+    , _tags{} {
+    _tags.emplace_back("source", "command");
+    _tags.emplace_back("system", "");
 };
 
 template<typename History>
@@ -18,13 +20,10 @@ template<typename History>
     if (args.empty()) {
         return ::std::string_view{};
     }
-    ::std::vector<::ai::chat::histories::tag> tags{};
-    tags.emplace_back("source", "command");
-    tags.emplace_back("system", "");
     _history.template insert<instruct>(::ai::chat::histories::message{
         ::std::chrono::nanoseconds{},
         args,
-        tags
+        _tags
     });
     return instruct::name;
 };

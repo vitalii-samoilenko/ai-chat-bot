@@ -1,6 +1,8 @@
 #ifndef AI_CHAT_COMMANDS_BAN_IPP
 #define AI_CHAT_COMMANDS_BAN_IPP
 
+#include "ai/chat/commands/ban.hpp"
+
 namespace ai {
 namespace chat {
 namespace commands {

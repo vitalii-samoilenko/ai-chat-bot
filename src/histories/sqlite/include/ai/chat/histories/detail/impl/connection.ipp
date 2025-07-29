@@ -3,6 +3,8 @@
 
 #include "esqlite3.hpp"
 
+#include "ai/chat/histories/detail/connection.hpp"
+
 namespace ai {
 namespace chat {
 namespace histories {

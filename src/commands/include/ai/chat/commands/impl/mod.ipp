@@ -1,6 +1,8 @@
 #ifndef AI_CHAT_COMMANDS_MOD_IPP
 #define AI_CHAT_COMMANDS_MOD_IPP
 
+#include "ai/chat/commands/mod.hpp"
+
 namespace ai {
 namespace chat {
 namespace commands {

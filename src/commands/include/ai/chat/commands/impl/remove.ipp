@@ -3,6 +3,8 @@
 
 #include <ctime>
 
+#include "ai/chat/commands/remove.hpp"
+
 namespace ai {
 namespace chat {
 namespace commands {

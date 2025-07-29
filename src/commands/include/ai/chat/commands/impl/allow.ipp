@@ -1,6 +1,8 @@
 #ifndef AI_CHAT_COMMANDS_ALLOW_IPP
 #define AI_CHAT_COMMANDS_ALLOW_IPP
 
+#include "ai/chat/commands/allow.hpp"
+
 namespace ai {
 namespace chat {
 namespace commands {

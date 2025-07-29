@@ -1,6 +1,8 @@
 #ifndef AI_CHAT_COMMANDS_LEAVE_IPP
 #define AI_CHAT_COMMANDS_LEAVE_IPP
 
+#include "ai/chat/commands/leave.hpp"
+
 namespace ai {
 namespace chat {
 namespace commands {

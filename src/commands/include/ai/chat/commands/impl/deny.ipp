@@ -1,6 +1,8 @@
 #ifndef AI_CHAT_COMMANDS_DENY_IPP
 #define AI_CHAT_COMMANDS_DENY_IPP
 
+#include "ai/chat/commands/deny.hpp"
+
 namespace ai {
 namespace chat {
 namespace commands {

@@ -3,6 +3,8 @@
 
 #include <limits>
 
+#include "ai/chat/moderators/sqlite.hpp"
+
 namespace ai {
 namespace chat {
 namespace moderators {

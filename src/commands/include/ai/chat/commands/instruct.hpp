@@ -2,6 +2,7 @@
 #define AI_CHAT_COMMANDS_INSTRUCT_HPP
 
 #include <string_view>
+#include <vector>
 
 #include "ai/chat/histories/observable.hpp"
 
@@ -29,6 +30,7 @@ public:
 
 private:
     ::ai::chat::histories::observable<History> &_history;
+    ::std::vector<::ai::chat::histories::tag> _tags;
 };
 
 } // commands

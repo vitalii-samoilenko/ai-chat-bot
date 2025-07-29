@@ -1,6 +1,8 @@
 #ifndef AI_CHAT_COMMANDS_JOIN_IPP
 #define AI_CHAT_COMMANDS_JOIN_IPP
 
+#include "ai/chat/commands/join.hpp"
+
 namespace ai {
 namespace chat {
 namespace commands {

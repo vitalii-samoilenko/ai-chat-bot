@@ -1,6 +1,8 @@
 #ifndef AI_CHAT_COMMANDS_UNBAN_IPP
 #define AI_CHAT_COMMANDS_UNBAN_IPP
 
+#include "ai/chat/commands/unban.hpp"
+
 namespace ai {
 namespace chat {
 namespace commands {

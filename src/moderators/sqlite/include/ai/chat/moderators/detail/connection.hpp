@@ -5,6 +5,7 @@
 
 #include "sqlite3.h"
 
+#include "ai/chat/moderators/sqlite.hpp"
 #include "ai/chat/telemetry.hpp"
 
 namespace ai {

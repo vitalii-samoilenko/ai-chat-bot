@@ -3,6 +3,8 @@
 
 #include <utility>
 
+#include "ai/chat/commands/executor.hpp"
+
 namespace ai {
 namespace chat {
 namespace commands {
@@ -18,7 +20,7 @@ template<typename... Commands>
 template<size_t I>
 ::std::string_view executor<Commands...>::execute(::std::string_view name, ::std::string_view args) {
     if constexpr (!(I < ::std::tuple_size_v<decltype(_commands)>)) {
-        return {};
+        return ::std::string_view{};
     } else {
         if (name == ::std::tuple_element_t<I, decltype(_commands)>::name) {
             return ::std::get<I>(_commands).execute(args);

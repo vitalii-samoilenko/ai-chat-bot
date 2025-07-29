@@ -19,10 +19,15 @@ namespace detail {
 
 class connection {
 private:
-    static constexpr size_t BUFFER_SIZE{ 8192 };
-    static constexpr size_t RESPONSE_SIZE{ BUFFER_SIZE / 2 };
-    static constexpr size_t READ_SIZE{ BUFFER_SIZE / 4 };
-    static constexpr size_t JSON_SIZE{ BUFFER_SIZE / 4 };
+    static constexpr size_t BUFFER_TOTAL_SIZE{ 8192 };
+    static constexpr size_t BUFFER_JSON_SERIALIZER_SIZE{ BUFFER_TOTAL_SIZE };
+    static constexpr size_t BUFFER_RESPONSE_PARSER_SIZE{ BUFFER_TOTAL_SIZE / 2 };
+    static constexpr size_t BUFFER_READ_SIZE{ BUFFER_TOTAL_SIZE / 4 };
+    static constexpr size_t BUFFER_JSON_PARSER_SIZE{ BUFFER_TOTAL_SIZE / 4 };
+    static constexpr size_t BUFFER_JSON_SERIALIZER_OFFSET{ 0 };
+    static constexpr size_t BUFFER_RESPONSE_PARSER_OFFSET{ 0 };
+    static constexpr size_t BUFFER_READ_OFFSET{ BUFFER_RESPONSE_PARSER_OFFSET + BUFFER_RESPONSE_PARSER_SIZE };
+    static constexpr size_t BUFFER_JSON_PARSER_OFFSET{ BUFFER_READ_OFFSET + BUFFER_READ_SIZE };
 
     friend ::eboost::beast::metered_rate_policy<connection>;
     friend iterator;
@@ -49,7 +54,7 @@ private:
         DECLARE_ONLY_SPAN(span));
     void on_reset();
 
-    char _buffer[BUFFER_SIZE];
+    char _buffer[BUFFER_TOTAL_SIZE];
     ::boost::asio::io_context _io_context;
     ::boost::asio::ip::tcp::resolver _dns_resolver;
     ::boost::asio::ssl::context _ssl_context;

@@ -3,6 +3,8 @@
 
 #include <ctime>
 
+#include "ai/chat/commands/find.hpp"
+
 namespace ai {
 namespace chat {
 namespace commands {

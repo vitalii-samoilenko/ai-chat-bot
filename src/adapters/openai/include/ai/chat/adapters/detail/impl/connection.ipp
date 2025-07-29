@@ -16,21 +16,24 @@ connection::connection()
     , _dns_resolver{ _io_context }
     , _ssl_context{ ::boost::asio::ssl::context::tlsv12_client }
     , _ssl_stream{
-        ::eboost::beast::metered_tcp_stream<connection>{ ::eboost::beast::metered_rate_policy<connection>{ *this }, _io_context },
+        ::eboost::beast::metered_tcp_stream<connection>{
+            ::eboost::beast::metered_rate_policy<connection>{ *this },
+            _io_context
+        },
         _ssl_context
     }
     , _request{}
     , _response{}
     , _request_serializer{ _request }
     , _response_parser{}
-    , _read_buffer{ &_buffer[RESPONSE_SIZE], READ_SIZE }
+    , _read_buffer{ &_buffer[BUFFER_READ_OFFSET], BUFFER_READ_SIZE }
     , _request_body{ nullptr }
     , _response_body{ nullptr }
     , _json_serializer{}
     , _json_parser{
         ::boost::json::get_null_resource(),
         ::boost::json::parse_options{},
-        reinterpret_cast<unsigned char *>(&_buffer[RESPONSE_SIZE + READ_SIZE]), JSON_SIZE
+        reinterpret_cast<unsigned char *>(&_buffer[BUFFER_JSON_PARSER_OFFSET]), BUFFER_JSON_PARSER_SIZE
     }
     , _host{}
     , _port{}
@@ -104,7 +107,7 @@ void connection::on_send(
 void connection::on_write_chunk(
     DECLARE_ONLY_SPAN(span)) {
     START_SUBSPAN(operation, "on_write_chunk", span, (*this))
-    ::std::string_view chunk{ _json_serializer.read(&_buffer[0], BUFFER_SIZE) };
+    ::std::string_view chunk{ _json_serializer.read(&_buffer[BUFFER_JSON_SERIALIZER_OFFSET], BUFFER_JSON_SERIALIZER_SIZE) };
     _request.body().data = const_cast<char *>(chunk.data());
     _request.body().size = chunk.size();
     _request.body().more = !_json_serializer.done();
@@ -134,14 +137,14 @@ void connection::on_read_chunk(
     DECLARE_ONLY_SPAN(span)) {
     START_SUBSPAN(operation, "on_read_chunk", span, (*this))
     ::boost::beast::http::response<::boost::beast::http::buffer_body> &response{ _response_parser.get() };
-    response.body().data = &_buffer[0];
-    response.body().size = RESPONSE_SIZE;
+    response.body().data = &_buffer[BUFFER_RESPONSE_PARSER_OFFSET];
+    response.body().size = BUFFER_RESPONSE_PARSER_SIZE;
     ::boost::beast::http::async_read(_ssl_stream, _read_buffer, _response_parser, [this PROPAGATE_SPAN(span) PROPAGATE_SPAN(operation)](::boost::beast::error_code error_code, size_t bytes_transferred) mutable ->void {
     if (!(error_code == ::boost::beast::http::error::need_buffer)) {
         ::eboost::beast::ensure_success(error_code);
     }
-    LOG_INFO(&_buffer[0], bytes_transferred, operation, (*this));
-    _json_parser.write_some(&_buffer[0], bytes_transferred);
+    LOG_INFO(&_buffer[BUFFER_RESPONSE_PARSER_OFFSET], bytes_transferred, operation, (*this));
+    _json_parser.write_some(&_buffer[BUFFER_RESPONSE_PARSER_OFFSET], bytes_transferred);
     STOP_SPAN(operation)
     if (error_code == ::boost::beast::http::error::need_buffer) {
         on_read_chunk(
@@ -165,12 +168,15 @@ void connection::on_read_chunk(
 
 void connection::on_reset() {
     _io_context.restart();
+    _request.clear();
     _ssl_stream.~stream();
     new(&_ssl_stream) ::boost::asio::ssl::stream<::eboost::beast::metered_tcp_stream<connection>>{
-        ::eboost::beast::metered_tcp_stream<connection>{ ::eboost::beast::metered_rate_policy<connection>{ *this }, _io_context },
+        ::eboost::beast::metered_tcp_stream<connection>{
+            ::eboost::beast::metered_rate_policy<connection>{ *this },
+            _io_context
+        },
         _ssl_context
     };
-    _request = ::boost::beast::http::request<::boost::beast::http::buffer_body>{};
     _request_serializer.~serializer();
     new(&_request_serializer) ::boost::beast::http::request_serializer<::boost::beast::http::buffer_body>{ _request };
     _response_parser.~parser();

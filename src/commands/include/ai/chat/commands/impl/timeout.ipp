@@ -3,6 +3,8 @@
 
 #include <chrono>
 
+#include "ai/chat/commands/timeout.hpp"
+
 namespace ai {
 namespace chat {
 namespace commands {

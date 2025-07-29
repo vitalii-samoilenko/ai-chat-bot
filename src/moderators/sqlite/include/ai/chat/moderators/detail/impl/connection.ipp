@@ -3,6 +3,8 @@
 
 #include "esqlite3.hpp"
 
+#include "ai/chat/moderators/detail/connection.hpp"
+
 namespace ai {
 namespace chat {
 namespace moderators {
