@@ -3,6 +3,8 @@
 
 #include "boost/json.hpp"
 
+#include "ai/chat/adapters/openai.hpp"
+
 namespace ai {
 namespace chat {
 namespace adapters {

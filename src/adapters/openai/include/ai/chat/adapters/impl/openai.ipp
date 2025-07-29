@@ -2,12 +2,12 @@
 #define AI_CHAT_ADAPTERS_OPENAI_IPP
 
 #include <stdexcept>
-#include <thread>
 #include <utility>
 
 #include "boost/scope/scope_exit.hpp"
-#include "eboost/beast.hpp"
 #include "re2/re2.h"
+
+#include "ai/chat/adapters/openai.hpp"
 
 namespace ai {
 namespace chat {
@@ -115,8 +115,13 @@ iterator::iterator(Args &&...args)
 };
 
 openai::openai(::std::string_view address, ::std::chrono::milliseconds timeout,
-    ::std::chrono::milliseconds delay, size_t limit)
+    ::std::chrono::milliseconds delay,
+    size_t completion_limit, size_t total_limit)
     : _context{} {
+    ::boost::json::object &object{ _context._request_body.emplace_object() };
+    object.emplace("model", ::boost::json::string_kind);
+    object.emplace("max_completion_tokens", completion_limit);
+    object.emplace("messages", ::boost::json::array_kind);
     ::RE2 uri{ R"(https:\/\/(?<host>[^:\/]+)(?::(?<port>\d+))?(?<path>\/.*))" };
     if (!::RE2::FullMatch(address, uri,
             &_context._host, &_context._port, &_context._t_completions)) {
@@ -127,34 +132,34 @@ openai::openai(::std::string_view address, ::std::chrono::milliseconds timeout,
     }
     _context._timeout = timeout;
     _context._delay = delay;
-    _context._limit = limit;
+    _context._total_limit = total_limit;
     _context.on_init();
 };
 
 message openai::front() {
-    ::boost::json::value &messages{ _context._completion.at("messages") };
+    ::boost::json::value &messages{ _context._request_body.at("messages") };
     ::boost::json::array &array{ messages.as_array() };
     return ::boost::json::value_to<message>(array.front());
 };
 message openai::back() {
-    ::boost::json::value &messages{ _context._completion.at("messages") };
+    ::boost::json::value &messages{ _context._request_body.at("messages") };
     ::boost::json::array &array{ messages.as_array() };
     return ::boost::json::value_to<message>(array.back());
 };
 
 iterator openai::begin() {
-    ::boost::json::value &messages{ _context._completion.at("messages") };
+    ::boost::json::value &messages{ _context._request_body.at("messages") };
     ::boost::json::array &array{ messages.as_array() };
     return iterator{ array.begin() };
 };
 iterator openai::end() {
-    ::boost::json::value &messages{ _context._completion.at("messages") };
+    ::boost::json::value &messages{ _context._request_body.at("messages") };
     ::boost::json::array &array{ messages.as_array() };
     return iterator{ array.end() };
 };
 
 void openai::reserve(size_t capacity) {
-    ::boost::json::value &messages{ _context._completion.at("messages") };
+    ::boost::json::value &messages{ _context._request_body.at("messages") };
     ::boost::json::array &array{ messages.as_array() };
     array.reserve(capacity);
 };
@@ -162,31 +167,29 @@ void openai::reserve(size_t capacity) {
 void openai::push_back(message value) {
     START_SPAN(span, "push_back", _context)
     LOG_INFO(value.content.data(), value.content.size(), span, _context)
-    ::boost::json::value &messages{ _context._completion.at("messages") };
+    ::boost::json::value &messages{ _context._request_body.at("messages") };
     ::boost::json::array &array{ messages.as_array() };
     ::boost::json::value_from(value, array.emplace_back(nullptr));
 };
 void openai::complete(::std::string_view model, ::std::string_view key) {
     START_SPAN(span, "complete", _context)
-    _context._completion.at("model") = model;
+    _context._request_body.at("model") = model;
     _context._h_bearer.resize(::std::size("Bearer ") - 1);
     _context._h_bearer += key;
-    ::boost::beast::http::request<::eboost::beast::http::json_body> request{
-        ::boost::beast::http::verb::post, _context._t_completions, 11,
-        _context._completion
-    };
-    request.prepare_payload();
-    request.set(::boost::beast::http::field::content_type, "application/json");
-    request.set(::boost::beast::http::field::authorization, _context._h_bearer);
-    ::boost::beast::http::response<::eboost::beast::http::json_body> response{};
+    _context._request.method(::boost::beast::http::verb::post);
+    _context._request.target(_context._t_completions);
+    _context._request.version(11);
+    _context._request.set(::boost::beast::http::field::host, _context._host);
+    _context._request.set(::boost::beast::http::field::transfer_encoding, "chunked");
+    _context._request.set(::boost::beast::http::field::content_type, "application/json");
+    _context._request.set(::boost::beast::http::field::authorization, _context._h_bearer);
     auto on_exit = ::boost::scope::make_scope_exit([this]()->void {
-        _context._io_context.restart();
-        _context._stream_reset();
+        _context.on_reset();
     });
-    _context.on_send(request, response
-        PROPAGATE_SPAN(span));
+    _context.on_send(
+        PROPAGATE_ONLY_SPAN(span));
     _context._io_context.run();
-    ::boost::json::value &_usage{ response.body().at("usage") };
+    ::boost::json::value &_usage{ _context._response_body.at("usage") };
     ::ai::chat::adapters::usage usage{ ::boost::json::value_to<::ai::chat::adapters::usage>(_usage) };
     RECORD_GAUGE(_context._m_context, usage.completion_tokens, {
         TAG("type", "completion")
@@ -194,10 +197,10 @@ void openai::complete(::std::string_view model, ::std::string_view key) {
     RECORD_GAUGE(_context._m_context, usage.prompt_tokens, {
         TAG("type", "prompt")
     })
-    if (_context._limit < usage.total_tokens) {
+    if (_context._total_limit < usage.total_tokens) {
         throw ::std::overflow_error{ "context limit is reached" };
     }
-    ::boost::json::value &_choices{ response.body().at("choices") };
+    ::boost::json::value &_choices{ _context._response_body.at("choices") };
     ::boost::json::array &_array{ _choices.as_array() };
     ::boost::json::value &_choice{ _array[0] };
     ::boost::json::value &_message{ _choice.at("message") };
@@ -205,20 +208,20 @@ void openai::complete(::std::string_view model, ::std::string_view key) {
 };
 void openai::pop_back() {
     START_SPAN(span, "pop_back", _context)
-    ::boost::json::value &messages{ _context._completion.at("messages") };
+    ::boost::json::value &messages{ _context._request_body.at("messages") };
     ::boost::json::array &array{ messages.as_array() };
     array.pop_back();
 };
 
 iterator openai::erase(iterator pos) {
     START_SPAN(span, "erase", _context)
-    ::boost::json::value &messages{ _context._completion.at("messages") };
+    ::boost::json::value &messages{ _context._request_body.at("messages") };
     ::boost::json::array &array{ messages.as_array() };
     return iterator{ array.erase(pos._target._pos) };
 };
 iterator openai::erase(iterator first, iterator last) {
     START_SPAN(span, "erase", _context)
-    ::boost::json::value &messages{ _context._completion.at("messages") };
+    ::boost::json::value &messages{ _context._request_body.at("messages") };
     ::boost::json::array &array{ messages.as_array() };
     return iterator{ array.erase(first._target._pos, last._target._pos) };
 };

@@ -73,7 +73,8 @@ public:
     openai & operator=(openai &&other) = delete;
 
     openai(::std::string_view address, ::std::chrono::milliseconds timeout,
-        ::std::chrono::milliseconds delay, size_t limit);
+        ::std::chrono::milliseconds delay,
+        size_t compltetion_limit, size_t total_limit);
 
     message front();
     message back();

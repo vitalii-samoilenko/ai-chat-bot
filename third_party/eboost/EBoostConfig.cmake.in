@@ -2,7 +2,7 @@
 
 include(CMakeFindDependencyMacro)
 
-find_dependency(Boost CONFIG REQUIRED COMPONENTS asio beast json)
+find_dependency(Boost CONFIG REQUIRED COMPONENTS asio beast)
 
 check_required_components(EBoost)
 

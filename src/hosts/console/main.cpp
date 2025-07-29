@@ -137,7 +137,8 @@ int main(int argc, char* argv[]) {
         config.at("adapter").at("address").as_string(),
         ::std::chrono::milliseconds{ config.at("adapter").at("timeout").as_int64() },
         ::std::chrono::milliseconds{ config.at("adapter").at("delay").as_int64() },
-        static_cast<size_t>(config.at("adapter").at("limit").as_int64())
+        static_cast<size_t>(config.at("adapter").at("limits").at("completion").as_int64()),
+        static_cast<size_t>(config.at("adapter").at("limits").at("total").as_int64())
     };
     {
         ::ai::chat::histories::observable_iterator<::ai::chat::histories::sqlite> pos{ history.begin() };
