@@ -27,7 +27,7 @@ connection<Handler>::connection(size_t dop, twitch<Handler> &handler)
         _ssl_context
     }
     , _read_buffer{ &_buffer[BUFFER_READ_OFFSET], BUFFER_READ_SIZE }
-    , _read_buffer{ &_buffer[BUFFER_WRITE_OFFSET], BUFFER_WRITE_SIZE }
+    , _write_buffer{ &_buffer[BUFFER_WRITE_OFFSET], BUFFER_WRITE_SIZE }
     , _signals{ _io_context }
     , _handler{ handler }
     , _host{}
