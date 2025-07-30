@@ -165,7 +165,6 @@ void connection::on_read_chunk(
     }); // shutdown
     }); // read chunk
 };
-
 void connection::on_reset() {
     _io_context.restart();
     _request.clear();

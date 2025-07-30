@@ -5,6 +5,7 @@
 
 #include "re2/re2.h"
 
+#include "ai/chat/clients/console.hpp"
 #include "ai/chat/telemetry.hpp"
 
 namespace ai {

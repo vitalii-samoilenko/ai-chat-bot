@@ -1,8 +1,8 @@
 #ifndef AI_CHAT_CLIENTS_DETAIL_CONNECTION_HPP
 #define AI_CHAT_CLIENTS_DETAIL_CONNECTION_HPP
 
-#include <queue>
 #include <string>
+#include <vector>
 
 #include "boost/asio/ssl.hpp"
 #include "boost/asio.hpp"
@@ -12,6 +12,7 @@
 #include "eboost/beast.hpp"
 #include "re2/re2.h"
 
+#include "ai/chat/clients/twitch.hpp"
 #include "ai/chat/telemetry.hpp"
 
 namespace ai {
@@ -22,6 +23,12 @@ namespace detail {
 template<typename Handler>
 class connection {
 private:
+    static size_t constexpr BUFFER_TOTAL_SIZE{ 8192 };
+    static size_t constexpr BUFFER_READ_SIZE{ BUFFER_TOTAL_SIZE / 2 };
+    static size_t constexpr BUFFER_WRITE_SIZE{ BUFFER_TOTAL_SIZE / 2 };
+    static size_t constexpr BUFFER_READ_OFFSET{ 0 };
+    static size_t constexpr BUFFER_WRITE_OFFSET{ BUFFER_READ_SIZE };
+
     friend ::eboost::beast::metered_rate_policy<connection>;
     friend twitch<Handler>;
 
@@ -43,10 +50,8 @@ private:
     void on_connect(
         DECLARE_ONLY_SPAN(root));
     void on_read();
-    void on_push(::std::string &&request
-        DECLARE_SPAN(root));
     void on_write(
-        DECLARE_ONLY_SPAN(root));
+        DECLARE_ONLY_SPAN(span));
     void on_disconnect(
         DECLARE_ONLY_SPAN(root));
     void on_send(
@@ -56,14 +61,17 @@ private:
     void on_leave(
         DECLARE_ONLY_SPAN(root));
 
+    char _buffer[BUFFER_TOTAL_SIZE];
     ::boost::asio::io_context _io_context;
     ::boost::asio::thread_pool _io_run_context;
-    ::boost::asio::thread_pool _h_context;
-    ::boost::asio::ip::tcp::resolver _resolver;
+    ::boost::asio::thread_pool _handler_context;
+    ::boost::asio::ip::tcp::resolver _dns_resolver;
     ::boost::asio::ssl::context _ssl_context;
-    ::boost::beast::websocket::stream<::boost::asio::ssl::stream<::eboost::beast::metered_tcp_stream<connection>>> _stream;
+    ::boost::beast::websocket::stream<::boost::asio::ssl::stream<::eboost::beast::metered_tcp_stream<connection>>> _ws_ssl_stream;
+    ::boost::beast::flat_static_buffer_base _read_buffer;
+    ::boost::beast::flat_static_buffer_base _write_buffer;
     ::boost::asio::signal_set _signals;
-    twitch<Handler>& _handler;
+    twitch<Handler> &_handler;
     ::std::string _host;
     ::std::string _port;
     ::std::string _path;
@@ -75,8 +83,6 @@ private:
     ::std::string _channel;
     ::std::string _message_content;
     ::std::string _message_channel;
-    ::std::queue<::std::string> _q_write;
-    ::boost::beast::flat_buffer _buffer;
     ::std::chrono::nanoseconds _next;
     ::RE2 _re_notice;
     ::RE2 _re_line;

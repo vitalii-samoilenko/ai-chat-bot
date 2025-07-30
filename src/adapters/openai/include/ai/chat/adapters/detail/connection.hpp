@@ -19,15 +19,15 @@ namespace detail {
 
 class connection {
 private:
-    static constexpr size_t BUFFER_TOTAL_SIZE{ 8192 };
-    static constexpr size_t BUFFER_JSON_SERIALIZER_SIZE{ BUFFER_TOTAL_SIZE };
-    static constexpr size_t BUFFER_RESPONSE_PARSER_SIZE{ BUFFER_TOTAL_SIZE / 2 };
-    static constexpr size_t BUFFER_READ_SIZE{ BUFFER_TOTAL_SIZE / 4 };
-    static constexpr size_t BUFFER_JSON_PARSER_SIZE{ BUFFER_TOTAL_SIZE / 4 };
-    static constexpr size_t BUFFER_JSON_SERIALIZER_OFFSET{ 0 };
-    static constexpr size_t BUFFER_RESPONSE_PARSER_OFFSET{ 0 };
-    static constexpr size_t BUFFER_READ_OFFSET{ BUFFER_RESPONSE_PARSER_OFFSET + BUFFER_RESPONSE_PARSER_SIZE };
-    static constexpr size_t BUFFER_JSON_PARSER_OFFSET{ BUFFER_READ_OFFSET + BUFFER_READ_SIZE };
+    static size_t constexpr BUFFER_TOTAL_SIZE{ 8192 };
+    static size_t constexpr BUFFER_JSON_SERIALIZER_SIZE{ BUFFER_TOTAL_SIZE };
+    static size_t constexpr BUFFER_RESPONSE_PARSER_SIZE{ BUFFER_TOTAL_SIZE / 2 };
+    static size_t constexpr BUFFER_READ_SIZE{ BUFFER_TOTAL_SIZE / 4 };
+    static size_t constexpr BUFFER_JSON_PARSER_SIZE{ BUFFER_TOTAL_SIZE / 4 };
+    static size_t constexpr BUFFER_JSON_SERIALIZER_OFFSET{ 0 };
+    static size_t constexpr BUFFER_RESPONSE_PARSER_OFFSET{ 0 };
+    static size_t constexpr BUFFER_READ_OFFSET{ BUFFER_RESPONSE_PARSER_OFFSET + BUFFER_RESPONSE_PARSER_SIZE };
+    static size_t constexpr BUFFER_JSON_PARSER_OFFSET{ BUFFER_READ_OFFSET + BUFFER_READ_SIZE };
 
     friend ::eboost::beast::metered_rate_policy<connection>;
     friend iterator;

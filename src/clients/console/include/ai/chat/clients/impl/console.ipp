@@ -3,6 +3,8 @@
 
 #include <stdexcept>
 
+#include "ai/chat/clients/console.hpp"
+
 namespace ai {
 namespace chat {
 namespace clients {

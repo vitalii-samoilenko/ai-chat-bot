@@ -1,18 +1,37 @@
 #ifndef AI_CHAT_CLIENTS_DETAIL_AUTH_CONNECTION_IPP
 #define AI_CHAT_CLIENTS_DETAIL_AUTH_CONNECTION_IPP
 
+#include "ai/chat/clients/detail/auth_connection.hpp"
+
 namespace ai {
 namespace chat {
 namespace clients {
 namespace detail {
 
 auth_connection::auth_connection()
-    : _io_context{}
-    , _resolver{ _io_context }
+    : // _buffer{},
+      _io_context{}
+    , _dns_resolver{ _io_context }
     , _ssl_context{ ::boost::asio::ssl::context::tlsv12_client }
-    , _stream{ ::eboost::beast::metered_tcp_stream<auth_connection>{ ::eboost::beast::metered_rate_policy<auth_connection>{ *this }, _io_context }, _ssl_context }
-    , _buffer{}
-    , _context{ nullptr }
+    , _ssl_stream{
+        ::eboost::beast::metered_tcp_stream<auth_connection>{
+            ::eboost::beast::metered_rate_policy<auth_connection>{ *this },
+            _io_context
+        },
+        _ssl_context
+    }
+    , _request{}
+    , _response{}
+    , _request_serializer{ _request }
+    , _response_parser{}
+    , _read_buffer{ &_buffer[BUFFER_READ_OFFSET], BUFFER_READ_SIZE }
+    , _request_body{}
+    , _response_body{ nullptr }
+    , _json_parser{
+        ::boost::json::get_null_resource(),
+        ::boost::json::parse_options{},
+        reinterpret_cast<unsigned char *>(&_buffer[BUFFER_JSON_PARSER_OFFSET]), BUFFER_JSON_PARSER_SIZE
+    }
     , _host{}
     , _port{}
     , _path{}
@@ -39,62 +58,118 @@ void auth_connection::bytes_tx(size_t n) {
 };
 
 void auth_connection::on_init() {
+    _ssl_context.set_verify_mode(::boost::asio::ssl::verify_none);
     _t_validate = _path + "validate";
     _t_token = _path + "token";
     _t_device = _path + "device";
-    _ssl_context.set_verify_mode(::boost::asio::ssl::verify_none);
 };
-template<typename Request, typename Response>
-void auth_connection::on_send(Request &request, Response &response
-    DECLARE_SPAN(root)) {
+void auth_connection::on_send(
+    DECLARE_ONLY_SPAN(root)) {
     START_SUBSPAN(span, "on_send", root, (*this))
-    request.set(::boost::beast::http::field::host, _host);
-    request.set(::boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-    if (!::SSL_set_tlsext_host_name(_stream.native_handle(), _host.c_str())) {
+    if (!::SSL_set_tlsext_host_name(_ssl_stream.native_handle(), _host.c_str())) {
         throw ::boost::beast::system_error{
             static_cast<int>(::ERR_get_error()),
             ::boost::asio::error::get_ssl_category()
         };
     }
-    _stream.set_verify_callback(::boost::asio::ssl::host_name_verification{ _host });
-    ::boost::beast::get_lowest_layer(_stream).expires_after(_timeout);
+    _ssl_stream.set_verify_callback(::boost::asio::ssl::host_name_verification{ _host });
+    ::boost::beast::get_lowest_layer(_ssl_stream).expires_after(_timeout);
     START_SUBSPAN(operation, "on_dns_resolve", span, (*this))
-    _resolver.async_resolve(_host, _port, [this, &request, &response PROPAGATE_SPAN(span) PROPAGATE_SPAN(operation)](::boost::beast::error_code error_code, ::boost::asio::ip::tcp::resolver::results_type results) mutable ->void {
+    _dns_resolver.async_resolve(_host, _port, [this PROPAGATE_SPAN(span) PROPAGATE_SPAN(operation)](::boost::beast::error_code error_code, ::boost::asio::ip::tcp::resolver::results_type results) mutable ->void {
     ::eboost::beast::ensure_success(error_code);
     RESTART_SUBSPAN(operation, "on_tcp_connect", span, (*this))
-    ::boost::beast::get_lowest_layer(_stream).async_connect(results, [this, &request, &response PROPAGATE_SPAN(span) PROPAGATE_SPAN(operation)](::boost::beast::error_code error_code, ::boost::asio::ip::tcp::resolver::results_type::endpoint_type) mutable ->void {
+    ::boost::beast::get_lowest_layer(_ssl_stream).async_connect(results, [this PROPAGATE_SPAN(span) PROPAGATE_SPAN(operation)](::boost::beast::error_code error_code, ::boost::asio::ip::tcp::resolver::results_type::endpoint_type) mutable ->void {
     ::eboost::beast::ensure_success(error_code);
     RESTART_SUBSPAN(operation, "on_ssl_handshake", span, (*this))
-    _stream.async_handshake(::boost::asio::ssl::stream_base::client, [this, &request, &response PROPAGATE_SPAN(span) PROPAGATE_SPAN(operation)](::boost::beast::error_code error_code) mutable ->void {
+    _ssl_stream.async_handshake(::boost::asio::ssl::stream_base::client, [this PROPAGATE_SPAN(span) PROPAGATE_SPAN(operation)](::boost::beast::error_code error_code) mutable ->void {
     ::eboost::beast::ensure_success(error_code);
-    RESTART_SUBSPAN(operation, "on_write", span, (*this))
-    ::boost::beast::http::async_write(_stream, request, [this, &response PROPAGATE_SPAN(span) PROPAGATE_SPAN(operation)](::boost::beast::error_code error_code, size_t bytes_transferred) mutable ->void {
-    ::eboost::beast::ensure_success(error_code);
-    ::boost::ignore_unused(bytes_transferred);
-    RESTART_SUBSPAN(operation, "on_read", span, (*this))
-    ::boost::beast::http::async_read(_stream, _buffer, response, [this PROPAGATE_SPAN(span) PROPAGATE_SPAN(operation)](::boost::beast::error_code error_code, size_t bytes_transferred) mutable ->void {
+    RESTART_SUBSPAN(operation, "on_write_headers", span, (*this))
+    ::boost::beast::http::async_write_header(_ssl_stream, _request_serializer, [this PROPAGATE_SPAN(span) PROPAGATE_SPAN(operation)](::boost::beast::error_code error_code, size_t bytes_transferred) mutable ->void {
     ::eboost::beast::ensure_success(error_code);
     ::boost::ignore_unused(bytes_transferred);
+    STOP_SPAN(operation)
+    on_write_chunk(
+        PROPAGATE_ONLY_SPAN(span));
+
+    }); // write headers
+    }); // SSL handshake
+    }); // TCP connect
+    }); // DNS resolve
+};
+void auth_connection::on_write_chunk(
+    DECLARE_ONLY_SPAN(span)) {
+    START_SUBSPAN(operation, "on_write_chunk", span, (*this))
+    ::std::string_view chunk{ _request_body };
+    _request.body().data = const_cast<char *>(chunk.data());
+    _request.body().size = chunk.size();
+    _request.body().more = false;
+    LOG_INFO(chunk.data(), chunk.size(), operation, (*this));
+    ::boost::beast::http::async_write(_ssl_stream, _request_serializer, [this PROPAGATE_SPAN(span) PROPAGATE_SPAN(operation)](::boost::beast::error_code error_code, size_t bytes_transferred) mutable ->void {
+    if (error_code == ::boost::beast::http::error::need_buffer) {
+        STOP_SPAN(operation)
+        on_write_chunk(
+            PROPAGATE_ONLY_SPAN(span));
+        return;
+    }
+    ::eboost::beast::ensure_success(error_code);
+    ::boost::ignore_unused(bytes_transferred);
+    RESTART_SUBSPAN(operation, "on_read_headers", span, (*this))
+    ::boost::beast::http::async_read_header(_ssl_stream, _read_buffer, _response_parser, [this PROPAGATE_SPAN(span) PROPAGATE_SPAN(operation)](::boost::beast::error_code error_code, size_t bytes_transferred) mutable ->void {
+    ::eboost::beast::ensure_success(error_code);
+    ::boost::ignore_unused(bytes_transferred);
+    STOP_SPAN(operation)
+    _json_parser.reset();
+    on_read_chunk(
+        PROPAGATE_ONLY_SPAN(span));
+
+    }); // read headers    
+    }); // write chunk
+};
+void auth_connection::on_read_chunk(
+    DECLARE_ONLY_SPAN(span)) {
+    START_SUBSPAN(operation, "on_read_chunk", span, (*this))
+    ::boost::beast::http::response<::boost::beast::http::buffer_body> &response{ _response_parser.get() };
+    response.body().data = &_buffer[BUFFER_RESPONSE_PARSER_OFFSET];
+    response.body().size = BUFFER_RESPONSE_PARSER_SIZE;
+    ::boost::beast::http::async_read(_ssl_stream, _read_buffer, _response_parser, [this PROPAGATE_SPAN(span) PROPAGATE_SPAN(operation)](::boost::beast::error_code error_code, size_t bytes_transferred) mutable ->void {
+    if (!(error_code == ::boost::beast::http::error::need_buffer)) {
+        ::eboost::beast::ensure_success(error_code);
+    }
+    LOG_INFO(&_buffer[BUFFER_RESPONSE_PARSER_OFFSET], bytes_transferred, operation, (*this));
+    _json_parser.write_some(&_buffer[BUFFER_RESPONSE_PARSER_OFFSET], bytes_transferred);
+    STOP_SPAN(operation)
+    if (error_code == ::boost::beast::http::error::need_buffer) {
+        on_read_chunk(
+            PROPAGATE_ONLY_SPAN(span));
+        return;
+    }
+    _response = _response_parser.release();
+    _response_body = _json_parser.release();
     RESTART_SUBSPAN(operation, "on_shutdown", span, (*this))
-    _stream.async_shutdown([this PROPAGATE_SPAN(span) PROPAGATE_SPAN(operation)](::boost::beast::error_code error_code) mutable ->void {
+    _ssl_stream.async_shutdown([this PROPAGATE_SPAN(span) PROPAGATE_SPAN(operation)](::boost::beast::error_code error_code) mutable ->void {
     if (error_code == ::boost::asio::ssl::error::stream_truncated) {
         return;
     }
     ::eboost::beast::ensure_success(error_code);
 
     }); // shutdown
-    }); // read
-    }); // write
-    }); // SSL handshake
-    }); // TCP connect
-    }); // resolve
+    }); // read chunk
 };
-void auth_connection::_stream_reset() {
-    _stream.~stream();
-    new(&_stream) ::boost::asio::ssl::stream<::eboost::beast::metered_tcp_stream<auth_connection>>{
-        ::eboost::beast::metered_tcp_stream<auth_connection>{ ::eboost::beast::metered_rate_policy<auth_connection>{ *this }, _io_context },
+void auth_connection::on_reset() {
+    _io_context.restart();
+    _request.clear();
+    _ssl_stream.~stream();
+    new(&_ssl_stream) ::boost::asio::ssl::stream<::eboost::beast::metered_tcp_stream<auth_connection>>{
+        ::eboost::beast::metered_tcp_stream<auth_connection>{
+            ::eboost::beast::metered_rate_policy<auth_connection>{ *this },
+            _io_context
+        },
         _ssl_context
     };
+    _request_serializer.~serializer();
+    new(&_request_serializer) ::boost::beast::http::request_serializer<::boost::beast::http::buffer_body>{ _request };
+    _response_parser.~parser();
+    new(&_response_parser) ::boost::beast::http::response_parser<::boost::beast::http::buffer_body>{};
 };
 
 } // detail

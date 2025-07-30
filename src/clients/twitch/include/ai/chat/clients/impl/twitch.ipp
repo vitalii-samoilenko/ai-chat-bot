@@ -6,6 +6,8 @@
 
 #include "re2/re2.h"
 
+#include "ai/chat/clients/twitch.hpp"
+
 namespace ai {
 namespace chat {
 namespace clients {
@@ -86,13 +88,12 @@ void twitch<Handler>::leave() {
         PROPAGATE_SPAN(span)]()->void {
     _channel.on_leave(
         PROPAGATE_ONLY_SPAN(span));
-    _channel._channel.clear();
 
     }); // post
 };
 template<typename Handler>
 void twitch<Handler>::attach() {
-    _channel._h_context.attach();
+    _channel._handler_context.attach();
 };
 
 template<typename Handler>

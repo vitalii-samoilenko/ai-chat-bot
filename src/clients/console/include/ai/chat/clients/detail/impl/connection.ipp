@@ -3,6 +3,8 @@
 
 #include <iostream>
 
+#include "ai/chat/clients/detail/connection.hpp"
+
 namespace ai {
 namespace chat {
 namespace clients {

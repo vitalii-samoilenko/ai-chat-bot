@@ -1,6 +1,7 @@
+#include <exception>
 #include <fstream>
 #include <iostream>
-#include <exception>
+#include <string>
 #include <vector>
 
 #include "boost/json.hpp"
@@ -175,10 +176,6 @@ int main(int argc, char* argv[]) {
     }
 
     #ifdef CLIENT_TWITCH
-    ::ai::chat::clients::auth auth{
-        config.at("client").at("auth").at("address").as_string(),
-        ::std::chrono::milliseconds{ config.at("client").at("auth").at("timeout").as_int64() },
-    };
     ::ai::chat::clients::observable<::ai::chat::clients::twitch> client{
         config.at("client").at("address").as_string(),
         ::std::chrono::milliseconds{ config.at("client").at("timeout").as_int64() },
@@ -265,15 +262,23 @@ int main(int argc, char* argv[]) {
         config.at("botname").as_string());
 
     #ifdef CLIENT_TWITCH
-    ::ai::chat::clients::token_context access_context{
-        auth.refresh_token(
-            config.at("client").at("auth").at("client_id").as_string(),
-            config.at("client").at("auth").at("client_secret").as_string(),
-            config.at("client").at("auth").at("refresh_token").as_string())
-    };
+    ::std::string access_token{};
+    {
+        ::ai::chat::clients::auth auth{
+            config.at("client").at("auth").at("address").as_string(),
+            ::std::chrono::milliseconds{ config.at("client").at("auth").at("timeout").as_int64() },
+        };
+        ::ai::chat::clients::token_context access_context{
+            auth.refresh_token(
+                config.at("client").at("auth").at("client_id").as_string(),
+                config.at("client").at("auth").at("client_secret").as_string(),
+                config.at("client").at("auth").at("refresh_token").as_string())
+        };
+        access_token = access_context.access_token;
+    }
     client.connect(
         config.at("botname").as_string(),
-        access_context.access_token);
+        access_token);
     #else
     client.connect(
         config.at("client").at("username").as_string());

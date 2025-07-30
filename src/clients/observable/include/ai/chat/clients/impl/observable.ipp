@@ -4,6 +4,8 @@
 #include <functional>
 #include <utility>
 
+#include "ai/chat/clients/observable.hpp"
+
 namespace ai {
 namespace chat {
 namespace clients {
