@@ -208,12 +208,12 @@ void connection<Handler>::on_read() {
     }
     ::eboost::beast::ensure_success(error_code);
     ::boost::asio::const_buffer response{ _read_buffer.cdata() };
-    LOG_INFO(reinterpret_cast<char *>(response.data()), bytes_transferred, operation, (*this));
+    LOG_INFO(reinterpret_cast<char const *>(response.data()), bytes_transferred, operation, (*this));
     bool pong{ false };
     bool disconnect{ false };
     {
         ::std::string_view line{};
-        ::std::string_view cursor{ reinterpret_cast<char *>(response.data()), bytes_transferred };
+        ::std::string_view cursor{ reinterpret_cast<char const *>(response.data()), bytes_transferred };
         while (::RE2::FindAndConsume(&cursor, _re_line,
                 &line)) {
             ::std::string_view arg1{};
@@ -314,8 +314,8 @@ void connection<Handler>::on_write(
     }
     START_SUBSPAN(operation, "on_write", span, (*this))
     ::boost::asio::const_buffer stripe{ _write_buffer.data() };
-    ::boost::asio::const_buffer request{ reinterpret_cast<char *>(stripe.data()) + sizeof(size_t), *reinterpret_cast<size_t *>(stripe.data()) };
-    LOG_INFO(reinterpret_cast<char *>(request.data()), request.size(), operation, (*this));
+    ::boost::asio::const_buffer request{ reinterpret_cast<char const *>(stripe.data()) + sizeof(size_t), *reinterpret_cast<size_t *>(stripe.data()) };
+    LOG_INFO(reinterpret_cast<char const *>(request.data()), request.size(), operation, (*this));
     _ws_ssl_stream.async_write(request, [this PROPAGATE_SPAN(span) PROPAGATE_SPAN(operation)](::boost::beast::error_code error_code, size_t bytes_transferred) mutable ->void {
     if (error_code == ::boost::beast::errc::operation_canceled) {
         return;
