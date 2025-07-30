@@ -314,7 +314,7 @@ void connection<Handler>::on_write(
     }
     START_SUBSPAN(operation, "on_write", span, (*this))
     ::boost::asio::const_buffer stripe{ _write_buffer.data() };
-    ::boost::asio::const_buffer request{ reinterpret_cast<char const *>(stripe.data()) + sizeof(size_t), *reinterpret_cast<size_t *>(stripe.data()) };
+    ::boost::asio::const_buffer request{ reinterpret_cast<char const *>(stripe.data()) + sizeof(size_t), *reinterpret_cast<size_t const *>(stripe.data()) };
     LOG_INFO(reinterpret_cast<char const *>(request.data()), request.size(), operation, (*this));
     _ws_ssl_stream.async_write(request, [this PROPAGATE_SPAN(span) PROPAGATE_SPAN(operation)](::boost::beast::error_code error_code, size_t bytes_transferred) mutable ->void {
     if (error_code == ::boost::beast::errc::operation_canceled) {
