@@ -102,7 +102,7 @@ void connection<Handler>::on_connect(
     _ws_ssl_stream.next_layer().set_verify_callback(::boost::asio::ssl::host_name_verification{ _host });
     ::boost::beast::get_lowest_layer(_ws_ssl_stream).expires_after(_timeout);
     START_SUBSPAN(operation, "on_dns_resolve", span, (*this))
-    _resolver.async_resolve(_host, _port, [this PROPAGATE_SPAN(span) PROPAGATE_SPAN(operation)](::boost::beast::error_code error_code, ::boost::asio::ip::tcp::resolver::results_type results) mutable ->void {
+    _dns_resolver.async_resolve(_host, _port, [this PROPAGATE_SPAN(span) PROPAGATE_SPAN(operation)](::boost::beast::error_code error_code, ::boost::asio::ip::tcp::resolver::results_type results) mutable ->void {
     if (error_code == ::boost::beast::errc::operation_canceled) {
         return;
     }
@@ -242,7 +242,7 @@ void connection<Handler>::on_read() {
             } else if (::RE2::FullMatch(line, _re_message,
                     &arg1, &arg2, &arg3)) {
                 START_SUBSPAN(span, "message", operation, (*this))
-                ::boost::asio::post(_h_context, [this,
+                ::boost::asio::post(_handler_context, [this,
                     username = ::std::string{ arg1 },
                     channel = ::std::string{ arg2 },
                     content = ::std::string{ arg3 }
@@ -270,7 +270,7 @@ void connection<Handler>::on_read() {
         char const PONG[]{ "PONG :tmi.twitch.tv" };
         ::boost::asio::mutable_buffer request{ _write_buffer.prepare(sizeof(size_t) + ::std::size(PONG) - 1) };
         *reinterpret_cast<size_t *>(request.data()) = request.size() - sizeof(size_t);
-        ::std::memcpy(reinterpret_cast<char *>(request.data()) + sizeof(size_t), JOIN, ::std::size(JOIN) - 1);
+        ::std::memcpy(reinterpret_cast<char *>(request.data()) + sizeof(size_t), PONG, ::std::size(PONG) - 1);
         _write_buffer.commit(request.size());
         if (_write_buffer.size() == request.size()) {
             on_write(
