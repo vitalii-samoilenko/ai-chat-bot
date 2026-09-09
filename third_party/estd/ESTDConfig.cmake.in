@@ -1,0 +1,7 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+check_required_components(ESTD)
+
+include(${CMAKE_CURRENT_LIST_DIR}/estdTargets.cmake)
