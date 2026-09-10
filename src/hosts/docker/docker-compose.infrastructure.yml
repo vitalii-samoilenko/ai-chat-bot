@@ -4,7 +4,7 @@ name:
 services:
   loki:
     container_name: loki
-    image: grafana/loki
+    image: grafana/loki:3.7.7
     volumes:
       - ./loki:/etc/loki
       - data.loki:/data
@@ -15,7 +15,7 @@ services:
 
   tempo:
     container_name: tempo
-    image: grafana/tempo
+    image: grafana/tempo:3.0.3
     volumes:
       - ./tempo:/etc/tempo
       - data.tempo:/data
@@ -26,16 +26,17 @@ services:
 
   prometheus:
     container_name: prometheus
-    image: prom/prometheus
+    image: prom/prometheus:v3.14.0
     volumes:
       - ./prometheus:/etc/prometheus
-      - data.prometheus:/prometheus
+      - data.prometheus:/data
     command: 
       - --config.file=/etc/prometheus/config.yaml
-      - --web.enable-remote-write-receiver
-      - --storage.tsdb.retention.time=72h
-    ports:
-      - 9090:9090
+      - --storage.tsdb.path=/data
+      - --web.listen-address=0.0.0.0:8080
+      - --web.enable-otlp-receiver
+      - --enable-feature=promql-experimental-functions
+      - --enable-feature=otlp-deltatocumulative
     networks:
       - ai-chat-hosts-docker
 
@@ -45,17 +46,19 @@ services:
       - loki
       - tempo
       - prometheus
-    image: grafana/alloy
+    image: grafana/alloy:v1.19.2
     volumes:
       - ./alloy:/etc/alloy
+      - data.alloy:/data
     command:
       - run
-      - --server.http.listen-addr=0.0.0.0:3300
+      - --server.http.listen-addr=0.0.0.0:8080
       - --disable-reporting
+      - --storage.path=/data
       - /etc/alloy/config.alloy
     ports:
-      - 3300:3300
-      - 4317:4317
+      - 8080:8080
+      - 8081:8081
     networks:
       - ai-chat-hosts-docker
 
@@ -68,10 +71,10 @@ services:
       - loki
       - tempo
       - prometheus
-    image: grafana/grafana
+    image: grafana/grafana:13.2.1
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning
-      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - ./grafana/dashboards:/etc/grafana/dashboards
     ports:
       - 3000:3000
     networks:
@@ -87,4 +90,6 @@ volumes:
   data.tempo:
     external: true
   data.prometheus:
+    external: true
+  data.alloy:
     external: true

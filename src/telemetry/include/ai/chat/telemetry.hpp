@@ -25,7 +25,7 @@
 #include "estd/system.hpp"
 
 #define SYSTEM_CALLBACKS()\
-void on_cpu_total(::opentelemetry::metrics::ObserverResult observer_result, void *state) {\
+void _ot_on_cpu_total(::opentelemetry::metrics::ObserverResult observer_result, void *state) {\
 	auto usage = ::eboost::system::cpu::get_usage();\
 	auto gauge = ::opentelemetry::nostd::get<\
 		::opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(\
@@ -38,7 +38,7 @@ void on_cpu_total(::opentelemetry::metrics::ObserverResult observer_result, void
 	});\
 };\
 \
-void on_memory_total(::opentelemetry::metrics::ObserverResult observer_result, void *state) {\
+void _ot_on_memory_total(::opentelemetry::metrics::ObserverResult observer_result, void *state) {\
 	auto usage = ::eboost::system::memory::get_usage();\
 	auto gauge = ::opentelemetry::nostd::get<\
 		::opentelemetry::nostd::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(\
@@ -49,7 +49,7 @@ void on_memory_total(::opentelemetry::metrics::ObserverResult observer_result, v
 	gauge->Observe(usage.shared, {\
 		{"type", "shared"}\
 	});\
-};
+}
 #define INIT_TELEMETRY(endpoint, service_name)\
 {\
 	::opentelemetry::exporter::otlp::OtlpGrpcLogRecordExporterOptions options{};\
@@ -97,95 +97,73 @@ void on_memory_total(::opentelemetry::metrics::ObserverResult observer_result, v
 	::std::shared_ptr<::opentelemetry::trace::TracerProvider> api_provider{ ::std::move(sdk_provider) };\
 	::opentelemetry::trace::Provider::SetTracerProvider(api_provider);\
 }\
-auto meter = ::opentelemetry::metrics::Provider::GetMeterProvider()\
+auto _ot_meter = ::opentelemetry::metrics::Provider::GetMeterProvider()\
 	->GetMeter(service_name);\
-auto m_cpu_total = meter->CreateInt64ObservableGauge(\
+auto _ot_cpu_total = meter->CreateInt64ObservableGauge(\
 	service_name\
 	"_cpu_total"\
 );\
-m_cpu_total->AddCallback(on_cpu_total, nullptr);\
-auto m_memory_total = meter->CreateInt64ObservableGauge(\
+_ot_cpu_total->AddCallback(_ot_on_cpu_total, nullptr);\
+auto _ot_memory_total = meter->CreateInt64ObservableGauge(\
 	service_name\
 	"_memory_total"\
 );\
-m_memory_total->AddCallback(on_memory_total, nullptr);
+_ot_memory_total->AddCallback(_ot_on_memory_total, nullptr)
 
 #define DECLARE_LOGGER()\
-::opentelemetry::nostd::shared_ptr<::opentelemetry::logs::Logger> _logger;
+::opentelemetry::nostd::shared_ptr<::opentelemetry::logs::Logger> _ot_logger
 #define DELCARE_TRACER()\
-::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Tracer> _tracer;
+::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Tracer> _ot_tracer
 #define DECLARE_METER()\
-::opentelemetry::nostd::shared_ptr<::opentelemetry::metrics::Meter> _meter;
-#define DECLARE_GAUGE(identifier)\
-::opentelemetry::nostd::unique_ptr<::opentelemetry::metrics::Gauge<int64_t>> identifier;
+::opentelemetry::nostd::shared_ptr<::opentelemetry::metrics::Meter> _ot_meter
 #define DECLARE_COUNTER(identifier)\
-::opentelemetry::nostd::unique_ptr<::opentelemetry::metrics::Counter<uint64_t>> identifier;
-#define DECLARE_ONLY_SPAN(identifier)\
-::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> identifier
-#define DECLARE_SPAN(identifier)\
-, ::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> identifier
+::opentelemetry::nostd::unique_ptr<::opentelemetry::metrics::Counter<uint64_t>> _ot_ ## identifier
+#define DECLARE_GAUGE(identifier)\
+::opentelemetry::nostd::unique_ptr<::opentelemetry::metrics::Gauge<int64_t>> _ot_ ## identifier
 
-#define INIT_LOGGER(name)\
-, _logger{\
+#define a_INIT_LOGGER(name)\
+, _ot_logger{\
 	::opentelemetry::logs::Provider::GetLoggerProvider()\
 		->GetLogger(name)\
 }
-#define INIT_TRACER(name)\
-, _tracer{\
+#define a_INIT_TRACER(name)\
+, _ot_tracer{\
 	::opentelemetry::trace::Provider::GetTracerProvider()\
 		->GetTracer(name)\
 }
-#define INIT_METER(name)\
-, _meter{\
+#define a_INIT_METER(name)\
+, _ot_meter{\
 	::opentelemetry::metrics::Provider::GetMeterProvider()\
 		->GetMeter(name)\
 }
-#define INIT_GAUGE(identifier, name)\
-, identifier{ _meter->CreateInt64Gauge(name) }
-#define INIT_COUNTER(identifier, name)\
-, identifier{ _meter->CreateUInt64Counter(name) }
+#define a_INIT_COUNTER(identifier, name)\
+, _ot_ ## identifier{ _ot_meter->CreateUInt64Counter(name) }
+#define a_INIT_GAUGE(identifier, name)\
+, _ot_ ## identifier{ _ot_meter->CreateInt64Gauge(name) }
 
-#define START_SPAN(identifier, name, context_identifier)\
-::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> identifier{\
-	context_identifier._tracer->StartSpan(name)\
-};
-#define START_SUBSPAN(identifier, name, parent_identifier, context_identifier)\
-::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> identifier{\
-	context_identifier._tracer->StartSpan(name, ::opentelemetry::trace::StartSpanOptions{\
+#define START_SPAN(context_identifier, identifier, name)\
+::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> _ot_ ## identifier{\
+	context_identifier._ot_tracer->StartSpan(name)\
+}
+#define START_SUBSPAN(context_identifier, parent_identifier, identifier, name)\
+::opentelemetry::nostd::shared_ptr<::opentelemetry::trace::Span> _ot_ ## identifier{\
+	context_identifier._ot_tracer->StartSpan(name, ::opentelemetry::trace::StartSpanOptions{\
 		{}, {},\
 		parent_identifier->GetContext()\
 	})\
-};
-#define RESTART_SUBSPAN(identifier, name, parent_identifier, context_identifier)\
-identifier = context_identifier._tracer->StartSpan(name, ::opentelemetry::trace::StartSpanOptions{\
-	{}, {},\
-	parent_identifier->GetContext()\
-});
-#define PROPAGATE_ONLY_SPAN(identifier)\
-identifier
-#define PROPAGATE_SPAN(identifier)\
-, identifier
-
+}
 #define STOP_SPAN(identifier)\
-identifier = nullptr;
-#define START_SUBSCOPE(identifier, name, parent_identifier, context_identifier)\
-::opentelemetry::trace::Scope identifier{\
-	context_identifier._tracer->StartSpan(name, ::opentelemetry::trace::StartSpanOptions\
-	{\
-		{}, {},\
-		parent_identifier->GetContext()\
-	})\
-};
+_ot_ ## identifier = nullptr
 
-#define LOG_INFO(what_data, what_size, parent_identifier, context_identifier)\
-context_identifier._logger->Info(::opentelemetry::nostd::string_view{ what_data, what_size },\
-	parent_identifier->GetContext());
+#define LOG_INFO(context_identifier, parent_identifier, what)\
+context_identifier._ot_logger->Info(what, _ot_ ## parent_identifier)
+
 #define TAG(name, value)\
 {name, value}
 #define ADD_COUNTER(identifier, value, tags)\
-identifier->Add(value, tags);
+_ot_ ## identifier->Add(value, tags)
 #define RECORD_GAUGE(identifier, what, tags)\
-identifier->Record(static_cast<int64_t>(what), tags);
+_ot_ ## identifier->Record(static_cast<int64_t>(what), tags)
 
 #else
 
@@ -197,8 +175,6 @@ identifier->Record(static_cast<int64_t>(what), tags);
 #define DECLARE_METER()
 #define DECLARE_GAUGE(identifier)
 #define DECLARE_COUNTER(identifier)
-#define DECLARE_ONLY_SPAN(identifier)
-#define DECLARE_SPAN(identifier)
 
 #define INIT_LOGGER(name)
 #define INIT_TRACER(name)
@@ -206,15 +182,12 @@ identifier->Record(static_cast<int64_t>(what), tags);
 #define INIT_GAUGE(identifier, name)
 #define INIT_COUNTER(identifier, name)
 
-#define START_SPAN(identifier, name, context_identifier)
-#define START_SUBSPAN(identifier, name, parent_identifier, context_identifier)
-#define RESTART_SUBSPAN(identifier, name, parent_identifier, context_identifier)
-#define PROPAGATE_ONLY_SPAN(identifier)
-#define PROPAGATE_SPAN(identifier)
+#define START_SPAN(context_identifier, identifier, name)
+#define START_SUBSPAN(context_identifier, parent_identifier, identifier, name)
 #define STOP_SPAN(identifier)
-#define START_SUBSCOPE(identifier, name, parent_identifier, context_identifier)
 
-#define LOG_INFO(what_data, what_size, parent_identifier, context_identifier)
+#define LOG_INFO(context_identifier, parent_identifier, what)
+
 #define TAG(name, value)
 #define ADD_COUNTER(identifier, value, tags)
 #define RECORD_GAUGE(identifier, what, tags)

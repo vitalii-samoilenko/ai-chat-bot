@@ -2,46 +2,46 @@ livedebugging {
   enabled = true
 }
 
-otelcol.receiver.otlp "default" {
+otelcol.receiver.otlp "service" {
   grpc {
-    endpoint = "0.0.0.0:4317"
+    endpoint = "0.0.0.0:8081"
   }
 
   output {
-    metrics = [otelcol.processor.batch.default.input]
-    logs    = [otelcol.processor.batch.default.input]
-    traces  = [otelcol.processor.batch.default.input]
+    metrics = [otelcol.processor.batch.aggregator.input]
+    logs    = [otelcol.processor.batch.aggregator.input]
+    traces  = [otelcol.processor.batch.aggregator.input]
   }
 }
 
-otelcol.processor.batch "default" {
+otelcol.processor.batch "aggregator" {
   output {
-    metrics = [otelcol.exporter.prometheus.default.input]
-    logs    = [otelcol.exporter.loki.default.input]
-    traces  = [otelcol.exporter.otlp.default.input]
+    metrics = [otelcol.exporter.otlphttp.prometheus.input]
+    logs    = [otelcol.exporter.otlphttp.loki.input]
+    traces  = [otelcol.exporter.otlphttp.tempo.input]
   }
 }
 
-otelcol.exporter.loki "default" {
-  forward_to = [loki.write.default.receiver]
-}
-otelcol.exporter.prometheus "default" {
-  forward_to = [prometheus.remote_write.default.receiver]
-}
 
-prometheus.remote_write "default" {
-  endpoint {
-    url = "http://prometheus:9090/api/v1/write"
-  }
-}
-loki.write "default" {
-  endpoint {
-    url = "http://loki:3100/loki/api/v1/push"
-  }
-}
-otelcol.exporter.otlp "default" {
+otelcol.exporter.otlphttp "prometheus" {
   client {
-    endpoint = "tempo:4317"
+    endpoint = "prometheus:8080/api/v1/otlp"
+    tls {
+      insecure = true
+    }
+  }
+}
+otelcol.exporter.otlphttp "loki" {
+  client {
+    endpoint = "loki:8080/otlp"
+    tls {
+      insecure = true
+    }
+  }
+}
+otelcol.exporter.otlphttp "tempo" {
+  client {
+    endpoint = "tempo:8082"
     tls {
       insecure = true
     }

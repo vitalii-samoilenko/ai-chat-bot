@@ -1,43 +1,20 @@
 auth_enabled: false
 
 server:
-  http_listen_port: 3100
-  grpc_listen_port: 9096
   log_level: info
-  grpc_server_max_concurrent_streams: 1000
+  http_listen_port: 8080
+  grpc_listen_port: 8081
 
 common:
-  instance_addr: localhost
   path_prefix: /data/loki
-  storage:
-    filesystem:
-      chunks_directory: /data/loki/chunks
-      rules_directory: /data/loki/rules
   replication_factor: 1
   ring:
     kvstore:
       store: inmemory
 
-query_range:
-  results_cache:
-    cache:
-      embedded_cache:
-        enabled: true
-        max_size_mb: 100
-
-limits_config:
-  retention_period: 72h
-  metric_aggregation_enabled: true
-
-compactor:
-  working_directory: /data/loki/compactor
-  retention_enabled: true
-  retention_delete_delay: 2h
-  delete_request_store: filesystem
-
 schema_config:
   configs:
-    - from: 2020-10-24
+    - from: 2020-05-15
       store: tsdb
       object_store: filesystem
       schema: v13
@@ -45,16 +22,12 @@ schema_config:
         prefix: index_
         period: 24h
 
-pattern_ingester:
-  enabled: true
-  metric_aggregation:
-    loki_address: localhost:3100
+compactor:
+  retention_enabled: true
+  delete_request_store: filesystem
 
-ruler:
-  alertmanager_url: http://localhost:9093
-
-frontend:
-  encoding: protobuf
+limits_config:
+  retention_period: 72h
 
 analytics:
   reporting_enabled: false
