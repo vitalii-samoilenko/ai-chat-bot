@@ -69,20 +69,20 @@ block()
 endblock()
 
 block()
-	set(CARES_SOURCE_DIR ${PROJECT_SOURCE_DIR}/c-ares)
-	set(CARES_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/c-ares)
-	if(NOT EXISTS ${CARES_SOURCE_DIR}/CMakeLists.txt)
+	set(C_ARES_SOURCE_DIR ${PROJECT_SOURCE_DIR}/c-ares)
+	set(C_ARES_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/c-ares)
+	if(NOT EXISTS ${C_ARES_SOURCE_DIR}/CMakeLists.txt)
 		execute_process(COMMAND git submodule update
-				--init third_party/cares
+				--init third_party/c-ares
 			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 		execute_process(COMMAND git checkout cares-1_19_1
-			WORKING_DIRECTORY ${CARES_SOURCE_DIR}
+			WORKING_DIRECTORY ${C_ARES_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
-	if(NOT EXISTS ${CARES_BINARY_DIR}/configure.done)
+	if(NOT EXISTS ${C_ARES_BINARY_DIR}/configure.done)
 		execute_process(COMMAND cmake
 				-DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
 				-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
@@ -92,37 +92,37 @@ block()
 				-DCARES_BUILD_TOOLS=OFF
 				#-DCARES_THREADS=OFF
 				-DCARES_MSVC_STATIC_RUNTIME=ON
-				-B ${CARES_BINARY_DIR} -S .
-			WORKING_DIRECTORY ${CARES_SOURCE_DIR}
+				-B ${C_ARES_BINARY_DIR} -S .
+			WORKING_DIRECTORY ${C_ARES_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 		execute_process(COMMAND cmake
 				-E touch configure.done
-			WORKING_DIRECTORY ${CARES_BINARY_DIR}
+			WORKING_DIRECTORY ${C_ARES_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
-	if(NOT EXISTS ${CARES_BINARY_DIR}/build.done)
+	if(NOT EXISTS ${C_ARES_BINARY_DIR}/build.done)
 		execute_process(COMMAND cmake
 				--build . --config ${CMAKE_BUILD_TYPE}
-			WORKING_DIRECTORY ${CARES_BINARY_DIR}
+			WORKING_DIRECTORY ${C_ARES_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 		execute_process(COMMAND cmake
 				-E touch build.done
-			WORKING_DIRECTORY ${CARES_BINARY_DIR}
+			WORKING_DIRECTORY ${C_ARES_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
-	if(NOT EXISTS ${CARES_BINARY_DIR}/install.done)
+	if(NOT EXISTS ${C_ARES_BINARY_DIR}/install.done)
 		execute_process(COMMAND cmake
 				--install . --config ${CMAKE_BUILD_TYPE} --prefix ${CMAKE_INSTALL_PREFIX}
-			WORKING_DIRECTORY ${CARES_BINARY_DIR}
+			WORKING_DIRECTORY ${C_ARES_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 		execute_process(COMMAND cmake
 				-E touch install.done
-			WORKING_DIRECTORY ${CARES_BINARY_DIR}
+			WORKING_DIRECTORY ${C_ARES_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
@@ -219,7 +219,7 @@ block()
 	endif()
 	if(NOT EXISTS ${OPENSSL_BINARY_DIR}/configure.done)
 		if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
-			if(WIN32)
+			if(MSVC)
 				set(_DEBUG_SUFFIX d)
 			endif()
 			set(_DEBUG_FLAG --debug)
