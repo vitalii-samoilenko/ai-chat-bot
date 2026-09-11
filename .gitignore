@@ -1,1 +1,5 @@
-﻿*.drawio.bkp
+﻿build
+install
+
+*.drawio.bkp
+*.swp

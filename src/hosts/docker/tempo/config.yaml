@@ -23,11 +23,9 @@ storage:
 backend_scheduler:
   provider:
     compaction:
-      compaction:
-        block_retention: 72h
+      block_retention: 72h
 
 backend_worker:
-  backend_scheduler_addr: localhost:8081
   compaction:
     block_retention: 72h
 
