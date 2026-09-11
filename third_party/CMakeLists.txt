@@ -19,7 +19,7 @@ block()
 			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND git checkout v1.3.2
+		execute_process(COMMAND git checkout v1.3.1
 			WORKING_DIRECTORY ${ZLIB_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
@@ -30,8 +30,7 @@ block()
 				-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
 				-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
 				-DCMAKE_MSVC_RUNTIME_LIBRARY=${CMAKE_MSVC_RUNTIME_LIBRARY}
-				-DZLIB_BUILD_TESTING=OFF
-				-DZLIB_BUILD_SHARED=OFF
+				-DZLIB_BUILD_EXAMPLES=OFF
 				-B ${ZLIB_BINARY_DIR} -S .
 			WORKING_DIRECTORY ${ZLIB_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
@@ -70,15 +69,15 @@ block()
 endblock()
 
 block()
-	set(CARES_SOURCE_DIR ${PROJECT_SOURCE_DIR}/cares)
-	set(CARES_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/cares)
+	set(CARES_SOURCE_DIR ${PROJECT_SOURCE_DIR}/c-ares)
+	set(CARES_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/c-ares)
 	if(NOT EXISTS ${CARES_SOURCE_DIR}/CMakeLists.txt)
 		execute_process(COMMAND git submodule update
 				--init third_party/cares
 			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND git checkout v1.34.8
+		execute_process(COMMAND git checkout cares-1_19_1
 			WORKING_DIRECTORY ${CARES_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
@@ -91,7 +90,7 @@ block()
 				-DCARES_STATIC=ON
 				-DCARES_SHARED=OFF
 				-DCARES_BUILD_TOOLS=OFF
-				-DCARES_THREADS=OFF
+				#-DCARES_THREADS=OFF
 				-DCARES_MSVC_STATIC_RUNTIME=ON
 				-B ${CARES_BINARY_DIR} -S .
 			WORKING_DIRECTORY ${CARES_SOURCE_DIR}
@@ -138,7 +137,7 @@ block()
 			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND git checkout 20260817.0
+		execute_process(COMMAND git checkout 20250512.1
 			WORKING_DIRECTORY ${ABSEIL_CPP_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
@@ -213,7 +212,7 @@ block()
 				WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 				COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND git checkout openssl-4.0.2
+		execute_process(COMMAND git checkout openssl-3.3.1
 			WORKING_DIRECTORY ${OPENSSL_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
@@ -252,14 +251,15 @@ block()
 				${_MSVC_STATIC_RUNTIME}
 				no-apps
 				no-docs
-				no-demos
-				no-h3demo
+				#no-demos
+				#no-h3demo
 				no-tests
-				no-unit-test
+				no-acvp-tests
 				no-external-tests
+				no-unit-test
 				no-deprecated
 				no-legacy
-				no-tls-deprecated-ec
+				#no-tls-deprecated-ec
 				no-weak-ssl-ciphers
 				no-zstd
 			WORKING_DIRECTORY ${OPENSSL_BINARY_DIR}
@@ -306,7 +306,7 @@ block()
 			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND git checkout 2025-11-05
+		execute_process(COMMAND git checkout 2024-07-02
 			WORKING_DIRECTORY ${RE2_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
@@ -363,7 +363,7 @@ block()
 			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND git checkout v36.1
+		execute_process(COMMAND git checkout v35.1
 			WORKING_DIRECTORY ${PROTOBUF_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
@@ -375,6 +375,7 @@ block()
 				-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
 				-Dprotobuf_DISABLE_RTTI=ON
 				-Dprotobuf_LOCAL_DEPENDENCIES_ONLY=ON
+				-Dprotobuf_BUILD_SHARED_LIBS=OFF
 				-DZLIB_USE_STATIC_LIBS=${ZLIB_USE_STATIC_LIBS}
 				-B ${PROTOBUF_BINARY_DIR} -S .
 			WORKING_DIRECTORY ${PROTOBUF_SOURCE_DIR}
@@ -423,6 +424,15 @@ block()
 		)
 		execute_process(COMMAND git checkout v1.84.0
 			WORKING_DIRECTORY ${GRPC_SOURCE_DIR}
+			COMMAND_ERROR_IS_FATAL ANY
+		)
+		execute_process(COMMAND git submodule update
+				--init third_party/grpc-proto
+			WORKING_DIRECTORY ${GRPC_SOURCE_DIR}
+			COMMAND_ERROR_IS_FATAL ANY
+		)
+		execute_process(COMMAND git checkout ec30f58
+			WORKING_DIRECTORY ${GRPC_SOURCE_DIR}/third_party/grpc-proto
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
