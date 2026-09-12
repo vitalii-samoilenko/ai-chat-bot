@@ -62,4 +62,8 @@ RUN --mount=type=cache,id=install,target=install \
 
 FROM base AS host
 COPY --from=deploy /root/deploy /usr/local
-ENTRYPOINT ["/usr/local/bin/ai-chat-hosts-console"]
+USER nobody
+ENTRYPOINT [
+	"/usr/local/bin/ai-chat-hosts-console",
+		"--collector", "alloy:8081"
+]

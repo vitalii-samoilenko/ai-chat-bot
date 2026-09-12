@@ -1,5 +1,6 @@
 #include <chrono>
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <thread>
 
@@ -60,8 +61,15 @@ public:
 
 SYSTEM_CALLBACKS();
 
-int main(int argc, char const *argv) {
-	INIT_TELEMETRY("alloy:3300", "ai_chat_hosts_console");
+int main(int argc, char const **argv) {
+	char const *collector{ "localhost:8081" };
+	for (++argv; argv; ++argv) {
+		if (strcmp(argv, "--collector"))
+			continue;
+		collector = ++argv;
+		break;
+	}
+	INIT_TELEMETRY(collector, "ai_chat_hosts_console");
 	for (Spinner spinner{ 500, 2000 };;) {
 		spinner.Spin();
 	}
