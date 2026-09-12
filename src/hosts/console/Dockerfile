@@ -7,12 +7,12 @@ WORKDIR /root
 COPY [".git", ".git"]
 COPY [".gitmodules", ".gitmodules"]
 COPY ["src/hosts/console", "src/hosts/console"]
-COPY ["src/telemetry", "src/telemetry"]
 COPY ["third_party/abseil-cpp", "third_party/abseil-cpp"]
-COPY ["third_party/cares", "third_party/cares"]
+COPY ["third_party/c-ares", "third_party/c-ares"]
 COPY ["third_party/curl", "third_party/curl"]
 COPY ["third_party/esqlite", "third_party/esqlite"]
 COPY ["third_party/estd", "third_party/estd"]
+COPY ["third_party/etelemetry", "third_party/etelemetry"]
 COPY ["third_party/grpc", "third_party/grpc"]
 COPY ["third_party/openssl", "third_party/openssl"]
 COPY ["third_party/opentelemetry-cpp", "third_party/opentelemetry-cpp"]
@@ -32,7 +32,7 @@ RUN apk update \
 
 FROM prepare AS configure
 ARG BUILD_CONFIGURATION=Release
-ARG TELEMETRY=ON
+ARG TELEMETRY=True
 RUN --mount=type=cache,id=build,target=build \
 	--mount=type=cache,id=install,target=install \
 	rm -rg build/third_party/opentelemetry-cpp

@@ -23,7 +23,8 @@ storage:
 backend_scheduler:
   provider:
     compaction:
-      block_retention: 72h
+      compaction:
+        block_retention: 72h
 
 backend_worker:
   compaction:

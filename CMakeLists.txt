@@ -5,7 +5,7 @@ project(AI VERSION 0.1)
 option(TELEMETRY "Enable telemetry" OFF)
 
 if(TELEMETRY)
-	add_compile_definitions(ENABLE_TELEMETRY)
+	add_compile_definitions(ET_ENABLED)
 endif()
 
 if(MSVC)
@@ -17,10 +17,9 @@ if(MSVC)
 	endif()
 	#add_compile_options(/GR-)
 elseif(LINUX)
-	set(CMAKE_EXE_LINKER_FLAGS "--static -static-libgcc -static-libstdc++")
+	set(CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc -static-libstdc++")
 endif()
 
 add_subdirectory(third_party)
 
-add_subdirectory(src/telemetry)
 add_subdirectory(src/hosts/console)

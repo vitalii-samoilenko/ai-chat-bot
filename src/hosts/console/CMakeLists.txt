@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.25.1)
 
 project(AI.Chat.Hosts.Console VERSION 0.1 LANGUAGES CXX)
 
+find_package(ETelemetry CONFIG REQUIRED)
+
 add_executable(ai-chat-hosts-console main.cpp)
 if(MSVC)
 	if(MSVC_TOOLSET_VERSION EQUAL 143)
@@ -19,8 +21,7 @@ endif()
 target_compile_features(ai-chat-hosts-console PRIVATE cxx_std_20)
 target_link_libraries(ai-chat-hosts-console
 	PRIVATE
-		AI::Chat::Telemetry
+		::ETelemetry
 )
-add_executable(AI::Chat::Hosts::Console ALIAS ai-chat-hosts-console)
 
 install(TARGETS ai-chat-hosts-console)
