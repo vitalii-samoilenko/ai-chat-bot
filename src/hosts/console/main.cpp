@@ -62,7 +62,21 @@ public:
 ET_SYSTEM_CALLBACKS();
 
 int main(int argc, char const **argv) {
-	ET_INIT("localhost:8081", "ai_chat_hosts_console");
+	char const *collector{ "localhost:8081" };
+	{
+		char const **current{ nullptr };
+		for (--argc, ++argv; argc; --argc, ++argv) {
+			if (::std::strcmp("--collector", *argv) == 0) {
+				current = &collector;
+			} else {
+				if (!current)
+					continue;
+				*current = *argv;
+				current = nullptr;
+			}
+		}
+	}
+	ET_INIT(collector, "ai_chat_hosts_console");
 	for (Spinner spinner{ 500, 2000 };;) {
 		spinner.Spin();
 	}

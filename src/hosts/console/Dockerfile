@@ -1,8 +1,8 @@
-FROM alpine AS base
+FROM alpine:3.23.5 AS base
 USER $APP_UID
 WORKDIR /home/$APP_UID
 
-FROM alpine AS prepare
+FROM alpine:3.23.5 AS prepare
 WORKDIR /root
 COPY [".git", ".git"]
 COPY [".gitmodules", ".gitmodules"]
@@ -32,10 +32,7 @@ RUN apk update \
 
 FROM prepare AS configure
 ARG BUILD_CONFIGURATION=Release
-ARG TELEMETRY=True
-RUN --mount=type=cache,id=build,target=build \
-	--mount=type=cache,id=install,target=install \
-	rm -rg build/third_party/opentelemetry-cpp
+ARG TELEMETRY=ON
 RUN --mount=type=cache,id=build,target=build \
 	--mount=type=cache,id=install,target=install \
 	cmake -B build -S . \
@@ -62,8 +59,7 @@ RUN --mount=type=cache,id=install,target=install \
 
 FROM base AS host
 COPY --from=deploy /root/deploy /usr/local
-USER nobody
-ENTRYPOINT [
-	"/usr/local/bin/ai-chat-hosts-console",
-		"--collector", "alloy:8081"
+ENTRYPOINT [ \
+	"/usr/local/bin/ai-chat-hosts-console", \
+		"--collector", "alloy:8081" \
 ]

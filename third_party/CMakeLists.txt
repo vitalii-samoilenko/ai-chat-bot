@@ -2,96 +2,128 @@ cmake_minimum_required(VERSION 3.25.1)
 
 project(third_party VERSION 0.1)
 
-set(CMAKE_PREFIX_PATH ${CMAKE_INSTALL_PREFIX} PARENT_SCOPE)
+set(
+	CMAKE_COMMON_ARGS
+		-DCMAKE_CXX_STANDARD=17
+		-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+		-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+		-DCMAKE_MSVC_RUNTIME_LIBRARY=${CMAKE_MSVC_RUNTIME_LIBRARY}
+		-DBUILD_SHARED_LIBS=OFF
+)
 
-set(CMAKE_CXX_STANDARD 17)
-
-if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-	set(PLATFORM_PREFIX x32)
-else()
-	set(PLATFORM_PREFIX x64)
-endif()
+block()
+	set(
+		CMAKE_PREFIX_PATH ${CMAKE_INSTALL_PREFIX}
+		CACHE INTERNAL
+		"Force local dependencies"
+	)
+	set(
+		CMAKE_COMMON_ARGS ${CMAKE_COMMON_ARGS}
+			-DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+		PARENT_SCOPE
+	)
+endblock()
 
 block()
 	set(ZLIB_SOURCE_DIR ${PROJECT_SOURCE_DIR}/zlib)
 	set(ZLIB_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/zlib)
 	if(NOT EXISTS ${ZLIB_SOURCE_DIR}/CMakeLists.txt)
-		execute_process(COMMAND git submodule update
+		execute_process(
+			COMMAND git submodule update
 				--init third_party/zlib
 			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND git checkout v1.3.1
+		execute_process(
+			COMMAND git checkout v1.3.1
 			WORKING_DIRECTORY ${ZLIB_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${ZLIB_BINARY_DIR}/configure.done)
-		execute_process(COMMAND cmake
-				-DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
-				-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-				-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-				-DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
-				-DCMAKE_MSVC_RUNTIME_LIBRARY=${CMAKE_MSVC_RUNTIME_LIBRARY}
+		execute_process(
+			COMMAND cmake
+				${CMAKE_COMMON_ARGS}
 				-DZLIB_BUILD_EXAMPLES=OFF
 				-B ${ZLIB_BINARY_DIR} -S .
 			WORKING_DIRECTORY ${ZLIB_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch configure.done
 			WORKING_DIRECTORY ${ZLIB_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${ZLIB_BINARY_DIR}/build.done)
-		execute_process(COMMAND cmake
-				--build . --config ${CMAKE_BUILD_TYPE}
+		execute_process(
+			COMMAND cmake
+				--build .
+				--config ${CMAKE_BUILD_TYPE}
 			WORKING_DIRECTORY ${ZLIB_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch build.done
 			WORKING_DIRECTORY ${ZLIB_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${ZLIB_BINARY_DIR}/install.done)
-		execute_process(COMMAND cmake
-				--install . --config ${CMAKE_BUILD_TYPE} --prefix ${CMAKE_INSTALL_PREFIX}
+		execute_process(
+			COMMAND cmake
+				--install .
+				--config ${CMAKE_BUILD_TYPE}
+				--prefix ${CMAKE_INSTALL_PREFIX}
 			WORKING_DIRECTORY ${ZLIB_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		if(LINUX)
+			file(GLOB _SHARED ${CMAKE_INSTALL_PREFIX}/lib/*.so*)
+			file(REMOVE ${_SHARED})
+		endif()
+		execute_process(
+			COMMAND cmake
 				-E touch install.done
 			WORKING_DIRECTORY ${ZLIB_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
-	set(ZLIB_USE_STATIC_LIBS ON CACHE INTERNAL "zlib use static libraries")
+	set(
+		ZLIB_USE_STATIC_LIBS ON
+		CACHE INTERNAL
+		"Force static zlib"
+	)
+	set(
+		CMAKE_COMMON_ARGS ${CMAKE_COMMON_ARGS}
+			-DZLIB_USE_STATIC_LIBS=${ZLIB_USE_STATIC_LIBS}
+		PARENT_SCOPE
+	)
 endblock()
 
 block()
 	set(C_ARES_SOURCE_DIR ${PROJECT_SOURCE_DIR}/c-ares)
 	set(C_ARES_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/c-ares)
 	if(NOT EXISTS ${C_ARES_SOURCE_DIR}/CMakeLists.txt)
-		execute_process(COMMAND git submodule update
+		execute_process(
+			COMMAND git submodule update
 				--init third_party/c-ares
 			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND git checkout cares-1_19_1
+		execute_process(
+			COMMAND git checkout cares-1_19_1
 			WORKING_DIRECTORY ${C_ARES_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${C_ARES_BINARY_DIR}/configure.done)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
+				${CMAKE_COMMON_ARGS}
 				-DCMAKE_POLICY_VERSION_MINIMUM=3.5
-				-DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
-				-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-				-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-				-DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
 				-DCARES_STATIC=ON
 				-DCARES_SHARED=OFF
 				-DCARES_BUILD_TOOLS=OFF
@@ -101,31 +133,39 @@ block()
 			WORKING_DIRECTORY ${C_ARES_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch configure.done
 			WORKING_DIRECTORY ${C_ARES_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${C_ARES_BINARY_DIR}/build.done)
-		execute_process(COMMAND cmake
-				--build . --config ${CMAKE_BUILD_TYPE}
+		execute_process(
+			COMMAND cmake
+				--build .
+				--config ${CMAKE_BUILD_TYPE}
 			WORKING_DIRECTORY ${C_ARES_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch build.done
 			WORKING_DIRECTORY ${C_ARES_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${C_ARES_BINARY_DIR}/install.done)
-		execute_process(COMMAND cmake
-				--install . --config ${CMAKE_BUILD_TYPE} --prefix ${CMAKE_INSTALL_PREFIX}
+		execute_process(
+			COMMAND cmake
+				--install .
+				--config ${CMAKE_BUILD_TYPE}
+				--prefix ${CMAKE_INSTALL_PREFIX}
 			WORKING_DIRECTORY ${C_ARES_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch install.done
 			WORKING_DIRECTORY ${C_ARES_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
@@ -137,53 +177,61 @@ block()
 	set(ABSEIL_CPP_SOURCE_DIR ${PROJECT_SOURCE_DIR}/abseil-cpp)
 	set(ABSEIL_CPP_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/abseil-cpp)
 	if(NOT EXISTS ${ABSEIL_CPP_SOURCE_DIR}/CMakeLists.txt)
-		execute_process(COMMAND git submodule update
+		execute_process(
+			COMMAND git submodule update
 				--init third_party/abseil-cpp
 			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND git checkout 20250512.1
+		execute_process(
+			COMMAND git checkout 20250512.1
 			WORKING_DIRECTORY ${ABSEIL_CPP_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${ABSEIL_CPP_BINARY_DIR}/configure.done)
-		execute_process(COMMAND cmake
-				-DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
-				-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-				-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-				-DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+		execute_process(
+			COMMAND cmake
+				${CMAKE_COMMON_ARGS}
 				-DABSL_ENABLE_INSTALL=ON
 				-DABSL_MSVC_STATIC_RUNTIME=ON
 				-B ${ABSEIL_CPP_BINARY_DIR} -S .
 			WORKING_DIRECTORY ${ABSEIL_CPP_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch configure.done
 			WORKING_DIRECTORY ${ABSEIL_CPP_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${ABSEIL_CPP_BINARY_DIR}/build.done)
-		execute_process(COMMAND cmake
-				--build . --config ${CMAKE_BUILD_TYPE}
+		execute_process(
+			COMMAND cmake
+				--build .
+				--config ${CMAKE_BUILD_TYPE}
 			WORKING_DIRECTORY ${ABSEIL_CPP_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch build.done
 			WORKING_DIRECTORY ${ABSEIL_CPP_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${ABSEIL_CPP_BINARY_DIR}/install.done)
-		execute_process(COMMAND cmake
-				--install . --config ${CMAKE_BUILD_TYPE} --prefix ${CMAKE_INSTALL_PREFIX}
+		execute_process(
+			COMMAND cmake
+				--install .
+				--config ${CMAKE_BUILD_TYPE}
+				--prefix ${CMAKE_INSTALL_PREFIX}
 			WORKING_DIRECTORY ${ABSEIL_CPP_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch install.done
 			WORKING_DIRECTORY ${ABSEIL_CPP_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
@@ -213,47 +261,36 @@ block()
 		set(MAKE_COMMAND make)
 	endif()
 	if(NOT EXISTS ${OPENSSL_SOURCE_DIR}/Configure)
-		execute_process(COMMAND git submodule update
+		execute_process(
+			COMMAND git submodule update
 				--init third_party/openssl
-				WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-				COMMAND_ERROR_IS_FATAL ANY
+			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND git checkout openssl-3.3.1
+		execute_process(
+			COMMAND git checkout openssl-3.3.1
 			WORKING_DIRECTORY ${OPENSSL_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${OPENSSL_BINARY_DIR}/configure.done)
 		if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
-			if(MSVC)
-				set(_DEBUG_SUFFIX d)
-			endif()
 			set(_DEBUG_FLAG --debug)
 		endif()
 		if(MSVC)
 			set(_MSVC_STATIC_RUNTIME /MT${_DEBUG_SUFFIX})
 		endif()
-		find_library(_ZLIB_LIBRARY
-			REQUIRED
-			NAMES
-				zlibstatic${_DEBUG_SUFFIX}
-				zlibstat${_DEBUG_SUFFIX}
-				zs${_DEBUG_SUFFIX}
-				zlib${_DEBUG_SUFFIX}
-				z${_DEBUG_SUFFIX}
-			PATHS ${CMAKE_INSTALL_PREFIX}/lib
-			NO_DEFAULT_PATH
-			NO_CACHE
-		)
 		make_directory(${OPENSSL_BINARY_DIR})
-		execute_process(COMMAND ${CONFIGURE_COMMAND}
+		execute_process(
+			COMMAND ${CONFIGURE_COMMAND}
 				-static
 				--prefix=${CMAKE_INSTALL_PREFIX}
 				--openssldir=${CMAKE_INSTALL_PREFIX}/ssl
 				${_DEBUG_FLAG}
-				zlib
-				--with-zlib-include=${CMAKE_INSTALL_PREFIX}/include
-				--with-zlib-lib=${_ZLIB_LIBRARY}
+				no-zlib
+				no-zlib-dynamic
+				#--with-zlib-include=${CMAKE_INSTALL_PREFIX}/include
+				#--with-zlib-lib=${CMAKE_INSTALL_PREFIX}/lib
 				${_MSVC_STATIC_RUNTIME}
 				no-apps
 				no-docs
@@ -268,92 +305,119 @@ block()
 				#no-tls-deprecated-ec
 				no-weak-ssl-ciphers
 				no-zstd
+				no-zstd-dynamic
 			WORKING_DIRECTORY ${OPENSSL_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch configure.done
 			WORKING_DIRECTORY ${OPENSSL_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${OPENSSL_BINARY_DIR}/build.done)
-		execute_process(COMMAND ${MAKE_COMMAND}
+		execute_process(
+			COMMAND ${MAKE_COMMAND}
 			WORKING_DIRECTORY ${OPENSSL_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch build.done
 			WORKING_DIRECTORY ${OPENSSL_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${OPENSSL_BINARY_DIR}/install.done)
-		execute_process(COMMAND ${MAKE_COMMAND} install
+		execute_process(
+			COMMAND ${MAKE_COMMAND} install
 			WORKING_DIRECTORY ${OPENSSL_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch install.done
 			WORKING_DIRECTORY ${OPENSSL_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
-	set(OPENSSL_USE_STATIC_LIBS TRUE CACHE INTERNAL "OpenSSL use static libraries")
-	set(OPENSSL_MSVC_STATIC_RT TRUE CACHE INTERNAL "OpenSSL use static MSVC runtime")
+	set(
+		OPENSSL_USE_STATIC_LIBS ON
+		CACHE INTERNAL
+		"Force static openssl"
+	)
+	set(
+		OPENSSL_MSVC_STATIC_RT ON
+		CACHE INTERNAL
+		"Force static runtime"
+	)
+	set(
+		CMAKE_COMMON_ARGS ${CMAKE_COMMON_ARGS}
+			-DOPENSSL_USE_STATIC_LIBS=${OPENSSL_USE_STATIC_LIBS}
+			-DOPENSSL_MSVC_STATIC_RT=${OPENSSL_MSVC_STATIC_RT}
+		PARENT_SCOPE
+	)
 endblock()
 
 block()
 	set(RE2_SOURCE_DIR ${PROJECT_SOURCE_DIR}/re2)
 	set(RE2_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/re2)
 	if(NOT EXISTS ${RE2_SOURCE_DIR}/CMakeLists.txt)
-		execute_process(COMMAND git submodule update
+		execute_process(
+			COMMAND git submodule update
 				--init third_party/re2
 			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND git checkout 2024-07-02
+		execute_process(
+			COMMAND git checkout 2024-07-02
 			WORKING_DIRECTORY ${RE2_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${RE2_BINARY_DIR}/configure.done)
-		execute_process(COMMAND cmake
-				-DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
-				-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-				-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-				-DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+		execute_process(
+			COMMAND cmake
+				${CMAKE_COMMON_ARGS}
 				-DCMAKE_POLICY_DEFAULT_CMP0091=NEW
-				-DCMAKE_MSVC_RUNTIME_LIBRARY=${CMAKE_MSVC_RUNTIME_LIBRARY}
 				-B ${RE2_BINARY_DIR} -S .
 			WORKING_DIRECTORY ${RE2_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch configure.done
 			WORKING_DIRECTORY ${RE2_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${RE2_BINARY_DIR}/build.done)
-		execute_process(COMMAND cmake
-				--build . --config ${CMAKE_BUILD_TYPE}
+		execute_process(
+			COMMAND cmake
+				--build .
+				--config ${CMAKE_BUILD_TYPE}
 			WORKING_DIRECTORY ${RE2_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch build.done
 			WORKING_DIRECTORY ${RE2_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${RE2_BINARY_DIR}/install.done)
-		execute_process(COMMAND cmake
-				--install . --config ${CMAKE_BUILD_TYPE} --prefix ${CMAKE_INSTALL_PREFIX}
+		execute_process(
+			COMMAND cmake
+				--install .
+				--config ${CMAKE_BUILD_TYPE}
+				--prefix ${CMAKE_INSTALL_PREFIX}
 			WORKING_DIRECTORY ${RE2_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch install.done
 			WORKING_DIRECTORY ${RE2_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
@@ -365,55 +429,62 @@ block()
 	set(PROTOBUF_SOURCE_DIR ${PROJECT_SOURCE_DIR}/protobuf)
 	set(PROTOBUF_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/protobuf)
 	if(NOT EXISTS ${PROTOBUF_SOURCE_DIR}/CMakeLists.txt)
-		execute_process(COMMAND git submodule update
+		execute_process(
+			COMMAND git submodule update
 				--init third_party/protobuf
 			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND git checkout v35.1
+		execute_process(
+			COMMAND git checkout v35.1
 			WORKING_DIRECTORY ${PROTOBUF_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${PROTOBUF_BINARY_DIR}/configure.done)
-		execute_process(COMMAND cmake
-				-DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
-				-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-				-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-				-DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+		execute_process(
+			COMMAND cmake
+				${CMAKE_COMMON_ARGS}
 				-Dprotobuf_DISABLE_RTTI=ON
 				-Dprotobuf_LOCAL_DEPENDENCIES_ONLY=ON
 				-Dprotobuf_BUILD_SHARED_LIBS=OFF
-				-DZLIB_USE_STATIC_LIBS=${ZLIB_USE_STATIC_LIBS}
 				-B ${PROTOBUF_BINARY_DIR} -S .
 			WORKING_DIRECTORY ${PROTOBUF_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch configure.done
 			WORKING_DIRECTORY ${PROTOBUF_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${PROTOBUF_BINARY_DIR}/build.done)
-		execute_process(COMMAND cmake
-				--build . --config ${CMAKE_BUILD_TYPE}
+		execute_process(
+			COMMAND cmake
+				--build .
+				--config ${CMAKE_BUILD_TYPE}
 			WORKING_DIRECTORY ${PROTOBUF_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch build.done
 			WORKING_DIRECTORY ${PROTOBUF_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${PROTOBUF_BINARY_DIR}/install.done)
-		execute_process(COMMAND cmake
-				--install . --config ${CMAKE_BUILD_TYPE} --prefix ${CMAKE_INSTALL_PREFIX}
+		execute_process(
+			COMMAND cmake
+				--install .
+				--config ${CMAKE_BUILD_TYPE}
+				--prefix ${CMAKE_INSTALL_PREFIX}
 			WORKING_DIRECTORY ${PROTOBUF_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch install.done
 			WORKING_DIRECTORY ${PROTOBUF_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
@@ -425,32 +496,34 @@ block()
 	set(GRPC_SOURCE_DIR ${PROJECT_SOURCE_DIR}/grpc)
 	set(GRPC_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/grpc)
 	if(NOT EXISTS ${GRPC_SOURCE_DIR}/CMakeLists.txt)
-		execute_process(COMMAND git submodule update
+		execute_process(
+			COMMAND git submodule update
 				--init third_party/grpc
 			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND git checkout v1.84.0
+		execute_process(
+			COMMAND git checkout v1.84.0
 			WORKING_DIRECTORY ${GRPC_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND git submodule update
+		execute_process(
+			COMMAND git submodule update
 				--init third_party/grpc-proto
 			WORKING_DIRECTORY ${GRPC_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND git checkout ec30f58
+		execute_process(
+			COMMAND git checkout ec30f58
 			WORKING_DIRECTORY ${GRPC_SOURCE_DIR}/third_party/grpc-proto
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${GRPC_BINARY_DIR}/configure.done)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
+				${CMAKE_COMMON_ARGS}
 				-DCMAKE_POLICY_VERSION_MINIMUM=3.5
-				-DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
-				-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-				-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-				-DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
 				-DCMAKE_POSITION_INDEPENDENT_CODE=FALSE
 				-DgRPC_DOWNLOAD_ARCHIVES=OFF
 				-DgRPC_INSTALL=ON
@@ -467,38 +540,43 @@ block()
 				-DgRPC_BUILD_GRPC_PHP_PLUGIN=OFF
 				-DgRPC_BUILD_GRPC_PYTHON_PLUGIN=OFF
 				-DgRPC_BUILD_GRPC_RUBY_PLUGIN=OFF
-				-DZLIB_USE_STATIC_LIBS=${ZLIB_USE_STATIC_LIBS}
-				-DOPENSSL_USE_STATIC_LIBS=${OPENSSL_USE_STATIC_LIBS}
-				-DOPENSSL_MSVC_STATIC_RT=${OPENSSL_MSVC_STATIC_RT}
 				-B ${GRPC_BINARY_DIR} -S .
 			WORKING_DIRECTORY ${GRPC_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch configure.done
 			WORKING_DIRECTORY ${GRPC_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${GRPC_BINARY_DIR}/build.done)
-		execute_process(COMMAND cmake
-				--build . --config ${CMAKE_BUILD_TYPE}
+		execute_process(
+			COMMAND cmake
+				--build .
+				--config ${CMAKE_BUILD_TYPE}
 			WORKING_DIRECTORY ${GRPC_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch build.done
 			WORKING_DIRECTORY ${GRPC_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${GRPC_BINARY_DIR}/install.done)
-		execute_process(COMMAND cmake
-				--install . --config ${CMAKE_BUILD_TYPE} --prefix ${CMAKE_INSTALL_PREFIX}
+		execute_process(
+			COMMAND cmake
+				--install .
+				--config ${CMAKE_BUILD_TYPE}
+				--prefix ${CMAKE_INSTALL_PREFIX}
 			WORKING_DIRECTORY ${GRPC_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch install.done
 			WORKING_DIRECTORY ${GRPC_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
@@ -509,41 +587,50 @@ endblock()
 block()
 	set(OPENTELEMETRY_PROTO_SOURCE_DIR ${PROJECT_SOURCE_DIR}/opentelemetry-proto)
 	if(NOT EXISTS ${OPENTELEMETRY_PROTO_SOURCE_DIR}/Makefile)
-		execute_process(COMMAND git submodule update
+		execute_process(
+			COMMAND git submodule update
 				--init third_party/opentelemetry-proto
 			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND git checkout v1.11.0
+		execute_process(
+			COMMAND git checkout v1.11.0
 			WORKING_DIRECTORY ${OPENTELEMETRY_PROTO_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
-	set(OTELCPP_PROTO_PATH ${OPENTELEMETRY_PROTO_SOURCE_DIR} CACHE INTERNAL "OpenTelemetry Proto path")
+	set(
+		OTELCPP_PROTO_PATH ${OPENTELEMETRY_PROTO_SOURCE_DIR}
+		CACHE INTERNAL
+		"Force local telemetry proto"
+	)
+	set(
+		CMAKE_COMMON_ARGS ${CMAKE_COMMON_ARGS}
+			-DOTELCPP_PROTO_PATH=${OTELCPP_PROTO_PATH}
+		PARENT_SCOPE
+	)
 endblock()
 
 block()
 	set(OPENTELEMETRY_CPP_SOURCE_DIR ${PROJECT_SOURCE_DIR}/opentelemetry-cpp)
 	set(OPENTELEMETRY_CPP_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/opentelemetry-cpp)
 	if(NOT EXISTS ${OPENTELEMETRY_CPP_SOURCE_DIR}/CMakeLists.txt)
-		execute_process(COMMAND git submodule update
+		execute_process(
+			COMMAND git submodule update
 				--init third_party/opentelemetry-cpp
 			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND git checkout v1.28.0
+		execute_process(
+			COMMAND git checkout v1.28.0
 			WORKING_DIRECTORY ${OPENTELEMETRY_CPP_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${OPENTELEMETRY_CPP_BINARY_DIR}/configure.done)
-		execute_process(COMMAND cmake
-				-DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
-				-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-				-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-				-DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
-				-DCMAKE_MSVC_RUNTIME_LIBRARY=${CMAKE_MSVC_RUNTIME_LIBRARY}
-				-DBUILD_SHARED_LIBS=OFF
+		execute_process(
+			COMMAND cmake
+				${CMAKE_COMMON_ARGS}
 				-DWITH_ABI_VERSION_1=OFF
 				-DWITH_ABI_VERSION_2=ON
 				-DWITH_NO_DEPRECATED_CODE=ON
@@ -555,37 +642,43 @@ block()
 				-DWITH_ETW=OFF
 				-DWITH_EXAMPLES=OFF
 				-DWITH_FUNC_TESTS=OFF
-				-DZLIB_USE_STATIC_LIBS=${ZLIB_USE_STATIC_LIBS}
-				-DOTELCPP_PROTO_PATH=${OTELCPP_PROTO_PATH}
 				-B ${OPENTELEMETRY_CPP_BINARY_DIR} -S .
 			WORKING_DIRECTORY ${OPENTELEMETRY_CPP_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch configure.done
 			WORKING_DIRECTORY ${OPENTELEMETRY_CPP_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${OPENTELEMETRY_CPP_BINARY_DIR}/build.done)
-		execute_process(COMMAND cmake
-				--build . --config ${CMAKE_BUILD_TYPE}
+		execute_process(
+			COMMAND cmake
+				--build .
+				--config ${CMAKE_BUILD_TYPE}
 			WORKING_DIRECTORY ${OPENTELEMETRY_CPP_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch build.done
 			WORKING_DIRECTORY ${OPENTELEMETRY_CPP_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${OPENTELEMETRY_CPP_BINARY_DIR}/install.done)
-		execute_process(COMMAND cmake
-				--install . --config ${CMAKE_BUILD_TYPE} --prefix ${CMAKE_INSTALL_PREFIX}
+		execute_process(
+			COMMAND cmake
+				--install .
+				--config ${CMAKE_BUILD_TYPE}
+				--prefix ${CMAKE_INSTALL_PREFIX}
 			WORKING_DIRECTORY ${OPENTELEMETRY_CPP_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch install.done
 			WORKING_DIRECTORY ${OPENTELEMETRY_CPP_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
@@ -597,40 +690,46 @@ block()
 	set(ESTD_SOURCE_DIR ${PROJECT_SOURCE_DIR}/estd)
 	set(ESTD_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/estd)
 	if(NOT EXISTS ${ESTD_BINARY_DIR}/configure.done)
-		execute_process(COMMAND cmake
-				-DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
-				-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-				-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-				-DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+		execute_process(
+			COMMAND cmake
+				${CMAKE_COMMON_ARGS}
 				-B ${ESTD_BINARY_DIR} -S .
 			WORKING_DIRECTORY ${ESTD_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch configure.done
 			WORKING_DIRECTORY ${ESTD_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${ESTD_BINARY_DIR}/build.done)
-		execute_process(COMMAND cmake
-				--build . --config ${CMAKE_BUILD_TYPE}
+		execute_process(
+			COMMAND cmake
+				--build .
+				--config ${CMAKE_BUILD_TYPE}
 			WORKING_DIRECTORY ${ESTD_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch build.done
 			WORKING_DIRECTORY ${ESTD_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${ESTD_BINARY_DIR}/install.done)
-		execute_process(COMMAND cmake
-				--install . --config ${CMAKE_BUILD_TYPE} --prefix ${CMAKE_INSTALL_PREFIX}
+		execute_process(
+			COMMAND cmake
+				--install .
+				--config ${CMAKE_BUILD_TYPE}
+				--prefix ${CMAKE_INSTALL_PREFIX}
 			WORKING_DIRECTORY ${ESTD_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch install.done
 			WORKING_DIRECTORY ${ESTD_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
@@ -642,40 +741,46 @@ block()
 	set(ETELEMETRY_SOURCE_DIR ${PROJECT_SOURCE_DIR}/etelemetry)
 	set(ETELEMETRY_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/etelemetry)
 	if(NOT EXISTS ${ETELEMETRY_BINARY_DIR}/configure.done)
-		execute_process(COMMAND cmake
-				-DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
-				-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-				-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-				-DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+		execute_process(
+			COMMAND cmake
+				${CMAKE_COMMON_ARGS}
 				-B ${ETELEMETRY_BINARY_DIR} -S .
 			WORKING_DIRECTORY ${ETELEMETRY_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch configure.done
 			WORKING_DIRECTORY ${ETELEMETRY_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${ETELEMETRY_BINARY_DIR}/build.done)
-		execute_process(COMMAND cmake
-				--build . --config ${CMAKE_BUILD_TYPE}
+		execute_process(
+			COMMAND cmake
+				--build .
+				--config ${CMAKE_BUILD_TYPE}
 			WORKING_DIRECTORY ${ETELEMETRY_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch build.done
 			WORKING_DIRECTORY ${ETELEMETRY_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${ETELEMETRY_BINARY_DIR}/install.done)
-		execute_process(COMMAND cmake
-				--install . --config ${CMAKE_BUILD_TYPE} --prefix ${CMAKE_INSTALL_PREFIX}
+		execute_process(
+			COMMAND cmake
+				--install .
+				--config ${CMAKE_BUILD_TYPE}
+				--prefix ${CMAKE_INSTALL_PREFIX}
 			WORKING_DIRECTORY ${ETELEMETRY_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch install.done
 			WORKING_DIRECTORY ${ETELEMETRY_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
@@ -706,35 +811,41 @@ block()
 		set(MAKE_COMMAND make)
 	endif()
 	if(NOT EXISTS ${SQLITE_SOURCE_DIR}/configure)
-		execute_process(COMMAND git submodule update
+		execute_process(
+			COMMAND git submodule update
 				--init third_party/sqlite
 			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND git checkout version-3.53.4
+		execute_process(
+			COMMAND git checkout version-3.53.4
 			WORKING_DIRECTORY ${SQLITE_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${SQLITE_BINARY_DIR}/configure.done)
 		file(COPY ${SQLITE_SOURCE_DIR} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-		execute_process(COMMAND ${CONFIGURE_COMMAND}
+		execute_process(
+			COMMAND ${CONFIGURE_COMMAND}
 			WORKING_DIRECTORY ${SQLITE_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch configure.done
 			WORKING_DIRECTORY ${SQLITE_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${SQLITE_BINARY_DIR}/build.done)
-		execute_process(COMMAND ${MAKE_COMMAND}
+		execute_process(
+			COMMAND ${MAKE_COMMAND}
 				"OPTIONS=-DSQLITE_DQS=0 -DSQLITE_THREADSAFE=0 -DSQLITE_DEFAULT_MEMSTATUS=0 -DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1 -DSQLITE_LIKE_DOESNT_MATCH_BLOBS -DSQLITE_MAX_EXPR_DEPTH=0 -DSQLITE_OMIT_DEPRECATED -DSQLITE_OMIT_PROGRESS_CALLBACK -DSQLITE_OMIT_SHARED_CACHE -DSQLITE_USE_ALLOCA -DSQLITE_OMIT_AUTOINIT -DSQLITE_STRICT_SUBTYPE=1 -DSQLITE_OMIT_JSON"
 			WORKING_DIRECTORY ${SQLITE_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch build.done
 			WORKING_DIRECTORY ${SQLITE_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
@@ -752,54 +863,75 @@ block()
 		file(COPY ${SQLITE_BINARY_DIR}/sqlite3.h
 			DESTINATION ${SQLITE_INCLUDE_DIR}
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch install.done
 			WORKING_DIRECTORY ${SQLITE_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
-	set(PC_SQLite3_INCLUDE_DIRS ${SQLITE_INCLUDE_DIR} CACHE INTERNAL "SQLite include directory")
-	set(PC_SQLite3_LIBRARY_DIRS ${SQLITE_LIBRARY_DIR} CACHE INTERNAL "SQLite library directory")
+	set(
+		PC_SQLite3_INCLUDE_DIRS ${SQLITE_INCLUDE_DIR}
+		CACHE INTERNAL
+		"Force local sqlite include"
+	)
+	set(
+		PC_SQLite3_LIBRARY_DIRS ${SQLITE_LIBRARY_DIR}
+		CACHE INTERNAL
+		"Force local sqlite"
+	)
+	set(
+		CMAKE_COMMON_ARGS ${CMAKE_COMMON_ARGS}
+			-DPC_SQLite3_INCLUDE_DIRS=${PC_SQLite3_INCLUDE_DIRS}
+			-DPC_SQLite3_LIBRARY_DIRS=${PC_SQLite3_LIBRARY_DIRS}
+		PARENT_SCOPE
+	)
 endblock()
 
 block()
 	set(ESQLITE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/esqlite)
 	set(ESQLITE_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/esqlite)
 	if(NOT EXISTS ${ESQLITE_BINARY_DIR}/configure.done)
-		execute_process(COMMAND cmake
-				-DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
-				-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-				-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-				-DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+		execute_process(
+			COMMAND cmake
+				${CMAKE_COMMON_ARGS}
 				-B ${ESQLITE_BINARY_DIR} -S .
 			WORKING_DIRECTORY ${ESQLITE_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch configure.done
 			WORKING_DIRECTORY ${ESQLITE_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${ESQLITE_BINARY_DIR}/build.done)
-		execute_process(COMMAND cmake
-				--build . --config ${CMAKE_BUILD_TYPE}
+		execute_process(
+			COMMAND cmake
+				--build .
+				--config ${CMAKE_BUILD_TYPE}
 			WORKING_DIRECTORY ${ESQLITE_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch build.done
 			WORKING_DIRECTORY ${ESQLITE_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${ESQLITE_BINARY_DIR}/install.done)
-		execute_process(COMMAND cmake
-				--install . --config ${CMAKE_BUILD_TYPE} --prefix ${CMAKE_INSTALL_PREFIX}
+		execute_process(
+			COMMAND cmake
+				--install .
+				--config ${CMAKE_BUILD_TYPE}
+				--prefix ${CMAKE_INSTALL_PREFIX}
 			WORKING_DIRECTORY ${ESQLITE_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch install.done
 			WORKING_DIRECTORY ${ESQLITE_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
@@ -811,25 +943,23 @@ block()
 	set(CURL_SOURCE_DIR ${PROJECT_SOURCE_DIR}/curl)
 	set(CURL_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/curl)
 	if(NOT EXISTS ${CURL_SOURCE_DIR}/CMakeLists.txt)
-		execute_process(COMMAND git submodule update
+		execute_process(
+			COMMAND git submodule update
 				--init third_party/curl
 			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND git checkout curl-8_22_0
+		execute_process(
+			COMMAND git checkout curl-8_22_0
 			WORKING_DIRECTORY ${CURL_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${CURL_BINARY_DIR}/configure.done)
-		execute_process(COMMAND cmake
-				-DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
-				-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-				-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-				-DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
-				-DCMAKE_MSVC_RUNTIME_LIBRARY=${CMAKE_MSVC_RUNTIME_LIBRARY}
+		execute_process(
+			COMMAND cmake
+				${CMAKE_COMMON_ARGS}
 				-DBUILD_CURL_EXE=OFF
-				-DBUILD_SHARED_LIBS=OFF
 				-DBUILD_STATIC_LIBS=ON
 				-DENABLE_ARES=ON
 				-DCURL_LTO=ON
@@ -878,31 +1008,39 @@ block()
 			WORKING_DIRECTORY ${CURL_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch configure.done
 			WORKING_DIRECTORY ${CURL_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${CURL_BINARY_DIR}/build.done)
-		execute_process(COMMAND cmake
-				--build . --config ${CMAKE_BUILD_TYPE}
+		execute_process(
+			COMMAND cmake
+				--build .
+				--config ${CMAKE_BUILD_TYPE}
 			WORKING_DIRECTORY ${CURL_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch build.done
 			WORKING_DIRECTORY ${CURL_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 	if(NOT EXISTS ${CURL_BINARY_DIR}/install.done)
-		execute_process(COMMAND cmake
-				--install . --config ${CMAKE_BUILD_TYPE} --prefix ${CMAKE_INSTALL_PREFIX}
+		execute_process(
+			COMMAND cmake
+				--install .
+				--config ${CMAKE_BUILD_TYPE}
+				--prefix ${CMAKE_INSTALL_PREFIX}
 			WORKING_DIRECTORY ${CURL_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
-		execute_process(COMMAND cmake
+		execute_process(
+			COMMAND cmake
 				-E touch install.done
 			WORKING_DIRECTORY ${CURL_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
