@@ -68,9 +68,7 @@ int main(int argc, char const **argv) {
 		for (--argc, ++argv; argc; --argc, ++argv) {
 			if (::std::strcmp("--collector", *argv) == 0) {
 				current = &collector;
-			} else {
-				if (!current)
-					continue;
+			} else if(current) {
 				*current = *argv;
 				current = nullptr;
 			}
