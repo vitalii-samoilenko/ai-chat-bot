@@ -12,12 +12,12 @@ namespace threads {
 
 template<
 	typename TChannel,
-	typename ...TParticipantRepos
+	typename ...TParticipantGroup
 > class wired {
 private:
 	::std::tuple<
-		TParticipantRepos &...
-	> _participantRepos;
+		TParticipantGroup &...
+	> _participantGroup;
 	::std::unordered_set<
 		::std::tuple<
 			::std::string,
@@ -30,7 +30,7 @@ public:
 	template<
 		typename ...TChannelArgs
 	> wired(
-		TParticipantRepos &...participantRepos,
+		TParticipantGroup &...participantGroup,
 		TChannelArgs &&...channelArgs
 	);
 	wired() = delete;

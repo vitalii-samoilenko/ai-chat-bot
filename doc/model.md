@@ -7,7 +7,6 @@
 Conversation context
 
 - Passive
-- Persistent
 - Observable
 
 ## Participant

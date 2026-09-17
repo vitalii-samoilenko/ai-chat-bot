@@ -10,16 +10,16 @@ namespace threads {
 
 template<
 	typename TChannel,
-	typename ...TParticipantRepos
+	typename ...TParticipantGroup
 > template<
 	typename ...TChannelArgs
 > wired<
 	TChannel,
-	TParticipantRepos ...
+	TParticipantGroup ...
 >::wired(
-	TParticipantRepos &...participantRepos,
+	TParticipantGroup &...participantGroup,
 	TChannelArgs &&...channelArgs
-) : _participantRepos{ participantRepos... } 
+) : _participantGroup{ participantGroup... } 
 	, _participants{}
 	, _messages{
 		::std::forward<
@@ -31,10 +31,10 @@ template<
 
 template<
 	typename TChannel,
-	typename ...TParticipantRepos
+	typename ...TParticipantGroup
 > void wired<
 	TChannel,
-	TParticipantRepos ...
+	TParticipantGroup ...
 >::accept(
 	::std::string_view group,
 	::std::string_view name
@@ -49,10 +49,10 @@ template<
 
 template<
 	typename TChannel,
-	typename ...TParticipantRepos
+	typename ...TParticipantGroup
 > void wired<
 	TChannel,
-	TParticipantRepos ...
+	TParticipantGroup ...
 >::dismiss(
 	::std::string_view group,
 	::std::string_view name
@@ -67,10 +67,10 @@ template<
 
 template<
 	typename TChannel,
-	typename ...TParticipantRepos
+	typename ...TParticipantGroup
 > void wired<
 	TChannel,
-	TParticipantRepos ...
+	TParticipantGroup ...
 >::push(
 	::std::string_view content,
 	::std::span<
@@ -82,9 +82,9 @@ template<
 ) {
 	auto message = _messages.insert_back(content, tags);
 	for (auto &participant : _participants) {
-		::std::apply([&](TParticipantRepos &...participantRepos)->void {
+		::std::apply([&](TParticipantGroup &...participantGroup)->void {
 			([&]()->bool {
-				auto *instance = participantRepos.find(
+				auto *instance = participantGroup.find(
 					::std::get<0>(participant),
 					::std::get<1>(participant)
 				);
@@ -102,7 +102,7 @@ template<
 				}
 				return true;
 			}() || ...);
-		}, _participantRepos);
+		}, _participantGroup);
 	}
 };
 
