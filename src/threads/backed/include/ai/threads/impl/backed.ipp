@@ -5,15 +5,12 @@
 
 #include "ai/threads/backed.hpp"
 
-namespace ai {
-namespace threads {
-
 template<
 	typename TMedia,
 	typename ...TParticipantGroup
 > template<
 	typename ...TMediaArgs
-> backed<
+> ::ai::threads::backed<
 	TMedia,
 	TParticipantGroup ...
 >::backed(
@@ -32,7 +29,7 @@ template<
 template<
 	typename TMedia,
 	typename ...TParticipantGroup
-> void backed<
+> void ::ai::threads::backed<
 	TMedia,
 	TParticipantGroup ...
 >::accept(
@@ -50,7 +47,7 @@ template<
 template<
 	typename TMedia,
 	typename ...TParticipantGroup
-> void backed<
+> void ::ai::threads::backed<
 	TMedia,
 	TParticipantGroup ...
 >::dismiss(
@@ -68,7 +65,7 @@ template<
 template<
 	typename TMedia,
 	typename ...TParticipantGroup
-> void backed<
+> void ::ai::threads::backed<
 	TMedia,
 	TParticipantGroup ...
 >::push(
@@ -80,7 +77,8 @@ template<
 		>
 	> tags
 ) {
-	auto message = _messages.insert_back(content, tags);
+	auto current = _messages.insert_back(content, tags);
+	auto &message = *current;
 	for (auto &participant : _participants) {
 		::std::apply([&](TParticipantGroup &...participantGroup)->void {
 			([&]()->bool {
@@ -105,8 +103,5 @@ template<
 		}, _participantGroup);
 	}
 };
-
-} // threads
-} // ai
 
 #endif

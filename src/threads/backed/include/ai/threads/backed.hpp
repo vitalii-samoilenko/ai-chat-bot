@@ -39,8 +39,8 @@ public:
 
 	~backed() = default;
 
-	backed & operator=(backed const &) = delete;
-	backed & operator=(backed &&) = default;
+	backed &operator=(backed const &) = delete;
+	backed &operator=(backed &&) = default;
 
 	void accept(
 		::std::string_view group,
@@ -62,7 +62,7 @@ public:
 	);
 };
 
-#include "impl/backed.ipp"
+#include "ai/threads/impl/backed.ipp"
 
 } // threads
 } // ai
