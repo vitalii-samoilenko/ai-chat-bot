@@ -13,9 +13,9 @@ Message repository
 - Persistent via configuration
 - Cannot be constructed
 
-### Wired
+### Backed
 
-![Wired thread diagram](threads_wired.svg)
+![Backed thread diagram](threads_backed.svg)
 
 - sqlite: persists into database file
 - memory: caches into collection

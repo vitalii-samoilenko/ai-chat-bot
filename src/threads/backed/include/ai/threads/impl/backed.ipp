@@ -1,39 +1,39 @@
-#ifndef AI_THREADS_IMPL_WIRED_IPP
-#define AI_THREADS_IMPL_WIRED_IPP
+#ifndef AI_THREADS_IMPL_BACKED_IPP
+#define AI_THREADS_IMPL_BACKED_IPP
 
 #include <utility>
 
-#include "ai/threads/wired.hpp"
+#include "ai/threads/backed.hpp"
 
 namespace ai {
 namespace threads {
 
 template<
-	typename TChannel,
+	typename TMedia,
 	typename ...TParticipantGroup
 > template<
-	typename ...TChannelArgs
-> wired<
-	TChannel,
+	typename ...TMediaArgs
+> backed<
+	TMedia,
 	TParticipantGroup ...
->::wired(
+>::backed(
 	TParticipantGroup &...participantGroup,
-	TChannelArgs &&...channelArgs
+	TMediaArgs &&...mediaArgs
 ) : _participantGroup{ participantGroup... } 
 	, _participants{}
 	, _messages{
 		::std::forward<
-			TChannelArgs
-		>(channelArgs)...
+			TMediaArgs
+		>(mediaArgs)...
 	} {
 
 };
 
 template<
-	typename TChannel,
+	typename TMedia,
 	typename ...TParticipantGroup
-> void wired<
-	TChannel,
+> void backed<
+	TMedia,
 	TParticipantGroup ...
 >::accept(
 	::std::string_view group,
@@ -48,10 +48,10 @@ template<
 };
 
 template<
-	typename TChannel,
+	typename TMedia,
 	typename ...TParticipantGroup
-> void wired<
-	TChannel,
+> void backed<
+	TMedia,
 	TParticipantGroup ...
 >::dismiss(
 	::std::string_view group,
@@ -66,10 +66,10 @@ template<
 };
 
 template<
-	typename TChannel,
+	typename TMedia,
 	typename ...TParticipantGroup
-> void wired<
-	TChannel,
+> void backed<
+	TMedia,
 	TParticipantGroup ...
 >::push(
 	::std::string_view content,

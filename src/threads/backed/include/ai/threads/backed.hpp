@@ -1,5 +1,5 @@
-#ifndef AI_THREADS_WIRED_HPP
-#define AI_THREADS_WIRED_HPP
+#ifndef AI_THREADS_BACKED_HPP
+#define AI_THREADS_BACKED_HPP
 
 #include <span>
 #include <string>
@@ -11,9 +11,9 @@ namespace ai {
 namespace threads {
 
 template<
-	typename TChannel,
+	typename TMedia,
 	typename ...TParticipantGroup
-> class wired {
+> class backed {
 private:
 	::std::tuple<
 		TParticipantGroup &...
@@ -24,23 +24,23 @@ private:
 			::std::string
 		>
 	> _participants;
-	TChannel _messages;
+	TMedia _messages;
 
 public:
 	template<
-		typename ...TChannelArgs
-	> wired(
+		typename ...TMediaArgs
+	> backed(
 		TParticipantGroup &...participantGroup,
-		TChannelArgs &&...channelArgs
+		TMediaArgs &&...mediaArgs
 	);
-	wired() = delete;
-	wired(wired const &) = delete;
-	wired(wired &&) = default;
+	backed() = delete;
+	backed(backed const &) = delete;
+	backed(backed &&) = default;
 
-	~wired() = default;
+	~backed() = default;
 
-	wired & operator=(wired const &) = delete;
-	wired & operator=(wired &&) = default;
+	backed & operator=(backed const &) = delete;
+	backed & operator=(backed &&) = default;
 
 	void accept(
 		::std::string_view group,
@@ -62,7 +62,7 @@ public:
 	);
 };
 
-#include "impl/wired.ipp"
+#include "impl/backed.ipp"
 
 } // threads
 } // ai
