@@ -12,12 +12,12 @@ namespace threads {
 
 template<
 	typename TMedia,
-	typename ...TParticipantGroup
+	typename ...TParticipantCluster
 > class backed {
 private:
 	::std::tuple<
-		TParticipantGroup &...
-	> _participantGroup;
+		TParticipantCluster &...
+	> _participantCluster;
 	::std::unordered_set<
 		::std::tuple<
 			::std::string,
@@ -30,7 +30,7 @@ public:
 	template<
 		typename ...TMediaArgs
 	> backed(
-		TParticipantGroup &...participantGroup,
+		TParticipantCluster &...participantCluster,
 		TMediaArgs &&...mediaArgs
 	);
 	backed() = delete;
@@ -43,11 +43,11 @@ public:
 	backed &operator=(backed &&) = default;
 
 	void accept(
-		::std::string_view group,
+		::std::string_view partition,
 		::std::string_view name
 	);
 	void dismiss(
-		::std::string_view group,
+		::std::string_view partition,
 		::std::string_view name
 	);
 

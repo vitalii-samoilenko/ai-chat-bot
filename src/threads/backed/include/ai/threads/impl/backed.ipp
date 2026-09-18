@@ -7,16 +7,16 @@
 
 template<
 	typename TMedia,
-	typename ...TParticipantGroup
+	typename ...TParticipantCluster
 > template<
 	typename ...TMediaArgs
 > ::ai::threads::backed<
 	TMedia,
-	TParticipantGroup ...
+	TParticipantCluster ...
 >::backed(
-	TParticipantGroup &...participantGroup,
+	TParticipantCluster &...participantCluster,
 	TMediaArgs &&...mediaArgs
-) : _participantGroup{ participantGroup... } 
+) : _participantCluster{ participantCluster... } 
 	, _participants{}
 	, _messages{
 		::std::forward<
@@ -28,10 +28,10 @@ template<
 
 template<
 	typename TMedia,
-	typename ...TParticipantGroup
+	typename ...TParticipantCluster
 > void ::ai::threads::backed<
 	TMedia,
-	TParticipantGroup ...
+	TParticipantCluster ...
 >::accept(
 	::std::string_view group,
 	::std::string_view name
@@ -46,10 +46,10 @@ template<
 
 template<
 	typename TMedia,
-	typename ...TParticipantGroup
+	typename ...TParticipantCluster
 > void ::ai::threads::backed<
 	TMedia,
-	TParticipantGroup ...
+	TParticipantCluster ...
 >::dismiss(
 	::std::string_view group,
 	::std::string_view name
@@ -64,10 +64,10 @@ template<
 
 template<
 	typename TMedia,
-	typename ...TParticipantGroup
+	typename ...TParticipantCluster
 > void ::ai::threads::backed<
 	TMedia,
-	TParticipantGroup ...
+	TParticipantCluster ...
 >::push(
 	::std::string_view content,
 	::std::span<
@@ -77,12 +77,11 @@ template<
 		>
 	> tags
 ) {
-	auto current = _messages.insert_back(content, tags);
-	auto &message = *current;
+	auto message = _messages.insert_back(content, tags);
 	for (auto &participant : _participants) {
-		::std::apply([&](TParticipantGroup &...participantGroup)->void {
+		::std::apply([&](TParticipantCluster &...participantCluster)->void {
 			([&]()->bool {
-				auto *instance = participantGroup.find(
+				auto *instance = participantCluster.find(
 					::std::get<0>(participant),
 					::std::get<1>(participant)
 				);
@@ -90,9 +89,9 @@ template<
 					return false;
 				try {
 					instance->notify(
-						::std::get<0>(message),
-						::std::get<1>(message),
-						::std::get<2>(message)
+						::std::get<0>(*message),
+						::std::get<1>(*message),
+						::std::get<2>(*message)
 					);
 				}
 				catch (...) {
@@ -100,7 +99,7 @@ template<
 				}
 				return true;
 			}() || ...);
-		}, _participantGroup);
+		}, _participantCluster);
 	}
 };
 
