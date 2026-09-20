@@ -1,5 +1,5 @@
-#ifndef AI_THREADS_BACKED_HPP
-#define AI_THREADS_BACKED_HPP
+#ifndef AI_CHAT_THREADS_BACKED_HPP
+#define AI_CHAT_THREADS_BACKED_HPP
 
 #include <span>
 #include <string>
@@ -8,6 +8,7 @@
 #include <uonrdered_set>
 
 namespace ai {
+namespace chat {
 namespace threads {
 
 template<
@@ -62,9 +63,10 @@ public:
 	);
 };
 
-#include "ai/threads/impl/backed.ipp"
+#include "ai/chat/threads/impl/backed.ipp"
 
 } // threads
+} // chat
 } // ai
 
 #endif

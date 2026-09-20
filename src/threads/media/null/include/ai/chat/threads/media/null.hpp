@@ -1,15 +1,19 @@
-#ifndef AI_THREADS_MEDIA_NULL_HPP
-#define AI_THREADS_MEDIA_NULL_HPP
+#ifndef AI_CHAT_THREADS_MEDIA_NULL_HPP
+#define AI_CHAT_THREADS_MEDIA_NULL_HPP
 
 #include <span>
 #include <string_view>
 #include <tuple>
 
 namespace ai {
+namespace chat {
 namespace threads {
 namespace media {
 
 class null {
+private:
+	static constexpr long long TheEndTimes;
+
 public:
 	using value_type = ::std::tuple<
 		long long,
@@ -23,7 +27,7 @@ public:
 	>;
 	class iterator {
 	private:
-		value_type _message;
+		value_type that;
 
 		iterator(
 			long long timestamp,
@@ -72,14 +76,17 @@ public:
 	);
 
 	iterator begin();
-	iterator lower_bound(long long timestamp);
+	iterator lower_bound(
+		long long timestamp
+	);
 	iterator end();
 };
 
 } // media
 } // threads
+} // chat
 } // ai
 
-#include "ai/threads/media/impl/null.ipp"
+#include "ai/chat/threads/media/impl/null.ipp"
 
 #endif

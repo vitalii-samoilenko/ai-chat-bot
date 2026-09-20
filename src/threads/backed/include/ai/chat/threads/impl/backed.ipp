@@ -1,16 +1,16 @@
-#ifndef AI_THREADS_IMPL_BACKED_IPP
-#define AI_THREADS_IMPL_BACKED_IPP
+#ifndef AI_CHAT_THREADS_IMPL_BACKED_IPP
+#define AI_CHAT_THREADS_IMPL_BACKED_IPP
 
 #include <utility>
 
-#include "ai/threads/backed.hpp"
+#include "ai/chat/threads/backed.hpp"
 
 template<
 	typename TMedia,
 	typename ...TParticipantCluster
 > template<
 	typename ...TMediaArgs
-> ::ai::threads::backed<
+> ::ai::chat::threads::backed<
 	TMedia,
 	TParticipantCluster ...
 >::backed(
@@ -21,7 +21,7 @@ template<
 	, _messages{
 		::std::forward<
 			TMediaArgs
-		>(mediaArgs)...
+		>(mediaArgs) ...
 	} {
 
 };
@@ -29,7 +29,8 @@ template<
 template<
 	typename TMedia,
 	typename ...TParticipantCluster
-> void ::ai::threads::backed<
+> void
+::ai::chat::threads::backed<
 	TMedia,
 	TParticipantCluster ...
 >::accept(
@@ -47,7 +48,8 @@ template<
 template<
 	typename TMedia,
 	typename ...TParticipantCluster
-> void ::ai::threads::backed<
+> void
+::ai::chat::threads::backed<
 	TMedia,
 	TParticipantCluster ...
 >::dismiss(
@@ -65,7 +67,8 @@ template<
 template<
 	typename TMedia,
 	typename ...TParticipantCluster
-> void ::ai::threads::backed<
+> void
+::ai::chat::threads::backed<
 	TMedia,
 	TParticipantCluster ...
 >::push(
@@ -81,14 +84,14 @@ template<
 	for (auto &participant : _participants) {
 		::std::apply([&](TParticipantCluster &...participantCluster)->void {
 			([&]()->bool {
-				auto *instance = participantCluster.find(
+				auto recepient = participantCluster.find(
 					::std::get<0>(participant),
 					::std::get<1>(participant)
 				);
-				if (!instance)
+				if (recepient == participantCluster.end())
 					return false;
 				try {
-					instance->notify(
+					recepient->notify(
 						::std::get<0>(*message),
 						::std::get<1>(*message),
 						::std::get<2>(*message)

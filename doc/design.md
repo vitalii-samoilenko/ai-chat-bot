@@ -34,9 +34,24 @@ Message repository
 
 ### Twitch
 
+## Repositories
+
+![Repository diagram](repository.svg)
+
+- Grouped into cluster
+- Group into partition
+
 ## Logical constructs
 
-Communication patterns
+Blocks and communication patterns
+
+### Pipe
+
+![Pipe diagram](pipe.svg)
+
+### Cache
+
+![Cache diagram](cache.svg)
 
 ### Notification channel
 

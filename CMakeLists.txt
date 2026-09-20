@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25.1)
 
-project(AI VERSION 0.1)
+project(AI.Chat VERSION 0.1)
 
 option(TELEMETRY "Enable telemetry" OFF)
 
