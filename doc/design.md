@@ -17,9 +17,10 @@ Message repository
 
 ![Backed thread diagram](threads_backed.svg)
 
-- sqlite: persists into database file
-- memory: caches into collection
 - null: immediately discards
+- memory: caches into collection
+- file: persists into text file
+- sqlite: persists into database file
 
 ## Participants
 
@@ -49,6 +50,10 @@ Blocks and communication patterns
 ### Cache
 
 ![Cache diagram](cache.svg)
+
+### Solid
+
+![Solid diagram](solid.svg)
 
 ### Notification channel
 
