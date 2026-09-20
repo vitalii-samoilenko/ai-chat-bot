@@ -16,7 +16,7 @@ template<
 >::backed(
 	TParticipantCluster &...participantCluster,
 	TMediaArgs &&...mediaArgs
-) : _participantCluster{ participantCluster... } 
+) : _participantCluster{ participantCluster ... } 
 	, _participants{}
 	, _messages{
 		::std::forward<

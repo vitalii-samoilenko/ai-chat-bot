@@ -8,8 +8,11 @@ target_sources(_ai_chat_threads_media_null
 	INTERFACE FILE_SET HEADERS
 	BASE_DIRS include
 	FILES
-		include/ai/chat/threads/media/null.hpp
+		include/ai/chat/repositories/impl/pipe.ipp
+		include/ai/chat/repositories/pipe.hpp
 		include/ai/chat/threads/media/impl/null.ipp
+		include/ai/chat/threads/media/null.hpp
+		include/ai/chat/threads/pipe.hpp
 )
 
 add_library(::AI::Chat::Threads::Media::Null ALIAS _ai_chat_threads_media_null)

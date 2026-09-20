@@ -29,6 +29,8 @@ Message repository
 
 ### Console
 
+- Singleton
+
 ### OpenAI
 
 ### Moderator
