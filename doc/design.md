@@ -54,6 +54,10 @@ Blocks and communication patterns
 
 ![Notification channel diagram](notification_channel.svg)
 
-### Moderated channel
+### Moderated speech
 
-![Moderated channel diagram](moderated_channel.svg)
+![Moderated speech diagram](moderated_speech.svg)
+
+### Control interface
+
+![Control interface diagram](control_interface.svg)
