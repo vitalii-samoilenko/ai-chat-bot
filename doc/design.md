@@ -38,9 +38,6 @@ Message repository
 
 ![Repository diagram](repository.svg)
 
-- Grouped into cluster
-- Group into partition
-
 ## Logical constructs
 
 Blocks and communication patterns
