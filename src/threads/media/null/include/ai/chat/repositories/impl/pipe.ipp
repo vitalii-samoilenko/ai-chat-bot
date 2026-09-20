@@ -4,10 +4,10 @@
 #include "ai/chat/repositories/pipe.hpp"
 
 template
-	typename TConfig,
+	typename TGlobalConfig,
 	typename ...TParticipantCluster
 > ::ai::chat::repositories::pipe<
-	TConfig,
+	TGlobalConfig,
 	TParticipantCluster ...
 >::iterator::iterator(
 	::std::unordered_map<
@@ -19,57 +19,57 @@ template
 };
 
 template
-	typename TConfig,
+	typename TGlobalConfig,
 	typename ...TParticipantCluster
 > bool
 ::ai::chat::repositories::pipe<
-	TConfig,
+	TGlobalConfig,
 	TParticipantCluster ...
 >::iterator::operator==(
 	::ai::chat::repositories::pipe<
-		TConfig,
+		TGlobalConfig,
 		TParticipantCluster ...
 	>::iterator const &other
 ) {
 	return that == other.that;
 };
 template
-	typename TConfig,
+	typename TGlobalConfig,
 	typename ...TParticipantCluster
 > ::ai::chat::repositories::pipe<
-	TConfig,
+	TGlobalConfig,
 	TParticipantCluster ...
 >::iterator
 &::ai::chat::repositories::pipe<
-	TConfig,
+	TGlobalConfig,
 	TParticipantCluster ...
 >::iterator::operator++() {
 	++that;
 	return *this;
 };
 template
-	typename TConfig,
+	typename TGlobalConfig,
 	typename ...TParticipantCluster
 > ::ai::chat::repositories::pipe<
-	TConfig,
+	TGlobalConfig,
 	TParticipantCluster ...
 >::value_type
 &::ai::chat::repositories::pipe<
-	TConfig,
+	TGlobalConfig,
 	TParticipantCluster ...
 >::iterator::operator*() {
 	return ::std::get<1>(*that);
 };
 
 template
-	typename TConfig,
+	typename TGlobalConfig,
 	typename ...TParticipantCluster
 > ::ai::chat::repositories::pipe<
-	TConfig,
+	TGlobalConfig,
 	TParticipantCluster ...
 >::pipe(
 	::std::string_view partition,
-	TConfig &globalConfig,
+	TGlobalConfig &globalConfig,
 	TParticipantCluster &...participantCluster
 ) : _partition{ partition }
 	, _channels{}
@@ -79,14 +79,14 @@ template
 };
 
 template
-	typename TConfig,
+	typename TGlobalConfig,
 	typename ...TParticipantCluster
 > ::ai::chat::repositories::pipe<
-	TConfig,
+	TGlobalConfig,
 	TParticipantCluster ...
 >::iterator
 ::ai::chat::repositories::pipe<
-	TConfig,
+	TGlobalConfig,
 	TParticipantCluster ...
 >::begin() {
 	return iterator{
@@ -94,13 +94,13 @@ template
 	};
 };
 template
-	typename TConfig
+	typename TGlobalConfig
 > ::ai::chat::repositories::pipe<
-	TConfig,
+	TGlobalConfig,
 	TParticipantCluster ...
 >::iterator
 ::ai::chat::repositories::pipe<
-	TConfig,
+	TGlobalConfig,
 	TParticipantCluster ...
 >::find(
 	::std::string_view partition,
@@ -111,8 +111,8 @@ template
 			_channels.end()
 		};
 	bool enabled{
-		_globalConfig.get_threads()
-			.get_pipes()
+		_globalConfig.get_thread()
+			.get_pipe()
 			.get_enabled()
 	};
 	if (!enabled)
@@ -137,14 +137,14 @@ template
 	};
 };
 template
-	typename TConfig,
+	typename TGlobalConfig,
 	typename ...TParticipantCluster
 > ::ai::chat::repositories::pipe<
-	TConfig,
+	TGlobalConfig,
 	TParticipantCluster ...
 >::iterator
 ::ai::chat::repositories::pipe<
-	TConfig,
+	TGlobalConfig,
 	TParticipantCluster ...
 >::end() {
 	return iterator{

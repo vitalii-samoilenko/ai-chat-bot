@@ -13,7 +13,7 @@ namespace chat {
 namespace repositories {
 
 template<
-	typename TConfig,
+	typename TGlobalConfig,
 	typename ...TParticipantCluster
 > class pipe {
 private:
@@ -22,7 +22,7 @@ private:
 		::std::string,
 		value_type
 	> _channels;
-	TConfig &_globalConfig;
+	TGlobalConfig &_globalConfig;
 	::std::tuple<
 		TParticipantCluster &...
 	> _participantCluster;
@@ -61,7 +61,7 @@ public:
 
 	pipe(
 		::std::string_view partition,
-		TConfig &globalConfig,
+		TGlobalConfig &globalConfig,
 		TParticipantCluster &...participantCluster
 	);
 	pipe() = delete;
