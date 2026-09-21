@@ -30,6 +30,8 @@ Message repository
 ### Console
 
 - Singleton
+- Supports moderated speech
+- Supports control interface
 
 ### OpenAI
 

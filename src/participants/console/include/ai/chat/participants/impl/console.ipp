@@ -160,11 +160,11 @@ template<
 		input, reject, review,
 		command, unauthorized, error
 	};
-	enum sender_t{
-		self, other
-	};
 	partition_t partition{ input };
-	::std::string_view sender{};
+	::std::tuple<
+		::std::string_view,
+		::std::string_view
+	> sender{};
 	for (auto tag : tags) {
 		if (::std::get<0>(tag) == "channel.partition") {
 			if (::std::get<1>(tag) == "reject") {
@@ -178,16 +178,20 @@ template<
 			} else if (::std::get<1>(tag) == "error") {
 				partition = error;
 			}
+		} else if (::std::get<0>(tag) == "sender.partition") {
+			::std::get<0>(sender) = ::std::get<1>(tag);
 		} else if (::std::get<0>(tag) == "sender.name") {
-			sender = ::std::get<1>(tag);
+			::std::get<1>(sender) = ::std::get<1>(tag);
 		}
 	}
 	switch (partition) {
 	case input:
-		if (sender == _name)
+		if (::std::get<0>(sender) == _partition
+			&& ::std::get<1>(sender) == _name)
 			break;
 		::std::chrono::system_clock::time_point when{ timestamp };
-		::std::cout << when << " " << sender << ": " << content << ::std::endl;
+		::std::cout << when << " " << ::std::get<1>(sender) << ": "
+			<< content << ::std::endl;
 		break;
 	case reject:
 		::std::cout << "Message is rejected" << ::std::endl;

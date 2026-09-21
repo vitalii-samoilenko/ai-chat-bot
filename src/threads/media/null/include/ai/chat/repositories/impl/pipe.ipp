@@ -12,7 +12,10 @@ template
 >::iterator::iterator(
 	::std::unordered_map<
 		::std::string,
-		value_type
+		::ai::chat::repositories::pipe<
+			TGlobalConfig,
+			TParticipantCluster ...
+		>::value_type
 	>::iterator that
 ) : that{ that } {
 
@@ -120,12 +123,12 @@ template
 			_channels.end()
 		};
 	auto channel = _channels.find(name);
-	if (channel == _channels.end() {
+	if (channel == _channels.end()) {
 		::std::tie(channel, ::std::ignored) = _channels.insert(
 			::std::make_pair(
 				::std::string{ name },
-				::std::apply([&](TParticipantCluster ...participantCluster)->threads::pipe {
-					return threads::pipe{
+				::std::apply([&](TParticipantCluster ...participantCluster)->value_type {
+					return value_type{
 						partition,
 						name,
 						participantCluster ...

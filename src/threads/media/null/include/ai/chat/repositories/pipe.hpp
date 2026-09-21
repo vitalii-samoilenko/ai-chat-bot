@@ -28,7 +28,9 @@ private:
 	> _participantCluster;
 
 public:
-	using value_type = threads::pipe;
+	using value_type = threads::pipe<
+		TParticipantCluster ...
+	>;
 	class iterator {
 	private:
 		::std::unordered_map<

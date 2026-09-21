@@ -39,12 +39,12 @@ template<
 	TMedia,
 	TParticipantCluster ...
 >::accept(
-	::std::string_view group,
+	::std::string_view partition,
 	::std::string_view name
 ) {
 	_participants.insert(
 		::std::make_tuple(
-			::std::string{ group }
+			::std::string{ partition }
 			::std::string{ name }
 		)
 	);
@@ -58,13 +58,13 @@ template<
 	TMedia,
 	TParticipantCluster ...
 >::dismiss(
-	::std::string_view group,
+	::std::string_view partition,
 	::std::string_view name
 ) {
 	_participants.erase(
 		::std::make_tuple(
-			::std::string{ group },
-			::std::string{ name }
+			partition,
+			name
 		)
 	);
 };
@@ -85,20 +85,20 @@ template<
 		>
 	> tags
 ) {
-	::std::vector join{ tags };
-	join.insert_back(
+	::std::vector channelTags{ tags };
+	channelTags.insert_back(
 		::std::make_tuple(
 			::std::string_view{ "channel.partition" },
 			::std::string_view{ _partition }
 		)
 	);
-	join.insert_back(
+	channelTags.insert_back(
 		::std::make_tuple(
 			::std::string_view{ "channel.name" },
 			::std::string_view{ _name }
 		)
 	);
-	auto message = _messages.insert_back(content, join);
+	auto message = _messages.insert_back(content, channelTags);
 	for (auto &participant : _participants) {
 		::std::apply([&](TParticipantCluster &...participantCluster)->void {
 			([&]()->bool {

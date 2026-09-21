@@ -8,8 +8,11 @@ namespace ai {
 namespace chat {
 namespace threads {
 
-using pipe = backed<
-	media::null
+template<
+	typename ...TParticipantCluster
+> using pipe = backed<
+	media::null,
+	TParticipantCluster ...
 >;
 
 } // threads
