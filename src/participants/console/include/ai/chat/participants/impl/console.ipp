@@ -12,12 +12,14 @@ template<
 > ::ai::chat::participants::console<
 	TThreadCluster ...
 >::console(
+	::std::string_view partition,
+	::std::string_view name,
 	TThreadCluster &...threadCluster,
-	::std::string_view name
-) : _threadCluster{ threadCluster ... }
+) : _partition{ partition }
+	, _name{ name }
+	, _threadCluster{ threadCluster ... }
 	, _inputThread{ ::std::nullopt }
-	, _commandThread{ ::std::nullopt }
-	, _name{ name } {
+	, _commandThread{ ::std::nullopt } {
 
 };
 
@@ -39,7 +41,11 @@ template<
 		>
 	> tags{
 		::std::make_tuple(
-			::std::string_view{ "sender" },
+			::std::string_view{ "sender.partition" },
+			::std::string_view{ _partition }
+		),
+		::std::make_tuple(
+			::std::string_view{ "sender.name" },
 			::std::string_view{ _name }
 		)
 	};
@@ -60,7 +66,7 @@ template<
 		) {
 			tags.push_back(
 				::std::make_tuple(
-					::std::string_view{ "recepient" },
+					::std::string_view{ "recepient.name" },
 					recepient
 				)
 			);
@@ -68,12 +74,6 @@ template<
 	}
 	if (!thread)
 		return;
-	tags.push_back(
-		::std::make_tuple(
-			::std::string_view{ "partition" },
-			::std::string_view{ ::std::get<0>(*thread) }
-		)
-	);
 	::std::apply([&](TThreadCluster &...threadCluster)->void {
 		([&]()->bool {
 			auto channel = threadCluster.find(
@@ -166,19 +166,19 @@ template<
 	partition_t partition{ input };
 	::std::string_view sender{};
 	for (auto tag : tags) {
-		if (::std::get<0>(tag) == "partition") {
-			if (::std::get<1>(tag) == "command") {
-				partition = command;
-			} else if (::std::get<1>(tag) == "reject") {
+		if (::std::get<0>(tag) == "channel.partition") {
+			if (::std::get<1>(tag) == "reject") {
 				partition = reject;
 			} else if (::std::get<1>(tag) == "review") {
 				partition = review;
+			} else if (::std::get<1>(tag) == "command") {
+				partition = command;
 			} else if (::std::get<1>(tag) == "unauthorized") {
 				partition = unauthorized;
 			} else if (::std::get<1>(tag) == "error") {
 				partition = error;
 			}
-		} else if (::std::get<0>(tag) == "sender") {
+		} else if (::std::get<0>(tag) == "sender.name") {
 			sender = ::std::get<1>(tag);
 		}
 	}

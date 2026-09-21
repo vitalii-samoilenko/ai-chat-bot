@@ -126,6 +126,8 @@ template
 				::std::string{ name },
 				::std::apply([&](TParticipantCluster ...participantCluster)->threads::pipe {
 					return threads::pipe{
+						partition,
+						name,
 						participantCluster ...
 					};
 				}, _participantCluster)

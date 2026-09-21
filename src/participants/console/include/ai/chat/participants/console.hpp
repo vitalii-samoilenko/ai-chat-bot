@@ -15,6 +15,8 @@ template<
 	typename ...TThreadCluster
 > class console {
 private:
+	::std::string _partition;
+	::std::string _name;
 	::std::tuple<
 		TThreadCluster &...
 	> _threadCluster;
@@ -30,12 +32,12 @@ private:
 			::std::string
 		>
 	> _commandThread;
-	::std::string _name;
 
 public:
 	console(
-		TThreadCluster &...threadCluster,
-		::std::string_view from
+		::std::string_view partition,
+		::std::string_view name,
+		TThreadCluster &...threadCluster
 	);
 	console() = delete;
 	console(console const &) = delete;

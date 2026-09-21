@@ -2,6 +2,7 @@
 #define AI_CHAT_THREADS_IMPL_BACKED_IPP
 
 #include <utility>
+#include <vector>
 
 #include "ai/chat/threads/backed.hpp"
 
@@ -14,9 +15,13 @@ template<
 	TMedia,
 	TParticipantCluster ...
 >::backed(
+	::std::string_view partition,
+	::std::string_view name,
 	TParticipantCluster &...participantCluster,
 	TMediaArgs &&...mediaArgs
-) : _participantCluster{ participantCluster ... } 
+) : _partition{ partition }
+	, _name{ name }
+	, _participantCluster{ participantCluster ... } 
 	, _participants{}
 	, _messages{
 		::std::forward<
@@ -80,7 +85,20 @@ template<
 		>
 	> tags
 ) {
-	auto message = _messages.insert_back(content, tags);
+	::std::vector join{ tags };
+	join.insert_back(
+		::std::make_tuple(
+			::std::string_view{ "channel.partition" },
+			::std::string_view{ _partition }
+		)
+	);
+	join.insert_back(
+		::std::make_tuple(
+			::std::string_view{ "channel.name" },
+			::std::string_view{ _name }
+		)
+	);
+	auto message = _messages.insert_back(content, join);
 	for (auto &participant : _participants) {
 		::std::apply([&](TParticipantCluster &...participantCluster)->void {
 			([&]()->bool {

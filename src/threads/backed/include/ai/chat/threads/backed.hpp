@@ -16,6 +16,8 @@ template<
 	typename ...TParticipantCluster
 > class backed {
 private:
+	::std::string _partition;
+	::std::string _name;
 	::std::tuple<
 		TParticipantCluster &...
 	> _participantCluster;
@@ -31,6 +33,8 @@ public:
 	template<
 		typename ...TMediaArgs
 	> backed(
+		::std::string_view partition,
+		::std::string_view name,
 		TParticipantCluster &...participantCluster,
 		TMediaArgs &&...mediaArgs
 	);
