@@ -14,17 +14,18 @@ namespace chat {
 namespace repositories {
 
 template<
+	typename TGlobalConfig,
 	typename ...TThreadCluster
 > class console {
 private:
 	::std::string _partition;
-	::std::string _name;
-	::std::tuple<
-		TThreadCluster &...
-	> _threadCluster;
 	::std::optional<
 		value_type
 	> _recepient;
+	TGlobalConfig &_globalConfig;
+	::std::tuple<
+		TThreadCluster &...
+	> _threadCluster;
 
 public:
 	using value_typle = participants::console<
@@ -57,6 +58,7 @@ public:
 
 	console(
 		::std::string_view partition,
+		TGlobalConfig &globalConfig,
 		TThreadCluster &...threadCluster
 	);
 	console() = delete;
