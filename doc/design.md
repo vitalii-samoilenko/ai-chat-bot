@@ -17,6 +17,9 @@ Message repository
 
 ![Backed thread diagram](threads_backed.svg)
 
+- Supports notification channel
+
+
 - null: immediately discards
 - memory: caches into collection
 - file: persists into text file
@@ -63,10 +66,16 @@ Blocks and communication patterns
 
 ![Notification channel diagram](notification_channel.svg)
 
+- Upon acceptance applies channel tag
+
 ### Moderated speech
 
 ![Moderated speech diagram](moderated_speech.svg)
 
+- Participant applies sender tag for identification
+
 ### Control interface
 
 ![Control interface diagram](control_interface.svg)
+
+- Participant applies sender tag for identification

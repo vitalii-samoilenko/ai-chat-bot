@@ -85,19 +85,22 @@ template<
 		>
 	> tags
 ) {
-	::std::vector channelTags{ tags };
-	channelTags.insert_back(
+	::std::vector channelTags{
 		::std::make_tuple(
 			::std::string_view{ "channel.partition" },
 			::std::string_view{ _partition }
-		)
-	);
-	channelTags.insert_back(
+		),
 		::std::make_tuple(
 			::std::string_view{ "channel.name" },
 			::std::string_view{ _name }
 		)
-	);
+	};
+	for (auto tag : tags) {
+		if (::std::get<0>(tag) == "channel.partition"
+			|| ::std::get<0>(tag) == "channel.name")
+			continue;
+		channelTags.push_back(tag);
+	}
 	auto message = _messages.insert_back(content, channelTags);
 	for (auto &participant : _participants) {
 		::std::apply([&](TParticipantCluster &...participantCluster)->void {
