@@ -41,11 +41,11 @@ template<
 		>
 	> tags{
 		::std::make_tuple(
-			::std::string_view{ "sender.partition" },
+			::std::string_view{ "producer.partition" },
 			::std::string_view{ _partition }
 		),
 		::std::make_tuple(
-			::std::string_view{ "sender.name" },
+			::std::string_view{ "producer.name" },
 			::std::string_view{ _name }
 		)
 	};
@@ -59,15 +59,15 @@ template<
 		content = content.substr(1);
 		thread = _commandThread;
 	} else {
-		static ::RE2 a_recepient{ "@(\\w+)", ::RE2::Quiet };
+		static ::RE2 a_receiver{ "@(\\w+)", ::RE2::Quiet };
 		for (
-			::std::string_view cursor{ content }, recepient{};
-			::RE2::Consume(&cursor, a_recepient, &recepient);
+			::std::string_view cursor{ content }, receiver{};
+			::RE2::Consume(&cursor, a_receiver, &receiver);
 		) {
 			tags.push_back(
 				::std::make_tuple(
-					::std::string_view{ "recepient.name" },
-					recepient
+					::std::string_view{ "receiver.name" },
+					receiver
 				)
 			);
 		}
@@ -164,7 +164,7 @@ template<
 	::std::tuple<
 		::std::string_view,
 		::std::string_view
-	> sender{};
+	> producer{};
 	for (auto tag : tags) {
 		if (::std::get<0>(tag) == "channel.partition") {
 			if (::std::get<1>(tag) == "reject") {
@@ -178,20 +178,22 @@ template<
 			} else if (::std::get<1>(tag) == "error") {
 				partition = error;
 			}
-		} else if (::std::get<0>(tag) == "sender.partition") {
-			::std::get<0>(sender) = ::std::get<1>(tag);
-		} else if (::std::get<0>(tag) == "sender.name") {
-			::std::get<1>(sender) = ::std::get<1>(tag);
+		} else if (::std::get<0>(tag) == "producer.partition") {
+			::std::get<0>(producer) = ::std::get<1>(tag);
+		} else if (::std::get<0>(tag) == "producer.name") {
+			::std::get<1>(producer) = ::std::get<1>(tag);
 		}
 	}
 	switch (partition) {
 	case input:
-		if (::std::get<0>(sender) == _partition
-			&& ::std::get<1>(sender) == _name)
+		if (::std::get<0>(producer) == _partition
+			&& ::std::get<1>(producer) == _name)
 			break;
 		::std::chrono::system_clock::time_point when{ timestamp };
-		::std::cout << when << " " << ::std::get<1>(sender) << ": "
-			<< content << ::std::endl;
+		::std::cout << when
+			<< " " << ::std::get<1>(producer)
+			<< ": " << content
+			<< ::std::endl;
 		break;
 	case reject:
 		::std::cout << "Message is rejected" << ::std::endl;

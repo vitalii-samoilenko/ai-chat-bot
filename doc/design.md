@@ -17,7 +17,7 @@ Message repository
 
 ![Backed thread diagram](threads_backed.svg)
 
-- Supports notification channel
+Implements notification channel
 
 
 - null: immediately discards
@@ -66,16 +66,10 @@ Blocks and communication patterns
 
 ![Notification channel diagram](notification_channel.svg)
 
-- Upon acceptance applies channel tag
-
 ### Moderated speech
 
 ![Moderated speech diagram](moderated_speech.svg)
 
-- Participant applies sender tag for identification
-
 ### Control interface
 
 ![Control interface diagram](control_interface.svg)
-
-- Participant applies sender tag for identification
