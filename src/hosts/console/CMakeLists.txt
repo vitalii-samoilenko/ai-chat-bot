@@ -22,6 +22,9 @@ target_compile_features(ai-chat-hosts-console PRIVATE cxx_std_20)
 target_link_libraries(ai-chat-hosts-console
 	PRIVATE
 		::ETelemetry
+		::AI::Chat::Threads::Backed
+		::AI::Chat::Threads::Media::Null
+		::AI::Chat::Participants::Console
 )
 
 install(TARGETS ai-chat-hosts-console)

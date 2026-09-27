@@ -3,14 +3,14 @@
 
 template<
 	typename TGlobalConfig,
-	typename ...TThreadCluster
+	typename TThreadCluster
 > ::ai::chat::repositories::console<
 	TGlobalConfig,
-	TThreadCluster ...
+	TThreadCluster
 >::iterator::iterator(
 	::ai::chat::repositories::console<
 		TGlobalConfig,
-		TThreadCluster ...
+		TThreadCluster
 	>::value_type *that
 ) : that{ that } {
 
@@ -18,57 +18,70 @@ template<
 
 template<
 	typename TGlobalConfig,
-	typename ...TThreadCluster
+	typename TThreadCluster
 > bool
 ::ai::chat::repositories::console<
 	TGlobalConfig,
-	TThreadCluster ...
+	TThreadCluster
 >::iterator::operator==(
 	::ai::chat::repositories::console<
 		TGlobalConfig,
-		TThreadCluster ...
+		TThreadCluster
 	>::iterator const &other
-) {
+) const {
 	return that == other.that;
 };
 template<
 	typename TGlobalConfig,
-	typename ...TThreadCluster
+	typename TThreadCluster
 > ::ai::chat::repositories::console<
 	TGlobalConfig,
-	TThreadCluster ...
+	TThreadCluster
 >::iterator
 &::ai::chat::repositories::console<
 	TGlobalConfig,
-	TThreadCluster ...
+	TThreadCluster
 >::iterator::operator++() {
 	that = nullptr;
 	return *this;
 };
 template<
 	typename TGlobalConfig,
-	typename ...TThreadCluster
+	typename TThreadCluster
 > ::ai::chat::repositories::console<
 	TGlobalConfig,
-	TThreadCluster ...
+	TThreadCluster
 >::value_type
 &::ai::chat::repositories::console<
 	TGlobalConfig,
-	TThreadCluster ...
+	TThreadCluster
 >::iterator::operator*() {
 	return *that;
+};
+template<
+	typename TGlobalConfig,
+	typename TThreadCluster
+> ::ai::chat::repositories::console<
+	TGlobalConfig,
+	TThreadCluster
+>::value_type
+*::ai::chat::repositories::console<
+	TGlobalConfig,
+	TThreadCluster
+>::iterator::operator->() {
+	return that;
 };
 
 template<
 	typename TGlobalConfig,
-	typename ...TThreadCluster
+	typename TThreadCluster
 > ::ai::chat::repositories::console<
 	TGlobalConfig,
-	TThreadCluster ...
+	TThreadCluster
 >::console(
 	::std::string_view partition,
-	TGlobalConfig &globalConfig,
-	TThreadCluster &...threadCluster
+	TGlobalConfig const &globalConfig,
+	TThreadCluster const &threadCluster
 ) : _partition{ partition }
 	, _recepient{ ::std::nullopt }
 	, _globalConfig{ globalConfig }
@@ -78,35 +91,37 @@ template<
 
 template<
 	typename TGlobalConfig,
-	typename ...TThreadCluster
+	typename TThreadCluster
 > ::ai::chat::repositories::console<
 	TGlobalConfig,
-	TThreadCluster ...
+	TThreadCluster
 >::iterator
-::ai::chat::repositories::console<
+ai::chat::repositories::console<
 	TGlobalConfig,
-	TThreadCluster ...
->::begin() {
+	TThreadCluster
+>::begin() const {
+	if (!_recepient)
+		return iterator{
+			nullptr
+		};
 	return iterator{
-		_recepient
-			? &(*_recepient)
-			: nullptr
+		&(*_recepient)
 	};
 };
 template<
 	typename TGlobalConfig,
-	typename ...TThreadCluster
+	typename TThreadCluster
 > ::ai::chat::repositories::console<
 	TGlobalConfig,
-	TThreadCluster ...
+	TThreadCluster
 >::iterator
-::ai::chat::repositories::console<
+ai::chat::repositories::console<
 	TGlobalConfig,
-	TThreadCluster ...
+	TThreadCluster
 >::find(
 	::std::string_view partition,
 	::std::string_view name
-) {
+) const {
 	if (partition != _partition)
 		return iterator{
 			nullptr
@@ -126,26 +141,34 @@ template<
 			nullptr
 		};
 	if (!_recepient) {
-		_recepient = ::std::apply([&](TThreadCluster &...threadCluster)->value_type {
-			return value_type{
-				partition,
-				name,
-				threadCluster ...
-			};
-		}, _threadCluster);
+	/*
+		_recepient = value_type{
+			partition,
+			name,
+			_threadCluster
+		};
+	*/
+		_recepient.emplace(
+			partition,
+			name,
+			_threadCluster
+		);
 	}
 	return iterator{
 		&(*_recepient)
 	};
 };
 template<
-	typename ...TThreadCluster
+	typename TGlobalConfig,
+	typename TThreadCluster
 > ::ai::chat::repositories::console<
-	TThreadCluster ...
+	TGlobalConfig,
+	TThreadCluster
 >::iterator
-::ai::chat::repositories::console<
-	TThreadCluster ...
->::end() {
+ai::chat::repositories::console<
+	TGlobalConfig,
+	TThreadCluster
+>::end() const {
 	return iterator{
 		nullptr
 	};

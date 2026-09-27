@@ -1,6 +1,7 @@
 #ifndef AI_CHAT_THREADS_MEDIA_NULL_HPP
 #define AI_CHAT_THREADS_MEDIA_NULL_HPP
 
+#include <limits>
 #include <span>
 #include <string_view>
 #include <tuple>
@@ -12,7 +13,11 @@ namespace media {
 
 class null {
 private:
-	static constexpr long long TheEndTimes;
+	static constexpr long long TheEndTimes{
+		::std::numeric_limits<
+			long long
+		>::max()
+	};
 
 public:
 	using value_type = ::std::tuple<
@@ -20,7 +25,7 @@ public:
 		::std::string_view,
 		::std::span<
 			::std::tuple<
-				::std::string_view
+				::std::string_view,
 				::std::string_view
 			>
 		>
@@ -41,6 +46,7 @@ public:
 		);
 
 		friend null;
+
 	public:
 		iterator() = delete;
 		iterator(iterator const &) = delete;
@@ -51,7 +57,8 @@ public:
 		iterator &operator=(iterator const &) = delete;
 		iterator &operator=(iterator &&) = default;
 
-		bool operator==(iterator const &other);
+		bool operator==(iterator const &other) const;
+		bool operator<(iterator const &other) const;
 		iterator &operator++();
 		value_type &operator*();
 	};

@@ -12,14 +12,12 @@ namespace chat {
 namespace participants {
 
 template<
-	typename ...TThreadCluster
+	typename TThreadCluster
 > class console {
 private:
-	::std::string _partition;
-	::std::string _name;
-	::std::tuple<
-		TThreadCluster &...
-	> _threadCluster;
+	::std::string const _partition;
+	::std::string const _name;
+	TThreadCluster const &_threadCluster;
 	::std::optional<
 		::std::tuple<
 			::std::string,
@@ -37,7 +35,7 @@ public:
 	console(
 		::std::string_view partition,
 		::std::string_view name,
-		TThreadCluster &...threadCluster
+		TThreadCluster const &threadCluster
 	);
 	console() = delete;
 	console(console const &) = delete;
@@ -48,7 +46,7 @@ public:
 	console &operator=(console const &) = delete;
 	console &operator=(console &&) = default;
 
-	void operator()();
+	void operator()() const;
 
 	void join(
 		::std::string_view partition,
@@ -68,7 +66,7 @@ public:
 				::std::string_view
 			>
 		> tags
-	);
+	) const;
 };
 
 } // participants

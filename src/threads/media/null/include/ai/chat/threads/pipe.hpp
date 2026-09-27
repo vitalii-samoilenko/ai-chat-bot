@@ -9,10 +9,10 @@ namespace chat {
 namespace threads {
 
 template<
-	typename ...TParticipantCluster
+	typename TParticipantCluster
 > using pipe = backed<
-	media::null,
-	TParticipantCluster ...
+	TParticipantCluster,
+	media::null
 >;
 
 } // threads

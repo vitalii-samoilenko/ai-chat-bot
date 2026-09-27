@@ -8,27 +8,27 @@
 #include "re2/re2.h"
 
 template<
-	typename ...TThreadCluster
+	typename TThreadCluster
 > ::ai::chat::participants::console<
-	TThreadCluster ...
+	TThreadCluster
 >::console(
 	::std::string_view partition,
 	::std::string_view name,
-	TThreadCluster &...threadCluster,
+	TThreadCluster const &threadCluster
 ) : _partition{ partition }
 	, _name{ name }
-	, _threadCluster{ threadCluster ... }
+	, _threadCluster{ threadCluster }
 	, _inputThread{ ::std::nullopt }
 	, _commandThread{ ::std::nullopt } {
 
 };
 
 template<
-	typename ...TThreadCluster
+	typename TThreadCluster
 > void
 ::ai::chat::participants::console<
-	TThreadCluster ...
->::operator()() {
+	TThreadCluster
+>::operator()() const {
 	::std::string line{};
 	::std::getline(::std::cin, line);
 	if (line.empty())
@@ -59,10 +59,11 @@ template<
 		content = content.substr(1);
 		thread = _commandThread;
 	} else {
-		static ::RE2 a_receiver{ "@(\\w+)", ::RE2::Quiet };
+		static const ::RE2 a_receiver{ "@(\\w+)", ::RE2::Quiet };
 		for (
 			::std::string_view cursor{ content }, receiver{};
 			::RE2::Consume(&cursor, a_receiver, &receiver);
+
 		) {
 			tags.push_back(
 				::std::make_tuple(
@@ -74,28 +75,23 @@ template<
 	}
 	if (!thread)
 		return;
-	::std::apply([&](TThreadCluster &...threadCluster)->void {
-		([&]()->bool {
-			auto channel = threadCluster.find(
-				::std::get<0>(*thread),
-				::std::get<1>(*thread)
-			);
-			if (channel == threadCluster.end())
-				return false;
-			channel->push(
-				content,
-				tags
-			);
-			return true;
-		}() || ...);
-	}, _threadCluster);
+	try {
+		_threadCluster.push(
+			::std::get<0>(*thread),
+			::std::get<1>(*thread),
+			content,
+			tags
+		);
+	} catch (...) {
+
+	}
 };
 
 template<
-	typename ...TThreadCluster
+	typename TThreadCluster
 > void
 ::ai::chat::participants::console<
-	TThreadCluster ...
+	TThreadCluster
 >::join(
 	::std::string_view partition,
 	::std::string_view name
@@ -116,10 +112,10 @@ template<
 	);
 };
 template<
-	typename ...TThreadCluster
+	typename TThreadCluster
 > void
 ::ai::chat::participants::console<
-	TThreadCluster ...
+	TThreadCluster
 >::leave(
 	::std::string_view partition,
 	::std::string_view name
@@ -142,10 +138,10 @@ template<
 };
 
 template<
-	typename ...TThreadCluster
+	typename TThreadCluster
 > void
 ::ai::chat::participants::console<
-	TThreadCluster ...
+	TThreadCluster
 >::notify(
 	long long timestamp,
 	::std::string_view content,
@@ -155,7 +151,7 @@ template<
 			::std::string_view
 		>
 	> tags
-) {
+) const {
 	enum partition_t{
 		input, reject, review,
 		command, unauthorized, error
@@ -189,9 +185,11 @@ template<
 		if (::std::get<0>(producer) == _partition
 			&& ::std::get<1>(producer) == _name)
 			break;
-		::std::chrono::system_clock::time_point when{ timestamp };
-		::std::cout << when
-			<< " " << ::std::get<1>(producer)
+		::std::cout << ::std::chrono::system_clock::time_point{
+				::std::chrono::system_clock::duration{
+					timestamp
+				}
+			} << " " << ::std::get<1>(producer)
 			<< ": " << content
 			<< ::std::endl;
 		break;

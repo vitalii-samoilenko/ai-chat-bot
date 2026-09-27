@@ -3,7 +3,6 @@
 
 #include <string>
 #include <string_view>
-#include <tuple>
 #include <unordered_map>
 
 #include "ai/chat/threads/pipe.hpp"
@@ -14,22 +13,11 @@ namespace repositories {
 
 template<
 	typename TGlobalConfig,
-	typename ...TParticipantCluster
+	typename TParticipantCluster
 > class pipe {
-private:
-	::std::string _partition;
-	::std::unordered_map<
-		::std::string,
-		value_type
-	> _channels;
-	TGlobalConfig &_globalConfig;
-	::std::tuple<
-		TParticipantCluster &...
-	> _participantCluster;
-
 public:
 	using value_type = threads::pipe<
-		TParticipantCluster ...
+		TParticipantCluster
 	>;
 	class iterator {
 	private:
@@ -46,6 +34,7 @@ public:
 		);
 
 		friend pipe;
+
 	public:
 		iterator() = delete;
 		iterator(iterator const &) = delete;
@@ -56,31 +45,42 @@ public:
 		iterator &operator=(iterator const &) = delete;
 		iterator &operator=(iterator &&) = default;
 
-		bool operator==(iterator const &other);
+		bool operator==(iterator const &other) const;
 		iterator &operator++();
 		value_type &operator*();
+		value_type *operator->();
 	};
 
+private:
+	::std::string const _partition;
+	::std::unordered_map<
+		::std::string,
+		value_type
+	> mutable _channels;
+	TGlobalConfig const &_globalConfig;
+	TParticipantCluster const &_participantCluster;
+
+public:
 	pipe(
 		::std::string_view partition,
-		TGlobalConfig &globalConfig,
-		TParticipantCluster &...participantCluster
+		TGlobalConfig const &globalConfig,
+		TParticipantCluster const &participantCluster
 	);
 	pipe() = delete;
 	pipe(pipe const &) = delete;
-	pipe(pipe &&) = delete;
+	pipe(pipe &&) = default;
 
 	~pipe() = default;
 
 	pipe &operator=(pipe const &) = delete;
 	pipe &operator=(pipe &&) = delete;
 
-	iterator begin();
+	iterator begin() const;
 	iterator find(
 		::std::string_view partition,
 		::std::string_view name
-	);
-	iterator end();
+	) const;
+	iterator end() const;
 };
 
 } // repositories

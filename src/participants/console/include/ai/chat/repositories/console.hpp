@@ -4,8 +4,6 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <tuple>
-#include <unordered_map>
 
 #include "ai/chat/participants/console.hpp"
 
@@ -15,21 +13,11 @@ namespace repositories {
 
 template<
 	typename TGlobalConfig,
-	typename ...TThreadCluster
+	typename TThreadCluster
 > class console {
-private:
-	::std::string _partition;
-	::std::optional<
-		value_type
-	> _recepient;
-	TGlobalConfig &_globalConfig;
-	::std::tuple<
-		TThreadCluster &...
-	> _threadCluster;
-
 public:
-	using value_typle = participants::console<
-		TThreadCluster ...
+	using value_type = participants::console<
+		TThreadCluster
 	>;
 	class iterator {
 	private:
@@ -51,31 +39,41 @@ public:
 		iterator &operator=(iterator const &) = delete;
 		iterator &operator=(iterator &&) = default;
 
-		bool operator==(iterator const &other);
+		bool operator==(iterator const &other) const;
 		iterator &operator++();
 		value_type &operator*();
+		value_type *operator->();
 	};
 
+private:
+	::std::string const _partition;
+	::std::optional<
+		value_type
+	> mutable _recepient;
+	TGlobalConfig const &_globalConfig;
+	TThreadCluster const &_threadCluster;
+
+public:
 	console(
 		::std::string_view partition,
-		TGlobalConfig &globalConfig,
-		TThreadCluster &...threadCluster
+		TGlobalConfig const &globalConfig,
+		TThreadCluster const &threadCluster
 	);
 	console() = delete;
 	console(console const &) = delete;
-	console(console &&) = delete;
+	console(console &&) = default;
 
 	~console() = default;
 
 	console &operator=(console const &) = delete;
 	console &operator=(console &&) = delete;
 
-	iterator begin();
+	iterator begin() const;
 	iterator find(
 		::std::string_view partition,
 		::std::string_view name
-	);
-	iterator end();
+	) const;
+	iterator end() const;
 };
 
 } // repositories

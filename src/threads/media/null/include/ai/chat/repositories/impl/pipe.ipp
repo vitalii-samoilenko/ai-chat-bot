@@ -1,114 +1,131 @@
 #ifndef AI_CHAT_REPOSITORIES_IMPL_PIPE_IPP
 #define AI_CHAT_REPOSITORIES_IMPL_PIPE_IPP
 
+#include <tuple>
+#include <utility>
+
 #include "ai/chat/repositories/pipe.hpp"
 
-template
+template<
 	typename TGlobalConfig,
-	typename ...TParticipantCluster
+	typename TParticipantCluster
 > ::ai::chat::repositories::pipe<
 	TGlobalConfig,
-	TParticipantCluster ...
+	TParticipantCluster
 >::iterator::iterator(
 	::std::unordered_map<
 		::std::string,
 		::ai::chat::repositories::pipe<
 			TGlobalConfig,
-			TParticipantCluster ...
+			TParticipantCluster
 		>::value_type
 	>::iterator that
 ) : that{ that } {
 
 };
 
-template
+template<
 	typename TGlobalConfig,
-	typename ...TParticipantCluster
+	typename TParticipantCluster
 > bool
 ::ai::chat::repositories::pipe<
 	TGlobalConfig,
-	TParticipantCluster ...
+	TParticipantCluster
 >::iterator::operator==(
 	::ai::chat::repositories::pipe<
 		TGlobalConfig,
-		TParticipantCluster ...
+		TParticipantCluster
 	>::iterator const &other
-) {
+) const {
 	return that == other.that;
 };
-template
+template<
 	typename TGlobalConfig,
-	typename ...TParticipantCluster
+	typename TParticipantCluster
 > ::ai::chat::repositories::pipe<
 	TGlobalConfig,
-	TParticipantCluster ...
+	TParticipantCluster
 >::iterator
 &::ai::chat::repositories::pipe<
 	TGlobalConfig,
-	TParticipantCluster ...
+	TParticipantCluster
 >::iterator::operator++() {
 	++that;
 	return *this;
 };
-template
+template<
 	typename TGlobalConfig,
-	typename ...TParticipantCluster
+	typename TParticipantCluster
 > ::ai::chat::repositories::pipe<
 	TGlobalConfig,
-	TParticipantCluster ...
+	TParticipantCluster
 >::value_type
 &::ai::chat::repositories::pipe<
 	TGlobalConfig,
-	TParticipantCluster ...
+	TParticipantCluster
 >::iterator::operator*() {
 	return ::std::get<1>(*that);
 };
-
-template
+template<
 	typename TGlobalConfig,
-	typename ...TParticipantCluster
+	typename TParticipantCluster
 > ::ai::chat::repositories::pipe<
 	TGlobalConfig,
-	TParticipantCluster ...
+	TParticipantCluster
+>::value_type
+*::ai::chat::repositories::pipe<
+	TGlobalConfig,
+	TParticipantCluster
+>::iterator::operator->() {
+	return &::std::get<1>(*that);
+};
+
+template<
+	typename TGlobalConfig,
+	typename TParticipantCluster
+> ::ai::chat::repositories::pipe<
+	TGlobalConfig,
+	TParticipantCluster
 >::pipe(
 	::std::string_view partition,
-	TGlobalConfig &globalConfig,
-	TParticipantCluster &...participantCluster
+	TGlobalConfig const &globalConfig,
+	TParticipantCluster const &participantCluster
 ) : _partition{ partition }
 	, _channels{}
 	, _globalConfig{ globalConfig }
-	, _participantCluster{ participantCluster ... } {
+	, _participantCluster{ participantCluster } {
 
 };
 
-template
+template<
 	typename TGlobalConfig,
-	typename ...TParticipantCluster
+	typename TParticipantCluster
 > ::ai::chat::repositories::pipe<
 	TGlobalConfig,
-	TParticipantCluster ...
+	TParticipantCluster
 >::iterator
-::ai::chat::repositories::pipe<
+ai::chat::repositories::pipe<
 	TGlobalConfig,
-	TParticipantCluster ...
->::begin() {
+	TParticipantCluster
+>::begin() const {
 	return iterator{
 		_channels.begin()
 	};
 };
-template
-	typename TGlobalConfig
+template<
+	typename TGlobalConfig,
+	typename TParticipantCluster
 > ::ai::chat::repositories::pipe<
 	TGlobalConfig,
-	TParticipantCluster ...
+	TParticipantCluster
 >::iterator
-::ai::chat::repositories::pipe<
+ai::chat::repositories::pipe<
 	TGlobalConfig,
-	TParticipantCluster ...
+	TParticipantCluster
 >::find(
 	::std::string_view partition,
 	::std::string_view name
-) {
+) const {
 	if (_partition != partition)
 		return iterator{
 			_channels.end()
@@ -122,18 +139,21 @@ template
 		return iterator{
 			_channels.end()
 		};
-	auto channel = _channels.find(name);
+	auto channel = _channels.find(
+		::std::string{ name }
+	);
 	if (channel == _channels.end()) {
-		::std::tie(channel, ::std::ignored) = _channels.insert(
+		::std::tie(
+			channel,
+			::std::ignore
+		) = _channels.insert(
 			::std::make_pair(
 				::std::string{ name },
-				::std::apply([&](TParticipantCluster ...participantCluster)->value_type {
-					return value_type{
-						partition,
-						name,
-						participantCluster ...
-					};
-				}, _participantCluster)
+				value_type{
+					partition,
+					name,
+					_participantCluster
+				}
 			)
 		);
 	}
@@ -141,17 +161,17 @@ template
 		channel
 	};
 };
-template
+template<
 	typename TGlobalConfig,
-	typename ...TParticipantCluster
+	typename TParticipantCluster
 > ::ai::chat::repositories::pipe<
 	TGlobalConfig,
-	TParticipantCluster ...
+	TParticipantCluster
 >::iterator
-::ai::chat::repositories::pipe<
+ai::chat::repositories::pipe<
 	TGlobalConfig,
-	TParticipantCluster ...
->::end() {
+	TParticipantCluster
+>::end() const {
 	return iterator{
 		_channels.end()
 	};

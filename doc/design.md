@@ -17,8 +17,10 @@ Message repository
 
 ![Backed thread diagram](threads_backed.svg)
 
-Implements notification channel
+- Implements notification channel
 
+
+Supported media types:
 
 - null: immediately discards
 - memory: caches into collection
@@ -32,9 +34,10 @@ Implements notification channel
 
 ### Console
 
-- Singleton
 - Supports moderated speech
 - Supports control interface
+- Singleton
+- Single-threaded
 
 ### OpenAI
 

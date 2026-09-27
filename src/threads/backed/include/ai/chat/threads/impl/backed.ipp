@@ -7,21 +7,21 @@
 #include "ai/chat/threads/backed.hpp"
 
 template<
-	typename TMedia,
-	typename ...TParticipantCluster
+	typename TParticipantCluster,
+	typename TMedia
 > template<
 	typename ...TMediaArgs
 > ::ai::chat::threads::backed<
-	TMedia,
-	TParticipantCluster ...
+	TParticipantCluster,
+	TMedia
 >::backed(
 	::std::string_view partition,
 	::std::string_view name,
-	TParticipantCluster &...participantCluster,
+	TParticipantCluster const &participantCluster,
 	TMediaArgs &&...mediaArgs
 ) : _partition{ partition }
 	, _name{ name }
-	, _participantCluster{ participantCluster ... } 
+	, _participantCluster{ participantCluster } 
 	, _participants{}
 	, _messages{
 		::std::forward<
@@ -32,50 +32,50 @@ template<
 };
 
 template<
-	typename TMedia,
-	typename ...TParticipantCluster
+	typename TParticipantCluster,
+	typename TMedia
 > void
 ::ai::chat::threads::backed<
-	TMedia,
-	TParticipantCluster ...
+	TParticipantCluster,
+	TMedia
 >::accept(
 	::std::string_view partition,
 	::std::string_view name
 ) {
 	_participants.insert(
 		::std::make_tuple(
-			::std::string{ partition }
+			::std::string{ partition },
 			::std::string{ name }
 		)
 	);
 };
 
 template<
-	typename TMedia,
-	typename ...TParticipantCluster
+	typename TParticipantCluster,
+	typename TMedia
 > void
 ::ai::chat::threads::backed<
-	TMedia,
-	TParticipantCluster ...
+	TParticipantCluster,
+	TMedia
 >::dismiss(
 	::std::string_view partition,
 	::std::string_view name
 ) {
 	_participants.erase(
 		::std::make_tuple(
-			partition,
-			name
+			::std::string{ partition },
+			::std::string{ name }
 		)
 	);
 };
 
 template<
-	typename TMedia,
-	typename ...TParticipantCluster
+	typename TParticipantCluster,
+	typename TMedia
 > void
 ::ai::chat::threads::backed<
-	TMedia,
-	TParticipantCluster ...
+	TParticipantCluster,
+	TMedia
 >::push(
 	::std::string_view content,
 	::std::span<
@@ -85,7 +85,7 @@ template<
 		>
 	> tags
 ) {
-	::std::vector channelTags{
+	::std::vector overrides{
 		::std::make_tuple(
 			::std::string_view{ "channel.partition" },
 			::std::string_view{ _partition }
@@ -99,31 +99,24 @@ template<
 		if (::std::get<0>(tag) == "channel.partition"
 			|| ::std::get<0>(tag) == "channel.name")
 			continue;
-		channelTags.push_back(tag);
+		overrides.push_back(tag);
 	}
-	auto message = _messages.insert_back(content, channelTags);
+	auto message = _messages.insert_back(
+		content,
+		overrides
+	);
 	for (auto &participant : _participants) {
-		::std::apply([&](TParticipantCluster &...participantCluster)->void {
-			([&]()->bool {
-				auto recepient = participantCluster.find(
-					::std::get<0>(participant),
-					::std::get<1>(participant)
-				);
-				if (recepient == participantCluster.end())
-					return false;
-				try {
-					recepient->notify(
-						::std::get<0>(*message),
-						::std::get<1>(*message),
-						::std::get<2>(*message)
-					);
-				}
-				catch (...) {
+		try {
+			_participantCluster.notify(
+				::std::get<0>(participant),
+				::std::get<1>(participant),
+				::std::get<0>(*message),
+				::std::get<1>(*message),
+				::std::get<2>(*message)
+			);
+		} catch (...) {
 
-				}
-				return true;
-			}() || ...);
-		}, _participantCluster);
+		}
 	}
 };
 

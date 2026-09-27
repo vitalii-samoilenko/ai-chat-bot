@@ -5,22 +5,63 @@
 #include <string>
 #include <string_view>
 #include <tuple>
-#include <uonrdered_set>
+#include <unordered_set>
+
+namespace std {
+	template<>
+	class hash<
+		tuple<
+			string,
+			string
+		>
+	> {
+	private:
+
+
+	public:
+		hash() = default;
+		hash(hash const &) = default;
+		hash(hash &&) = default;
+
+		~hash() = default;
+
+		hash &operator=(hash const &) = default;
+		hash &operator=(hash &&) = default;
+
+		inline size_t operator()(
+			tuple<
+				string,
+				string
+			> const &value
+		) const {
+			hash<
+				string
+			> single{};
+			return single(
+				get<0>(value)
+			) ^ single(
+				get<1>(value)
+			);
+		};
+	};
+}
 
 namespace ai {
 namespace chat {
 namespace threads {
 
 template<
-	typename TMedia,
-	typename ...TParticipantCluster
+	typename TParticipantCluster,
+	typename TMedia
 > class backed {
+public:
+	using value_type = typename TMedia::value_type;
+	using iterator = typename TMedia::iterator;
+
 private:
-	::std::string _partition;
-	::std::string _name;
-	::std::tuple<
-		TParticipantCluster &...
-	> _participantCluster;
+	::std::string const _partition;
+	::std::string const _name;
+	TParticipantCluster const &_participantCluster;
 	::std::unordered_set<
 		::std::tuple<
 			::std::string,
@@ -35,7 +76,7 @@ public:
 	> backed(
 		::std::string_view partition,
 		::std::string_view name,
-		TParticipantCluster &...participantCluster,
+		TParticipantCluster const &participantCluster,
 		TMediaArgs &&...mediaArgs
 	);
 	backed() = delete;

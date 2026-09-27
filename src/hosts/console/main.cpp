@@ -1,10 +1,15 @@
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
-#include <iostream>
+#include <span>
+#include <string_view>
 #include <thread>
+#include <tuple>
 
 #include "etelemetry.hpp"
+
+#include "ai/chat/repositories/pipe.hpp"
+#include "ai/chat/repositories/console.hpp"
 
 class Spinner {
 private:
@@ -59,6 +64,213 @@ public:
 	};
 };
 
+class PipeConfig {
+private:
+
+
+public:
+	PipeConfig() = default;
+	PipeConfig(PipeConfig const &) = delete;
+	PipeConfig(PipeConfig &&) = default;
+
+	~PipeConfig() = default;
+
+	PipeConfig &operator=(PipeConfig const &) = delete;
+	PipeConfig &operator=(PipeConfig &&) = default;
+
+	inline bool get_enabled() const {
+		return true;
+	};
+};
+class ThreadConfig {
+private:
+	PipeConfig const _pipeConfig;
+
+public:
+	ThreadConfig() = default;
+	ThreadConfig(ThreadConfig const &) = delete;
+	ThreadConfig(ThreadConfig &&) = default;
+
+	~ThreadConfig() = default;
+
+	ThreadConfig &operator=(ThreadConfig const &) = delete;
+	ThreadConfig &operator=(ThreadConfig &&) = default;
+
+	inline PipeConfig const &get_pipe() const {
+		return _pipeConfig;
+	};
+};
+class ConsoleConfig {
+private:
+
+
+public:
+	ConsoleConfig() = default;
+	ConsoleConfig(ConsoleConfig const &) = delete;
+	ConsoleConfig(ConsoleConfig &&) = default;
+
+	~ConsoleConfig() = default;
+
+	ConsoleConfig &operator=(ConsoleConfig const &) = delete;
+	ConsoleConfig &operator=(ConsoleConfig &&) = default;
+
+	inline bool get_enabled() const {
+		return true;
+	};
+	inline ::std::string_view get_name() const {
+		return ::std::string_view{ "John Doe" };
+	};
+};
+class ParticipantConfig {
+private:
+	ConsoleConfig const _consoleConfig;
+
+public:
+	ParticipantConfig() = default;
+	ParticipantConfig(ParticipantConfig const &) = delete;
+	ParticipantConfig(ParticipantConfig &&) = default;
+
+	~ParticipantConfig() = default;
+
+	ParticipantConfig &operator=(ParticipantConfig const &) = delete;
+	ParticipantConfig &operator=(ParticipantConfig &&) = default;
+
+	inline ConsoleConfig const &get_console() const {
+		return _consoleConfig;
+	};
+};
+class GlobalConfig {
+private:
+	ThreadConfig const _threadConfig;
+	ParticipantConfig const _participantConfig;
+
+public:
+	GlobalConfig() = default;
+	GlobalConfig(GlobalConfig const &) = delete;
+	GlobalConfig(GlobalConfig &&) = default;
+
+	~GlobalConfig() = default;
+
+	GlobalConfig &operator=(GlobalConfig const &) = delete;
+	GlobalConfig &operator=(GlobalConfig &&) = default;
+
+	inline ThreadConfig const &get_thread() const {
+		return _threadConfig;
+	};
+	inline ParticipantConfig const &get_participant() const {
+		return _participantConfig;
+	};
+};
+
+class CommunicationCluster {
+private:
+	GlobalConfig const _globalConfig;
+	::std::tuple<
+		::ai::chat::repositories::pipe<
+			GlobalConfig,
+			CommunicationCluster
+		>
+	> mutable _threadCluster;
+	::std::tuple<
+		::ai::chat::repositories::console<
+			GlobalConfig,
+			CommunicationCluster
+		>
+	> mutable _participantCluster;
+
+public:
+	inline CommunicationCluster(
+	) : _globalConfig{}
+		, _threadCluster{
+			::ai::chat::repositories::pipe<
+				GlobalConfig,
+				CommunicationCluster
+			>{ "pipe", _globalConfig, *this}
+	} , _participantCluster{
+			::ai::chat::repositories::console<
+				GlobalConfig,
+				CommunicationCluster
+			>{ "console", _globalConfig, *this}
+	} {
+		auto console = ::std::get<0>(_participantCluster)
+			.find("console", "John Doe");
+		auto channel = ::std::get<0>(_threadCluster)
+			.find("pipe", "Topic");
+		console->join("pipe", "Topic");
+		channel->accept("console", "John Doe");
+	};
+	CommunicationCluster(CommunicationCluster const &) = delete;
+	CommunicationCluster(CommunicationCluster &&) = delete;
+
+	~CommunicationCluster() = default;
+
+	CommunicationCluster &operator=(CommunicationCluster const &) = delete;
+	CommunicationCluster &operator=(CommunicationCluster &&) = delete;
+
+	inline void operator()() const {
+		auto console = ::std::get<0>(_participantCluster)
+			.find("console", "John Doe");
+		(*console)();
+	};
+
+	inline void push(
+		::std::string_view partition,
+		::std::string_view name,
+		::std::string_view content,
+		::std::span<
+			::std::tuple<
+				::std::string_view,
+				::std::string_view
+			>
+		> tags
+	) const {
+		::std::apply([&](auto &...threadCluster)->void {
+			([&]()->bool {
+				auto channel = threadCluster.find(
+					partition,
+					name
+				);
+				if (channel == threadCluster.end())
+					return false;
+				channel->push(
+					content,
+					tags
+				);
+				return true;
+			}() || ...);
+		}, _threadCluster);
+	};
+	inline void notify(
+		::std::string_view partition,
+		::std::string_view name,
+		long long timestamp,
+		::std::string_view content,
+		::std::span<
+			::std::tuple<
+				::std::string_view,
+				::std::string_view
+			>
+		> tags
+	) const {
+		::std::apply([&](auto &...participantCluster)->void {
+			([&]()->bool {
+				auto recepient = participantCluster.find(
+					partition,
+					name
+				);
+				if (recepient == participantCluster.end())
+					return false;
+				recepient->notify(
+					timestamp,
+					content,
+					tags
+				);
+				return true;
+			}() || ...);
+		}, _participantCluster);
+	};
+};
+
 ET_SYSTEM_CALLBACKS();
 
 int main(int argc, char const **argv) {
@@ -75,8 +287,10 @@ int main(int argc, char const **argv) {
 		}
 	}
 	ET_INIT(collector, "ai_chat_hosts_console");
+	CommunicationCluster cluster{};
 	for (Spinner spinner{ 500, 2000 };;) {
 		spinner.Spin();
+		cluster();
 	}
 	return 0;
 };
