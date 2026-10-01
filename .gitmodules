@@ -46,3 +46,6 @@
 	path = third_party/c-ares
 	url = https://github.com/c-ares/c-ares
 	ignore = all
+[submodule "third_party/googletest"]
+	path = third_party/googletest
+	url = https://github.com/google/googletest

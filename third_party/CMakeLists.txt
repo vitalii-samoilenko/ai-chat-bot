@@ -1047,3 +1047,68 @@ block()
 		)
 	endif()
 endblock()
+
+block()
+	set(GTEST_SOURCE_DIR ${PROJECT_SOURCE_DIR}/googletest)
+	set(GTEST_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/googletest)
+	if(NOT EXISTS ${GTEST_SOURCE_DIR}/CMakeLists.txt)
+		execute_process(
+			COMMAND git submodule update
+				--init third_party/googletest
+			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+			COMMAND_ERROR_IS_FATAL ANY
+		)
+		execute_process(
+			COMMAND git checkout v1.17.0
+			WORKING_DIRECTORY ${GTEST_SOURCE_DIR}
+			COMMAND_ERROR_IS_FATAL ANY
+		)
+	endif()
+	if(NOT EXISTS ${GTEST_BINARY_DIR}/configure.done)
+		execute_process(
+			COMMAND cmake
+				${CMAKE_COMMON_ARGS}
+				-DGTEST_HAS_ABSL=ON
+				-B ${GTEST_BINARY_DIR} -S .
+			WORKING_DIRECTORY ${GTEST_SOURCE_DIR}
+			COMMAND_ERROR_IS_FATAL ANY
+		)
+		execute_process(
+			COMMAND cmake
+				-E touch configure.done
+			WORKING_DIRECTORY ${GTEST_BINARY_DIR}
+			COMMAND_ERROR_IS_FATAL ANY
+		)
+	endif()
+	if(NOT EXISTS ${GTEST_BINARY_DIR}/build.done)
+		execute_process(
+			COMMAND cmake
+				--build .
+				--config ${CMAKE_BUILD_TYPE}
+			WORKING_DIRECTORY ${GTEST_BINARY_DIR}
+			COMMAND_ERROR_IS_FATAL ANY
+		)
+		execute_process(
+			COMMAND cmake
+				-E touch build.done
+			WORKING_DIRECTORY ${GTEST_BINARY_DIR}
+			COMMAND_ERROR_IS_FATAL ANY
+		)
+	endif()
+	if(NOT EXISTS ${GTEST_BINARY_DIR}/install.done)
+		execute_process(
+			COMMAND cmake
+				--install .
+				--config ${CMAKE_BUILD_TYPE}
+				--prefix ${CMAKE_INSTALL_PREFIX}
+			WORKING_DIRECTORY ${GTEST_BINARY_DIR}
+			COMMAND_ERROR_IS_FATAL ANY
+		)
+		execute_process(
+			COMMAND cmake
+				-E touch install.done
+			WORKING_DIRECTORY ${GTEST_BINARY_DIR}
+			COMMAND_ERROR_IS_FATAL ANY
+		)
+	endif()
+endblock()

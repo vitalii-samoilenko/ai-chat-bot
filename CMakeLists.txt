@@ -24,4 +24,5 @@ add_subdirectory(third_party)
 
 add_subdirectory(src/threads)
 add_subdirectory(src/participants)
+add_subdirectory(test)
 add_subdirectory(src/hosts/console)
