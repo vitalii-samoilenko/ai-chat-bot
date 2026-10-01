@@ -5,10 +5,6 @@ project(AI.Chat.Hosts.Console VERSION 0.1 LANGUAGES CXX)
 find_package(ETelemetry CONFIG REQUIRED)
 
 add_executable(ai-chat-hosts-console main.cpp)
-add_custom_command(
-	TARGET ai-chat-hosts-console PRE_BUILD
-	COMMAND ai-chat-test
-)
 if(MSVC)
 	if(MSVC_TOOLSET_VERSION EQUAL 143)
 		set(BUILD_TOOLS_INSTALLATION_PATH "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools")

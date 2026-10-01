@@ -11,5 +11,11 @@ target_compile_features(ai-chat-test PRIVATE cxx_std_20)
 target_link_libraries(ai-chat-test
 	PRIVATE
 		GTest::gtest
+		::AI::Chat::Test::Threads::Backed
 		::AI::Chat::Test::Threads::Media::Null
+)
+
+add_custom_command(
+	TARGET ai-chat-test POST_BUILD
+	COMMAND ai-chat-test
 )
