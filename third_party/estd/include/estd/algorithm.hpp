@@ -1,5 +1,5 @@
 #ifndef ESTD_ALGORITHM_HPP
-#define ESTD_ALGORIGHM_HPP
+#define ESTD_ALGORITHM_HPP
 
 #include <type_traits>
 

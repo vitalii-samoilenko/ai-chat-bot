@@ -11,6 +11,16 @@ struct hash {
 	using is_transparent = ::std::true_type;
 
 	template<
+		typename T
+	> size_t
+	operator()(
+		T const &key
+	) const {
+		return ::std::hash<T>{}(
+			key
+		);
+	};
+	template<
 		typename T1,
 		typename T2
 	> size_t

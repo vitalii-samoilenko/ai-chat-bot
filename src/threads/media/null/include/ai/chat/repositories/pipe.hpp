@@ -2,9 +2,12 @@
 #define AI_CHAT_REPOSITORIES_PIPE_HPP
 
 #include <string>
-#include <string_view>
 #include <unordered_map>
 
+#include "estd/algorithm.hpp"
+#include "estd/utility.hpp"
+
+#include "ai/chat/model.hpp"
 #include "ai/chat/threads/pipe.hpp"
 
 namespace ai {
@@ -16,71 +19,122 @@ template<
 	typename TParticipantCluster
 > class pipe {
 public:
-	using value_type = threads::pipe<
-		TParticipantCluster
-	>;
 	class iterator {
 	private:
 		::std::unordered_map<
 			::std::string,
-			value_type
+			threads::pipe<
+				TParticipantCluster
+			>,
+			::estd::hash,
+			::estd::equal
 		>::iterator that;
 
 		explicit iterator(
 			::std::unordered_map<
 				::std::string,
-				value_type
-			>::iterator that
+				threads::pipe<
+					TParticipantCluster
+				>,
+				::estd::hash,
+				::estd::equal
+			>::iterator &&that
 		);
 
 		friend pipe;
 
 	public:
-		iterator() = delete;
-		iterator(iterator const &) = delete;
-		iterator(iterator &&) = default;
+		iterator(
+		) = delete;
+		iterator(
+			iterator const &
+		) = delete;
+		iterator(
+			iterator &&
+		) = default;
 
-		~iterator() = default;
+		~iterator(
+		) = default;
 
-		iterator &operator=(iterator const &) = delete;
-		iterator &operator=(iterator &&) = default;
+		iterator
+		&operator=(
+			iterator const &
+		) = delete;
+		iterator
+		&operator=(
+			iterator &&
+		) = default;
 
-		bool operator==(iterator const &other) const;
-		iterator &operator++();
-		value_type &operator*();
-		value_type *operator->();
+		bool
+		operator==(
+			iterator const &other
+		) const;
+		iterator
+		&operator++(
+		);
+		threads::pipe<
+			TParticipantCluster
+		>
+		&operator*(
+		);
+		threads::pipe<
+			TParticipantCluster
+		>
+		*operator->(
+		);
 	};
 
 private:
 	::std::string const _partition;
 	::std::unordered_map<
 		::std::string,
-		value_type
+		threads::pipe<
+			TParticipantCluster
+		>,
+		::estd::hash,
+		::estd::equal
 	> mutable _channels;
 	TGlobalConfig const &_globalConfig;
 	TParticipantCluster const &_participantCluster;
 
 public:
 	pipe(
-		::std::string_view partition,
+		string_t partition,
 		TGlobalConfig const &globalConfig,
 		TParticipantCluster const &participantCluster
 	);
-	pipe() = delete;
-	pipe(pipe const &) = delete;
-	pipe(pipe &&) = default;
+	pipe(
+	) = delete;
+	pipe(
+		pipe const &
+	) = delete;
+	pipe(
+		pipe &&
+	) = default;
 
-	~pipe() = default;
+	~pipe(
+	) = default;
 
-	pipe &operator=(pipe const &) = delete;
-	pipe &operator=(pipe &&) = delete;
+	pipe
+	&operator=(
+		pipe const &
+	) = delete;
+	pipe
+	&operator=(
+		pipe &&
+	) = delete;
 
-	iterator begin() const;
-	iterator find(
-		::std::string_view partition,
-		::std::string_view name
+	iterator
+	begin(
 	) const;
-	iterator end() const;
+	iterator
+	find(
+		string_t partition,
+		string_t slot
+	) const;
+	iterator
+	end(
+	) const;
 };
 
 } // repositories

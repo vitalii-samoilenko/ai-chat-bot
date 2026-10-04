@@ -32,6 +32,8 @@ target_sources(
 	BASE_DIRS include
 	FILES
 		include/ai/chat/mocks/communication_cluster.hpp
+		include/ai/chat/mocks/global_config.hpp
+		include/ai/chat/mocks/media.hpp
 )
 
 add_library(

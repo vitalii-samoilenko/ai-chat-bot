@@ -7,7 +7,7 @@
 	::ai::chat::timepoint_t timestamp,
 	::ai::chat::string_t content,
 	::ai::chat::tags_t tags
-) : that{
+) : _that{
 		timestamp,
 		content,
 		tags
@@ -19,26 +19,26 @@ bool
 ::ai::chat::threads::media::null::iterator::operator==(
 	::ai::chat::threads::media::null::iterator const &other
 ) const {
-	return get_timestamp(that) == get_timestamp(other.that);
+	return get_timestamp(_that) == get_timestamp(other._that);
 };
 bool
 ::ai::chat::threads::media::null::iterator::operator<(
 	::ai::chat::threads::media::null::iterator const &other
 ) const {
-	return get_timestamp(that) < get_timestamp(other.that);
+	return get_timestamp(_that) < get_timestamp(other._that);
 };
 ::ai::chat::threads::media::null::iterator
 &::ai::chat::threads::media::null::iterator::operator++(
 ) {
-	get_timestamp(that) = TheEndTimes;
-	get_content(that) = string_t{};
-	get_tags(that) = tags_t{};
+	get_timestamp(_that) = TheEndTimes;
+	get_content(_that) = string_t{};
+	get_tags(_that) = tags_t{};
 	return *this;
 };
 ::ai::chat::message_t
 &::ai::chat::threads::media::null::iterator::operator*(
 ) {
-	return that;
+	return _that;
 };
 
 ::ai::chat::threads::media::null::iterator

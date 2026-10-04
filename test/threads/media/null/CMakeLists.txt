@@ -32,6 +32,7 @@ target_sources(
 	BASE_DIRS include
 	FILES
 		include/ai/chat/threads/media/null_tests.hpp
+		include/ai/chat/repositories/pipe_tests.hpp
 )
 
 add_library(

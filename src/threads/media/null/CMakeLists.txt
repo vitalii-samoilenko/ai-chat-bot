@@ -7,6 +7,10 @@ project(
 	VERSION 0.1
 )
 
+find_package(
+	ESTD CONFIG REQUIRED
+)
+
 add_library(
 	_ai_chat_threads_media_null
 	INTERFACE
@@ -18,6 +22,7 @@ target_compile_features(
 target_link_libraries(
 	_ai_chat_threads_media_null
 	INTERFACE
+		::ESTD
 		::AI::Chat::Model
 )
 target_sources(

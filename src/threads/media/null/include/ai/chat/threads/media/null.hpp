@@ -21,7 +21,7 @@ private:
 public:
 	class iterator {
 	private:
-		message_t that;
+		message_t _that;
 
 		iterator(
 			timepoint_t timestamp,

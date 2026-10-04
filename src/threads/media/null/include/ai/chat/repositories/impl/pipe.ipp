@@ -1,9 +1,6 @@
 #ifndef AI_CHAT_REPOSITORIES_IMPL_PIPE_IPP
 #define AI_CHAT_REPOSITORIES_IMPL_PIPE_IPP
 
-#include <tuple>
-#include <utility>
-
 #include "ai/chat/repositories/pipe.hpp"
 
 template<
@@ -15,12 +12,13 @@ template<
 >::iterator::iterator(
 	::std::unordered_map<
 		::std::string,
-		::ai::chat::repositories::pipe<
-			TGlobalConfig,
+		::ai::chat::threads::pipe<
 			TParticipantCluster
-		>::value_type
-	>::iterator that
-) : that{ that } {
+		>,
+		::estd::hash,
+		::estd::equal
+	>::iterator &&that
+) : that{ ::std::move(that) } {
 
 };
 
@@ -49,34 +47,35 @@ template<
 &::ai::chat::repositories::pipe<
 	TGlobalConfig,
 	TParticipantCluster
->::iterator::operator++() {
+>::iterator::operator++(
+) {
 	++that;
 	return *this;
 };
 template<
 	typename TGlobalConfig,
 	typename TParticipantCluster
-> ::ai::chat::repositories::pipe<
-	TGlobalConfig,
+> ::ai::chat::threads::pipe<
 	TParticipantCluster
->::value_type
+>
 &::ai::chat::repositories::pipe<
 	TGlobalConfig,
 	TParticipantCluster
->::iterator::operator*() {
+>::iterator::operator*(
+) {
 	return ::std::get<1>(*that);
 };
 template<
 	typename TGlobalConfig,
 	typename TParticipantCluster
-> ::ai::chat::repositories::pipe<
-	TGlobalConfig,
+> ::ai::chat::threads::pipe<
 	TParticipantCluster
->::value_type
+>
 *::ai::chat::repositories::pipe<
 	TGlobalConfig,
 	TParticipantCluster
->::iterator::operator->() {
+>::iterator::operator->(
+) {
 	return &::std::get<1>(*that);
 };
 
@@ -87,7 +86,7 @@ template<
 	TGlobalConfig,
 	TParticipantCluster
 >::pipe(
-	::std::string_view partition,
+	string_t partition,
 	TGlobalConfig const &globalConfig,
 	TParticipantCluster const &participantCluster
 ) : _partition{ partition }
@@ -107,7 +106,8 @@ template<
 ai::chat::repositories::pipe<
 	TGlobalConfig,
 	TParticipantCluster
->::begin() const {
+>::begin(
+) const {
 	return iterator{
 		_channels.begin()
 	};
@@ -123,8 +123,8 @@ ai::chat::repositories::pipe<
 	TGlobalConfig,
 	TParticipantCluster
 >::find(
-	::std::string_view partition,
-	::std::string_view name
+	string_t partition,
+	string_t slot
 ) const {
 	if (_partition != partition)
 		return iterator{
@@ -140,7 +140,7 @@ ai::chat::repositories::pipe<
 			_channels.end()
 		};
 	auto channel = _channels.find(
-		::std::string{ name }
+		slot
 	);
 	if (channel == _channels.end()) {
 		::std::tie(
@@ -148,17 +148,19 @@ ai::chat::repositories::pipe<
 			::std::ignore
 		) = _channels.insert(
 			::std::make_pair(
-				::std::string{ name },
-				value_type{
+				::std::string{ slot },
+				threads::pipe<
+					TParticipantCluster
+				>{
 					partition,
-					name,
+					slot,
 					_participantCluster
 				}
 			)
 		);
 	}
 	return iterator{
-		channel
+		::std::move(channel)
 	};
 };
 template<
@@ -171,7 +173,8 @@ template<
 ai::chat::repositories::pipe<
 	TGlobalConfig,
 	TParticipantCluster
->::end() const {
+>::end(
+) const {
 	return iterator{
 		_channels.end()
 	};

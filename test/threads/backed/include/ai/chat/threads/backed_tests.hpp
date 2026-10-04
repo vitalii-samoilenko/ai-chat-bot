@@ -36,8 +36,7 @@ TEST(BackedThreadTests, PushWritesToMedia) {
 		communicationCluster,
 		[&](mocks::Media *that)->void {
 			EXPECT_CALL(
-				*that,
-				insert_back(
+				*that, insert_back(
 					Gt(0),
 					Eq(content),
 					IsSupersetOf(tags)
@@ -75,8 +74,7 @@ TEST(BackedThreadTests, PushAppendsChannel) {
 		communicationCluster,
 		[&](mocks::Media *that)->void {
 			EXPECT_CALL(
-				*that,
-				insert_back(
+				*that, insert_back(
 					_,
 					_,
 					UnorderedElementsAreArray(appends)
@@ -118,8 +116,7 @@ TEST(BackedThreadTests, PushOverridesChannel) {
 		communicationCluster,
 		[&](mocks::Media *that)->void {
 			EXPECT_CALL(
-				*that,
-				insert_back(
+				*that, insert_back(
 					_,
 					_,
 					UnorderedElementsAreArray(overrides)
@@ -161,8 +158,7 @@ TEST(BackedThreadTests, PushNotifiesReceivers) {
 	mocks::CommunicationCluster communicationCluster{};
 
 	EXPECT_CALL(
-		communicationCluster,
-		notify(
+		communicationCluster, notify(
 			Eq(rpartition_a),
 			Eq(rslot_a),
 			Eq(get_timestamp(*message)),
@@ -173,8 +169,7 @@ TEST(BackedThreadTests, PushNotifiesReceivers) {
 		Exactly(1)
 	);
 	EXPECT_CALL(
-		communicationCluster,
-		notify(
+		communicationCluster, notify(
 			Eq(rpartition_b),
 			Eq(rslot_b),
 			Eq(get_timestamp(*message)),
@@ -185,8 +180,7 @@ TEST(BackedThreadTests, PushNotifiesReceivers) {
 		Exactly(0)
 	);
 	EXPECT_CALL(
-		communicationCluster,
-		notify(
+		communicationCluster, notify(
 			Eq(rpartition_c),
 			Eq(rslot_c),
 			Eq(get_timestamp(*message)),
@@ -205,14 +199,13 @@ TEST(BackedThreadTests, PushNotifiesReceivers) {
 		slot,
 		communicationCluster,
 		[&](mocks::Media *that)->void {
-			ON_CALL(
-				*that,
-				insert_back(
+			EXPECT_CALL(
+				*that, insert_back(
 					_,
 					_,
 					_
 				)
-			).WillByDefault(
+			).WillRepeatedly(
 				Return(message)
 			);
 		}
@@ -259,8 +252,7 @@ TEST(BackedThreadTests, PushIsResilient) {
 	mocks::CommunicationCluster communicationCluster{};
 
 	EXPECT_CALL(
-		communicationCluster,
-		notify(
+		communicationCluster, notify(
 			Eq(rpartition_a),
 			Eq(rslot_a),
 			_,
@@ -273,8 +265,7 @@ TEST(BackedThreadTests, PushIsResilient) {
 		Throw("error_a")
 	);
 	EXPECT_CALL(
-		communicationCluster,
-		notify(
+		communicationCluster, notify(
 			Eq(rpartition_b),
 			Eq(rslot_b),
 			_,
@@ -295,14 +286,13 @@ TEST(BackedThreadTests, PushIsResilient) {
 		slot,
 		communicationCluster,
 		[&](mocks::Media *that)->void {
-			ON_CALL(
-				*that,
-				insert_back(
+			EXPECT_CALL(
+				*that, insert_back(
 					_,
 					_,
 					_
 				)
-			).WillByDefault(
+			).WillRepeatedly(
 				Return(message)
 			);
 		}

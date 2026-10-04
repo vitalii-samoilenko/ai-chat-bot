@@ -39,7 +39,7 @@ public:
 		typename ...TMediaArgs
 	> backed(
 		string_t partition,
-		string_t name,
+		string_t slot,
 		TParticipantCluster const &participantCluster,
 		TMediaArgs &&...mediaArgs
 	);
