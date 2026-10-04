@@ -3,7 +3,9 @@
 
 #include <string>
 #include <unordered_set>
-#include <utility>
+
+#include "estd/algorithm.hpp"
+#include "estd/utility.hpp"
 
 #include "ai/chat/model.hpp"
 
@@ -19,58 +21,6 @@ public:
 	using iterator = typename TMedia::iterator;
 
 private:
-	class hash {
-	private:
-
-
-	public:
-		using is_transparent = void;
-
-		template<
-			typename T
-		> size_t
-		operator()(
-			::std::pair<
-				T,
-				T
-			> const &value
-		) const {
-			::std::hash<
-				T
-			> base{};
-			return base(
-				::std::get<0>(value)
-			) ^ base(
-				::std::get<1>(value)
-			);
-		};
-	};
-	class equal {
-	private:
-	
-
-	public:
-		using is_transparent = void;
-
-		template<
-			typename L,
-			typename R
-		> bool
-		operator()(
-			::std::pair<
-				L,
-				L
-			> const &lhs,
-			::std::pair<
-				R,
-				R
-			> const &rhs
-		) const {
-			return ::std::get<0>(lhs) == ::std::get<0>(rhs)
-				&& ::std::get<1>(lhs) == ::std::get<1>(rhs);
-		};
-	};
-
 	::std::string const _partition;
 	::std::string const _slot;
 	TParticipantCluster const &_participantCluster;
@@ -79,8 +29,8 @@ private:
 			::std::string,
 			::std::string
 		>,
-		hash,
-		equal
+		::estd::hash,
+		::estd::equal
 	> _participants;
 	TMedia _messages;
 

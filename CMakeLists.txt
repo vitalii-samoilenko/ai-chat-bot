@@ -25,13 +25,11 @@ if(MSVC)
 	)
 	if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
 		set(
-			CMAKE_MSVC_RUNTIME_LIBRARY
-			MultiThreadedDebug
+			CMAKE_MSVC_RUNTIME_LIBRARY MultiThreadedDebug
 		)
 	else()
 		set(
-			CMAKE_MSVC_RUNTIME_LIBRARY
-			MultiThreaded
+			CMAKE_MSVC_RUNTIME_LIBRARY MultiThreaded
 		)
 	endif()
 	#add_compile_options(/GR-)

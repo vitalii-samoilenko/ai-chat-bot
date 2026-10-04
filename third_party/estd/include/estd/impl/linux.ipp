@@ -3,7 +3,7 @@
 
 #ifdef __unix__
 
-#include "estd/system/memory.hpp"
+#include "estd/system.hpp"
 
 #include <fstream>
 #include <string>
@@ -11,30 +11,30 @@
 #include <sys/times.h>
 #include <unistd.h>
 
-namespace estd {
-namespace system {
-
 pid_t g_pid{ ::getpid() };
 long g_ticksps{ ::sysconf(_SC_CLK_TCK) };
 long g_pageb{ ::sysconf(_SC_PAGESIZE) };
 
-namespace cpu {
-
-usage get_usage() {
+::estd::cpu::usage
+::estd::cpu::get_usage(
+) {
 	static double nanopt{ 1000000000. / g_ticksps };
 	usage usage{};
 	::tms times{};
 	if (!(nanopt < 0) && !(::times(&times) == (time_t)-1)) {
-		usage.system = static_cast<size_t>((times.tms_stime + times.tms_cstime) * nanopt);
-		usage.user = static_cast<size_t>((times.tms_utime + times.tms_cutime) * nanopt);
+		usage.system = static_cast<
+			size_t
+		>((times.tms_stime + times.tms_cstime) * nanopt);
+		usage.user = static_cast<
+			size_t
+		>((times.tms_utime + times.tms_cutime) * nanopt);
 	}
 	return usage;
 };
 
-} // cpu
-namespace memory {
-
-usage get_usage() {
+::estd::memory::usage
+::estd::memory::get_usage(
+) {
 	static ::std::string path{ "/proc/" + ::std::to_string(g_pid) + "/statm" };
 	usage usage{};
 	::std::ifstream statm{ path };
@@ -48,10 +48,6 @@ usage get_usage() {
 	}
 	return usage;
 };
-
-} // memory
-} // system
-} // estd
 
 #endif
 

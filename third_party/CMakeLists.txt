@@ -1,14 +1,10 @@
-cmake_minimum_required(VERSION 3.25.1)
+cmake_minimum_required(
+	VERSION 3.25.1
+)
 
-project(third_party VERSION 0.1)
-
-set(
-	CMAKE_COMMON_ARGS
-		-DCMAKE_CXX_STANDARD=17
-		-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-		-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-		-DCMAKE_MSVC_RUNTIME_LIBRARY=${CMAKE_MSVC_RUNTIME_LIBRARY}
-		-DBUILD_SHARED_LIBS=OFF
+project(
+	third_party
+	VERSION 0.1
 )
 
 block()
@@ -18,15 +14,24 @@ block()
 		"Force local dependencies"
 	)
 	set(
-		CMAKE_COMMON_ARGS ${CMAKE_COMMON_ARGS}
+		CMAKE_COMMON_ARGS
+			-DCMAKE_CXX_STANDARD=17
+			-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+			-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+			-DCMAKE_MSVC_RUNTIME_LIBRARY=${CMAKE_MSVC_RUNTIME_LIBRARY}
+			-DBUILD_SHARED_LIBS=OFF
 			-DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
 		PARENT_SCOPE
 	)
 endblock()
 
 block()
-	set(ZLIB_SOURCE_DIR ${PROJECT_SOURCE_DIR}/zlib)
-	set(ZLIB_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/zlib)
+	set(
+		ZLIB_SOURCE_DIR ${PROJECT_SOURCE_DIR}/zlib
+	)
+	set(
+		ZLIB_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/zlib
+	)
 	if(NOT EXISTS ${ZLIB_SOURCE_DIR}/CMakeLists.txt)
 		execute_process(
 			COMMAND git submodule update
@@ -104,8 +109,12 @@ block()
 endblock()
 
 block()
-	set(C_ARES_SOURCE_DIR ${PROJECT_SOURCE_DIR}/c-ares)
-	set(C_ARES_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/c-ares)
+	set(
+		C_ARES_SOURCE_DIR ${PROJECT_SOURCE_DIR}/c-ares
+	)
+	set(
+		C_ARES_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/c-ares
+	)
 	if(NOT EXISTS ${C_ARES_SOURCE_DIR}/CMakeLists.txt)
 		execute_process(
 			COMMAND git submodule update
@@ -174,9 +183,13 @@ block()
 endblock()
 
 block()
-	set(ABSEIL_CPP_SOURCE_DIR ${PROJECT_SOURCE_DIR}/abseil-cpp)
-	set(ABSEIL_CPP_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/abseil-cpp)
-	if(NOT EXISTS ${ABSEIL_CPP_SOURCE_DIR}/CMakeLists.txt)
+	set(
+		ABSEIL_SOURCE_DIR ${PROJECT_SOURCE_DIR}/abseil-cpp
+	)
+	set(
+		ABSEIL_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/abseil-cpp
+	)
+	if(NOT EXISTS ${ABSEIL_SOURCE_DIR}/CMakeLists.txt)
 		execute_process(
 			COMMAND git submodule update
 				--init third_party/abseil-cpp
@@ -185,80 +198,106 @@ block()
 		)
 		execute_process(
 			COMMAND git checkout 20250512.1
-			WORKING_DIRECTORY ${ABSEIL_CPP_SOURCE_DIR}
+			WORKING_DIRECTORY ${ABSEIL_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
-	if(NOT EXISTS ${ABSEIL_CPP_BINARY_DIR}/configure.done)
+	if(NOT EXISTS ${ABSEIL_BINARY_DIR}/configure.done)
 		execute_process(
 			COMMAND cmake
 				${CMAKE_COMMON_ARGS}
 				-DABSL_ENABLE_INSTALL=ON
 				-DABSL_MSVC_STATIC_RUNTIME=ON
-				-B ${ABSEIL_CPP_BINARY_DIR} -S .
-			WORKING_DIRECTORY ${ABSEIL_CPP_SOURCE_DIR}
+				-B ${ABSEIL_BINARY_DIR} -S .
+			WORKING_DIRECTORY ${ABSEIL_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 		execute_process(
 			COMMAND cmake
 				-E touch configure.done
-			WORKING_DIRECTORY ${ABSEIL_CPP_BINARY_DIR}
+			WORKING_DIRECTORY ${ABSEIL_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
-	if(NOT EXISTS ${ABSEIL_CPP_BINARY_DIR}/build.done)
+	if(NOT EXISTS ${ABSEIL_BINARY_DIR}/build.done)
 		execute_process(
 			COMMAND cmake
 				--build .
 				--config ${CMAKE_BUILD_TYPE}
-			WORKING_DIRECTORY ${ABSEIL_CPP_BINARY_DIR}
+			WORKING_DIRECTORY ${ABSEIL_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 		execute_process(
 			COMMAND cmake
 				-E touch build.done
-			WORKING_DIRECTORY ${ABSEIL_CPP_BINARY_DIR}
+			WORKING_DIRECTORY ${ABSEIL_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
-	if(NOT EXISTS ${ABSEIL_CPP_BINARY_DIR}/install.done)
+	if(NOT EXISTS ${ABSEIL_BINARY_DIR}/install.done)
 		execute_process(
 			COMMAND cmake
 				--install .
 				--config ${CMAKE_BUILD_TYPE}
 				--prefix ${CMAKE_INSTALL_PREFIX}
-			WORKING_DIRECTORY ${ABSEIL_CPP_BINARY_DIR}
+			WORKING_DIRECTORY ${ABSEIL_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 		execute_process(
 			COMMAND cmake
 				-E touch install.done
-			WORKING_DIRECTORY ${ABSEIL_CPP_BINARY_DIR}
+			WORKING_DIRECTORY ${ABSEIL_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 endblock()
 
 block()
-	set(OPENSSL_SOURCE_DIR ${PROJECT_SOURCE_DIR}/openssl)
-	set(OPENSSL_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/openssl)
+	set(
+		OPENSSL_SOURCE_DIR ${PROJECT_SOURCE_DIR}/openssl
+	)
+	set(
+		OPENSSL_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/openssl
+	)
 	if(WIN32)
-		set(CONFIGURE_COMMAND perl ${OPENSSL_SOURCE_DIR}/Configure)
+		set(
+			CONFIGURE_COMMAND
+			perl 	${OPENSSL_SOURCE_DIR}/Configure
+		)
 		if(MSVC)
 			if(MSVC_TOOLSET_VERSION EQUAL 143)
-				set(BUILD_TOOLS_INSTALLATION_PATH "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools")
+				set(
+					BUILD_TOOLS_INSTALLATION_PATH
+					"C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools"
+				)
 			endif()
 			if(NOT EXISTS ${BUILD_TOOLS_INSTALLATION_PATH})
-				message(FATAL_ERROR "Toolset is not supported")
+				message(
+					FATAL_ERROR "Toolset is not supported"
+				)
 			endif()
-			set(MAKE_COMMAND ${BUILD_TOOLS_INSTALLATION_PATH}/VC/Auxiliary/Build/vcvarsall.bat x64 && nmake)
+			set(
+				MAKE_COMMAND
+				${BUILD_TOOLS_INSTALLATION_PATH}/VC/Auxiliary/Build/vcvarsall.bat x64
+					&& nmake
+			)
 		else()
-			message(FATAL_ERROR "Compiler not supported")
+			message(
+				FATAL_ERROR "Compiler not supported"
+			)
 		endif()
-		link_libraries(ws2_32.lib gdi32.lib advapi32.lib crypt32.lib user32.lib)
+		link_libraries(
+			ws2_32 gdi32 advapi32 crypt32 user32
+		)
 	else()
-		set(CONFIGURE_COMMAND ${OPENSSL_SOURCE_DIR}/Configure)
-		set(MAKE_COMMAND make)
+		set(
+			CONFIGURE_COMMAND
+			${OPENSSL_SOURCE_DIR}/Configure
+		)
+		set(
+			MAKE_COMMAND
+			make
+		)
 	endif()
 	if(NOT EXISTS ${OPENSSL_SOURCE_DIR}/Configure)
 		execute_process(
@@ -275,12 +314,21 @@ block()
 	endif()
 	if(NOT EXISTS ${OPENSSL_BINARY_DIR}/configure.done)
 		if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
-			set(_DEBUG_FLAG --debug)
+			set(
+				_DEBUG_FLAG --debug
+			)
+			set(
+				_DEBUG_SUFFIX d
+			)
 		endif()
 		if(MSVC)
-			set(_MSVC_STATIC_RUNTIME /MT${_DEBUG_SUFFIX})
+			set(
+				_MSVC_STATIC_RUNTIME /MT${_DEBUG_SUFFIX}
+			)
 		endif()
-		make_directory(${OPENSSL_BINARY_DIR})
+		make_directory(
+			${OPENSSL_BINARY_DIR}
+		)
 		execute_process(
 			COMMAND ${CONFIGURE_COMMAND}
 				-static
@@ -361,8 +409,12 @@ block()
 endblock()
 
 block()
-	set(RE2_SOURCE_DIR ${PROJECT_SOURCE_DIR}/re2)
-	set(RE2_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/re2)
+	set(
+		RE2_SOURCE_DIR ${PROJECT_SOURCE_DIR}/re2
+	)
+	set(
+		RE2_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/re2
+	)
 	if(NOT EXISTS ${RE2_SOURCE_DIR}/CMakeLists.txt)
 		execute_process(
 			COMMAND git submodule update
@@ -426,8 +478,12 @@ block()
 endblock()
 
 block()
-	set(PROTOBUF_SOURCE_DIR ${PROJECT_SOURCE_DIR}/protobuf)
-	set(PROTOBUF_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/protobuf)
+	set(
+		PROTOBUF_SOURCE_DIR ${PROJECT_SOURCE_DIR}/protobuf
+	)
+	set(
+		PROTOBUF_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/protobuf
+	)
 	if(NOT EXISTS ${PROTOBUF_SOURCE_DIR}/CMakeLists.txt)
 		execute_process(
 			COMMAND git submodule update
@@ -493,8 +549,12 @@ block()
 endblock()
 
 block()
-	set(GRPC_SOURCE_DIR ${PROJECT_SOURCE_DIR}/grpc)
-	set(GRPC_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/grpc)
+	set(
+		GRPC_SOURCE_DIR ${PROJECT_SOURCE_DIR}/grpc
+	)
+	set(
+		GRPC_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/grpc
+	)
 	if(NOT EXISTS ${GRPC_SOURCE_DIR}/CMakeLists.txt)
 		execute_process(
 			COMMAND git submodule update
@@ -585,7 +645,9 @@ block()
 endblock()
 
 block()
-	set(OPENTELEMETRY_PROTO_SOURCE_DIR ${PROJECT_SOURCE_DIR}/opentelemetry-proto)
+	set(
+		OPENTELEMETRY_PROTO_SOURCE_DIR ${PROJECT_SOURCE_DIR}/opentelemetry-proto
+	)
 	if(NOT EXISTS ${OPENTELEMETRY_PROTO_SOURCE_DIR}/Makefile)
 		execute_process(
 			COMMAND git submodule update
@@ -612,9 +674,13 @@ block()
 endblock()
 
 block()
-	set(OPENTELEMETRY_CPP_SOURCE_DIR ${PROJECT_SOURCE_DIR}/opentelemetry-cpp)
-	set(OPENTELEMETRY_CPP_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/opentelemetry-cpp)
-	if(NOT EXISTS ${OPENTELEMETRY_CPP_SOURCE_DIR}/CMakeLists.txt)
+	set(
+		OPENTELEMETRY_SOURCE_DIR ${PROJECT_SOURCE_DIR}/opentelemetry-cpp
+	)
+	set(
+		OPENTELEMETRY_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/opentelemetry-cpp
+	)
+	if(NOT EXISTS ${OPENTELEMETRY_SOURCE_DIR}/CMakeLists.txt)
 		execute_process(
 			COMMAND git submodule update
 				--init third_party/opentelemetry-cpp
@@ -623,11 +689,11 @@ block()
 		)
 		execute_process(
 			COMMAND git checkout v1.28.0
-			WORKING_DIRECTORY ${OPENTELEMETRY_CPP_SOURCE_DIR}
+			WORKING_DIRECTORY ${OPENTELEMETRY_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
-	if(NOT EXISTS ${OPENTELEMETRY_CPP_BINARY_DIR}/configure.done)
+	if(NOT EXISTS ${OPENTELEMETRY_BINARY_DIR}/configure.done)
 		execute_process(
 			COMMAND cmake
 				${CMAKE_COMMON_ARGS}
@@ -642,53 +708,57 @@ block()
 				-DWITH_ETW=OFF
 				-DWITH_EXAMPLES=OFF
 				-DWITH_FUNC_TESTS=OFF
-				-B ${OPENTELEMETRY_CPP_BINARY_DIR} -S .
-			WORKING_DIRECTORY ${OPENTELEMETRY_CPP_SOURCE_DIR}
+				-B ${OPENTELEMETRY_BINARY_DIR} -S .
+			WORKING_DIRECTORY ${OPENTELEMETRY_SOURCE_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 		execute_process(
 			COMMAND cmake
 				-E touch configure.done
-			WORKING_DIRECTORY ${OPENTELEMETRY_CPP_BINARY_DIR}
+			WORKING_DIRECTORY ${OPENTELEMETRY_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
-	if(NOT EXISTS ${OPENTELEMETRY_CPP_BINARY_DIR}/build.done)
+	if(NOT EXISTS ${OPENTELEMETRY_BINARY_DIR}/build.done)
 		execute_process(
 			COMMAND cmake
 				--build .
 				--config ${CMAKE_BUILD_TYPE}
-			WORKING_DIRECTORY ${OPENTELEMETRY_CPP_BINARY_DIR}
+			WORKING_DIRECTORY ${OPENTELEMETRY_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 		execute_process(
 			COMMAND cmake
 				-E touch build.done
-			WORKING_DIRECTORY ${OPENTELEMETRY_CPP_BINARY_DIR}
+			WORKING_DIRECTORY ${OPENTELEMETRY_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
-	if(NOT EXISTS ${OPENTELEMETRY_CPP_BINARY_DIR}/install.done)
+	if(NOT EXISTS ${OPENTELEMETRY_BINARY_DIR}/install.done)
 		execute_process(
 			COMMAND cmake
 				--install .
 				--config ${CMAKE_BUILD_TYPE}
 				--prefix ${CMAKE_INSTALL_PREFIX}
-			WORKING_DIRECTORY ${OPENTELEMETRY_CPP_BINARY_DIR}
+			WORKING_DIRECTORY ${OPENTELEMETRY_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 		execute_process(
 			COMMAND cmake
 				-E touch install.done
-			WORKING_DIRECTORY ${OPENTELEMETRY_CPP_BINARY_DIR}
+			WORKING_DIRECTORY ${OPENTELEMETRY_BINARY_DIR}
 			COMMAND_ERROR_IS_FATAL ANY
 		)
 	endif()
 endblock()
 
 block()
-	set(ESTD_SOURCE_DIR ${PROJECT_SOURCE_DIR}/estd)
-	set(ESTD_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/estd)
+	set(
+		ESTD_SOURCE_DIR ${PROJECT_SOURCE_DIR}/estd
+	)
+	set(
+		ESTD_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/estd
+	)
 	if(NOT EXISTS ${ESTD_BINARY_DIR}/configure.done)
 		execute_process(
 			COMMAND cmake
@@ -738,8 +808,12 @@ block()
 endblock()
 
 block()
-	set(ETELEMETRY_SOURCE_DIR ${PROJECT_SOURCE_DIR}/etelemetry)
-	set(ETELEMETRY_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/etelemetry)
+	set(
+		ETELEMETRY_SOURCE_DIR ${PROJECT_SOURCE_DIR}/etelemetry
+	)
+	set(
+		ETELEMETRY_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/etelemetry
+	)
 	if(NOT EXISTS ${ETELEMETRY_BINARY_DIR}/configure.done)
 		execute_process(
 			COMMAND cmake
@@ -789,26 +863,54 @@ block()
 endblock()
 
 block()
-	set(SQLITE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/sqlite)
-	set(SQLITE_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/sqlite)
-	set(SQLITE_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include)
-	set(SQLITE_LIBRARY_DIR ${CMAKE_INSTALL_PREFIX}/lib)
+	set(
+		SQLITE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/sqlite
+	)
+	set(
+		SQLITE_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/sqlite
+	)
+	set(
+		SQLITE_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include
+	)
+	set(
+		SQLITE_LIBRARY_DIR ${CMAKE_INSTALL_PREFIX}/lib
+	)
 	if(WIN32)
-		set(CONFIGURE_COMMAND cmake -E touch config.log)
+		set(
+			CONFIGURE_COMMAND
+			cmake -E touch config.log
+		)
 		if(MSVC)
 			if(MSVC_TOOLSET_VERSION EQUAL 143)
-				set(BUILD_TOOLS_INSTALLATION_PATH "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools")
+				set(
+					BUILD_TOOLS_INSTALLATION_PATH
+					"C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools"
+				)
 			endif()
 			if(NOT EXISTS ${BUILD_TOOLS_INSTALLATION_PATH})
-				message(FATAL_ERROR "Toolset is not supported")
+				message(
+					FATAL_ERROR "Toolset is not supported"
+				)
 			endif()
-			set(MAKE_COMMAND ${BUILD_TOOLS_INSTALLATION_PATH}/VC/Auxiliary/Build/vcvarsall.bat x64 && nmake /F Makefile.msc)
+			set(
+				MAKE_COMMAND
+				${BUILD_TOOLS_INSTALLATION_PATH}/VC/Auxiliary/Build/vcvarsall.bat x64
+					&& nmake /F Makefile.msc
+				)
 		else()
-			message(FATAL_ERROR "Compiler not supported")
+			message(
+				FATAL_ERROR "Compiler not supported"
+			)
 		endif()
 	else()
-		set(CONFIGURE_COMMAND ${SQLITE_SOURCE_DIR}/configure)
-		set(MAKE_COMMAND make)
+		set(
+			CONFIGURE_COMMAND
+			${SQLITE_SOURCE_DIR}/configure
+		)
+		set(
+			MAKE_COMMAND
+			make
+		)
 	endif()
 	if(NOT EXISTS ${SQLITE_SOURCE_DIR}/configure)
 		execute_process(
@@ -824,7 +926,10 @@ block()
 		)
 	endif()
 	if(NOT EXISTS ${SQLITE_BINARY_DIR}/configure.done)
-		file(COPY ${SQLITE_SOURCE_DIR} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+		file(
+			COPY ${SQLITE_SOURCE_DIR}
+			DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+		)
 		execute_process(
 			COMMAND ${CONFIGURE_COMMAND}
 			WORKING_DIRECTORY ${SQLITE_BINARY_DIR}
@@ -853,14 +958,20 @@ block()
 	endif()
 	if(NOT EXISTS ${SQLITE_BINARY_DIR}/install.done)
 		if (WIN32)
-			set(_SQLITE_LIBRARY libsqlite3.lib)
+			set(
+				_SQLITE_LIBRARY libsqlite3.lib
+			)
 		elseif(LINUX)
-			set(_SQLITE_LIBRARY libsqlite3.a)
+			set(
+				_SQLITE_LIBRARY libsqlite3.a
+			)
 		endif()
-		file(COPY ${SQLITE_BINARY_DIR}/${_SQLITE_LIBRARY}
+		file(
+			COPY ${SQLITE_BINARY_DIR}/${_SQLITE_LIBRARY}
 			DESTINATION ${SQLITE_LIBRARY_DIR}
 		)
-		file(COPY ${SQLITE_BINARY_DIR}/sqlite3.h
+		file(
+			COPY ${SQLITE_BINARY_DIR}/sqlite3.h
 			DESTINATION ${SQLITE_INCLUDE_DIR}
 		)
 		execute_process(
@@ -871,7 +982,8 @@ block()
 		)
 	endif()
 	set(
-		PC_SQLite3_INCLUDE_DIRS ${SQLITE_INCLUDE_DIR}
+		PC_SQLite3_INCLUDE_DIRS
+		${SQLITE_INCLUDE_DIR}
 		CACHE INTERNAL
 		"Force local sqlite include"
 	)
@@ -889,8 +1001,12 @@ block()
 endblock()
 
 block()
-	set(ESQLITE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/esqlite)
-	set(ESQLITE_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/esqlite)
+	set(
+		ESQLITE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/esqlite
+	)
+	set(
+		ESQLITE_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/esqlite
+	)
 	if(NOT EXISTS ${ESQLITE_BINARY_DIR}/configure.done)
 		execute_process(
 			COMMAND cmake
@@ -940,8 +1056,12 @@ block()
 endblock()
 
 block()
-	set(CURL_SOURCE_DIR ${PROJECT_SOURCE_DIR}/curl)
-	set(CURL_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/curl)
+	set(
+		CURL_SOURCE_DIR ${PROJECT_SOURCE_DIR}/curl
+	)
+	set(
+		CURL_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/curl
+	)
 	if(NOT EXISTS ${CURL_SOURCE_DIR}/CMakeLists.txt)
 		execute_process(
 			COMMAND git submodule update
@@ -1049,8 +1169,12 @@ block()
 endblock()
 
 block()
-	set(GTEST_SOURCE_DIR ${PROJECT_SOURCE_DIR}/googletest)
-	set(GTEST_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/googletest)
+	set(
+		GTEST_SOURCE_DIR ${PROJECT_SOURCE_DIR}/googletest
+	)
+	set(
+		GTEST_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/googletest
+	)
 	if(NOT EXISTS ${GTEST_SOURCE_DIR}/CMakeLists.txt)
 		execute_process(
 			COMMAND git submodule update

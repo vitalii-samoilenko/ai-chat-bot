@@ -1,21 +1,37 @@
-cmake_minimum_required(VERSION 3.25.1)
+cmake_minimum_required(
+	VERSION 3.25.1
+)
 
-project(ESTD VERSION 0.1 LANGUAGES CXX)
+project(
+	ESTD
+	VERSION 0.1
+	LANGUAGES CXX
+)
 
-add_library(_estd INTERFACE)
-target_compile_features(_estd INTERFACE cxx_std_11)
-target_sources(_estd
+add_library(
+	_estd
+	INTERFACE
+)
+target_compile_features(
+	_estd
+	INTERFACE cxx_std_11
+)
+target_sources(
+	_estd
 	INTERFACE FILE_SET HEADERS
 	BASE_DIRS include
 	FILES
-		include/estd/system/cpu.hpp
-		include/estd/system/impl/linux.ipp
-		include/estd/system/impl/windows.ipp
-		include/estd/system/memory.hpp
+		include/estd/algorithm.hpp
 		include/estd/system.hpp
+		include/estd/impl/linux.ipp
+		include/estd/impl/windows.ipp
+		include/estd/utility.hpp
 )
 
-add_library(ESTD ALIAS _estd)
+add_library(
+	::ESTD ALIAS
+	_estd
+)
 
 include(GNUInstallDirs)
 install(
