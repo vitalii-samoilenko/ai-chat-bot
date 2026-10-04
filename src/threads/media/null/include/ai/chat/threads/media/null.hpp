@@ -2,9 +2,8 @@
 #define AI_CHAT_THREADS_MEDIA_NULL_HPP
 
 #include <limits>
-#include <span>
-#include <string_view>
-#include <tuple>
+
+#include "ai/chat/model.hpp"
 
 namespace ai {
 namespace chat {
@@ -15,78 +14,93 @@ class null {
 private:
 	static constexpr long long TheEndTimes{
 		::std::numeric_limits<
-			long long
+			timepoint_t
 		>::max()
 	};
 
 public:
-	using value_type = ::std::tuple<
-		long long,
-		::std::string_view,
-		::std::span<
-			::std::tuple<
-				::std::string_view,
-				::std::string_view
-			>
-		>
-	>;
 	class iterator {
 	private:
-		value_type that;
+		message_t that;
 
 		iterator(
-			long long timestamp,
-			::std::string_view _content,
-			::std::span<
-				::std::tuple<
-					::std::string_view,
-					::std::string_view
-				>
-			> tags
+			timepoint_t timestamp,
+			string_t content,
+			tags_t tags
 		);
 
 		friend null;
 
 	public:
-		iterator() = delete;
-		iterator(iterator const &) = delete;
-		iterator(iterator &&) = default;
+		iterator(
+		) = delete;
+		iterator(
+			iterator const &
+		) = delete;
+		iterator(
+			iterator &&
+		) = default;
 
-		~iterator() = default;
+		~iterator(
+		) = default;
 
-		iterator &operator=(iterator const &) = delete;
-		iterator &operator=(iterator &&) = default;
+		iterator
+		&operator=(
+			iterator const &
+		) = delete;
+		iterator
+		&operator=(
+			iterator &&
+		) = default;
 
-		bool operator==(iterator const &other) const;
-		bool operator<(iterator const &other) const;
-		iterator &operator++();
-		value_type &operator*();
+		bool
+		operator==(
+			iterator const &other
+		) const;
+		bool
+		operator<(
+			iterator const &other
+		) const;
+		iterator
+		&operator++(
+		);
+		message_t
+		&operator*(
+		);
 	};
 
-	null() = default;
-	null(null const &) = delete;
-	null(null &&) = default;
+	null(
+	) = default;
+	null(
+		null const &
+	) = delete;
+	null(
+		null &&
+	) = default;
 
-	~null() = default;
+	~null(
+	) = default;
 
-	null &operator=(null const &) = delete;
-	null &operator=(null &&) = default;
+	null
+	&operator=(
+		null const &
+	) = delete;
+	null
+	&operator=(
+		null &&
+	) = default;
 
-	iterator insert_back(
-		::std::string_view content,
-		::std::span<
-			::std::tuple<
-				::std::string_view,
-				::std::string_view
-			>
-		> tags
+	iterator
+	insert_back(
+		timepoint_t timestamp,
+		string_t content,
+		tags_t tags
 	);
 
-	iterator begin();
-	iterator lower_bound(
-		long long timestamp
+	iterator begin(
 	);
-	iterator end();
+	iterator end(
+	);
 };
 
 } // media

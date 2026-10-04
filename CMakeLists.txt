@@ -1,28 +1,55 @@
-cmake_minimum_required(VERSION 3.25.1)
+cmake_minimum_required(
+	VERSION 3.25.1
+)
 
-project(AI.Chat VERSION 0.1)
+project(
+	AI.Chat
+	VERSION 0.1
+)
 
-option(TELEMETRY "Enable telemetry" OFF)
+option(
+	TELEMETRY
+	"Enable telemetry"
+	OFF
+)
 
 if(TELEMETRY)
-	add_compile_definitions(ET_ENABLED)
+	add_compile_definitions(
+		ET_ENABLED
+	)
 endif()
 
 if(MSVC)
-	add_compile_options(/bigobj)
+	add_compile_options(
+		/bigobj
+	)
 	if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
-		set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreadedDebug)
+		set(
+			CMAKE_MSVC_RUNTIME_LIBRARY
+			MultiThreadedDebug
+		)
 	else()
-		set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreaded)
+		set(
+			CMAKE_MSVC_RUNTIME_LIBRARY
+			MultiThreaded
+		)
 	endif()
 	#add_compile_options(/GR-)
 elseif(LINUX)
-	set(CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc -static-libstdc++")
+	set(
+		CMAKE_EXE_LINKER_FLAGS
+		"-static -static-libgcc -static-libstdc++"
+	)
 endif()
 
 add_subdirectory(third_party)
 
+add_subdirectory(src/model)
 add_subdirectory(src/threads)
 add_subdirectory(src/participants)
-add_subdirectory(test)
-add_subdirectory(src/hosts/console)
+
+add_subdirectory(test/mocks)
+add_subdirectory(test/threads)
+add_subdirectory(test/runners/console)
+
+#add_subdirectory(src/hosts/console)

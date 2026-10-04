@@ -1,7 +1,7 @@
 #ifndef AI_CHAT_THREADS_IMPL_BACKED_IPP
 #define AI_CHAT_THREADS_IMPL_BACKED_IPP
 
-#include <utility>
+#include <chrono>
 #include <vector>
 
 #include "ai/chat/threads/backed.hpp"
@@ -15,12 +15,12 @@ template<
 	TParticipantCluster,
 	TMedia
 >::backed(
-	::std::string_view partition,
-	::std::string_view name,
+	::ai::chat::string_t partition,
+	::ai::chat::string_t slot,
 	TParticipantCluster const &participantCluster,
 	TMediaArgs &&...mediaArgs
 ) : _partition{ partition }
-	, _name{ name }
+	, _slot{ slot }
 	, _participantCluster{ participantCluster } 
 	, _participants{}
 	, _messages{
@@ -39,13 +39,13 @@ template<
 	TParticipantCluster,
 	TMedia
 >::accept(
-	::std::string_view partition,
-	::std::string_view name
+	::ai::chat::string_t partition,
+	::ai::chat::string_t slot
 ) {
 	_participants.insert(
-		::std::make_tuple(
+		::std::make_pair(
 			::std::string{ partition },
-			::std::string{ name }
+			::std::string{ slot }
 		)
 	);
 };
@@ -58,13 +58,13 @@ template<
 	TParticipantCluster,
 	TMedia
 >::dismiss(
-	::std::string_view partition,
-	::std::string_view name
+	::ai::chat::string_t partition,
+	::ai::chat::string_t slot
 ) {
 	_participants.erase(
-		::std::make_tuple(
-			::std::string{ partition },
-			::std::string{ name }
+		::std::make_pair(
+			partition,
+			slot
 		)
 	);
 };
@@ -77,31 +77,29 @@ template<
 	TParticipantCluster,
 	TMedia
 >::push(
-	::std::string_view content,
-	::std::span<
-		::std::tuple<
-			::std::string_view,
-			::std::string_view
-		>
-	> tags
+	::ai::chat::string_t content,
+	::ai::chat::tags_t tags
 ) {
-	::std::vector overrides{
-		::std::make_tuple(
-			::std::string_view{ "channel.partition" },
-			::std::string_view{ _partition }
-		),
-		::std::make_tuple(
-			::std::string_view{ "channel.name" },
-			::std::string_view{ _name }
-		)
+	timepoint_t timestamp{
+		::std::chrono::system_clock::now()
+			.time_since_epoch()
+			.count()
+		};
+	::std::vector<
+		tag_t
+	> _overrides{
+		tag_t{ "channel.partition", _partition },
+		tag_t{ "channel.slot", _slot }
 	};
-	for (auto tag : tags) {
-		if (::std::get<0>(tag) == "channel.partition"
-			|| ::std::get<0>(tag) == "channel.name")
+	for (tag_t &tag : tags) {
+		if (get_name(tag) == "channel.partition"
+			|| get_name(tag) == "channel.slot")
 			continue;
-		overrides.push_back(tag);
+		_overrides.push_back(tag);
 	}
+	tags_t overrides{ _overrides };
 	auto message = _messages.insert_back(
+		timestamp,
 		content,
 		overrides
 	);
@@ -110,9 +108,9 @@ template<
 			_participantCluster.notify(
 				::std::get<0>(participant),
 				::std::get<1>(participant),
-				::std::get<0>(*message),
-				::std::get<1>(*message),
-				::std::get<2>(*message)
+				get_timestamp(*message),
+				get_content(*message),
+				get_tags(*message)
 			);
 		} catch (...) {
 

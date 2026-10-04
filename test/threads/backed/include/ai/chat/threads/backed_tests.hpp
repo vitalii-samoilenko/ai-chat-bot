@@ -1,11 +1,12 @@
 #ifndef AI_CHAT_THREADS_BACKED_TESTS_HPP
 #define AI_CHAT_THREADS_BACKED_TESTS_HPP
 
-#include <vector>
-
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "ai/chat/mocks/communication_cluster.hpp"
+#include "ai/chat/mocks/media.hpp"
+
+#include "ai/chat/model.hpp"
 #include "ai/chat/threads/backed.hpp"
 
 using namespace ::testing;
@@ -14,365 +15,308 @@ namespace ai {
 namespace chat {
 namespace threads {
 
-class ParticipantClusterMock {
-public:
-	MOCK_METHOD(
-		void,
-		notify, (
-			::std::string_view,
-			::std::string_view,
-			long long,
-			::std::string_view,
-			(::std::span<
-				::std::tuple<
-					::std::string_view,
-					::std::string_view
-				>
-			>)
-		),
-		(const)
-	);
-};
-
-class MediaMock {
-public:
-	using value_type = ::std::tuple<
-		long long,
-		::std::string_view,
-		::std::span<
-			::std::tuple<
-				::std::string_view,
-				::std::string_view
-			>
-		>
-	>;
-	using iterator = value_type *;
-
-	template<
-		typename Func
-	> MediaMock(Func &&configure) {
-		configure(this);
-	};
-
-	MOCK_METHOD(
-		value_type *,
-		insert_back,
-		(
-			::std::string_view,
-			(::std::span<
-				::std::tuple<
-					::std::string_view,
-					::std::string_view
-				>
-			>)
-		)
-	);
-};
-
 TEST(BackedThreadTests, PushWritesToMedia) {
-	::std::string_view partition{ "test" };
-	::std::string_view name{ "backed" };
-	::std::string_view content{ "Some content" };
-	::std::string_view tag_name_a{ "Name A" };
-	::std::string_view tag_value_a{ "Value A" };
-	::std::string_view tag_name_b{ "Name B" };
-	::std::string_view tag_value_b{ "Value B" };
-	::std::vector<
-		::std::tuple<
-			::std::string_view,
-			::std::string_view
-		>
-	> tags{
-		::std::make_tuple(
-			tag_name_a,
-			tag_value_a
-		),
-		::std::make_tuple(
-			tag_name_b,
-			tag_value_b
-		)
+	string_t partition{ "test" };
+	string_t slot{ "backed" };
+	string_t content{ "Some content" };
+	tag_t _tags[]{
+		tag_t{ "Name A", "Value A" },
+		tag_t{ "Name B", "Value B" }
 	};
+	tags_t tags{ _tags };
 
-	StrictMock<
-		ParticipantClusterMock
-	> participantCluster{};
+	mocks::CommunicationCluster communicationCluster{};
 
 	backed<
-		StrictMock<
-			ParticipantClusterMock
-		>,
-		StrictMock<
-			MediaMock
-		>
-	> instance{
+		mocks::CommunicationCluster,
+		mocks::Media
+	> target{
 		partition,
-		name,
-		participantCluster,
-		[&](MediaMock *that)->void {
+		slot,
+		communicationCluster,
+		[&](mocks::Media *that)->void {
 			EXPECT_CALL(
 				*that,
 				insert_back(
+					Gt(0),
 					Eq(content),
-					IsSupersetOf(
-						tags.begin(),
-						tags.end()
-					)
+					IsSupersetOf(tags)
 				)
 			).Times(
 				Exactly(1)
-			).WillOnce(
-				Return(nullptr)
 			);
 		}
 	};
 
-	instance.push(
+	target.push(
 		content,
 		tags
 	);
 };
 TEST(BackedThreadTests, PushAppendsChannel) {
-	::std::string_view partition{ "test" };
-	::std::string_view name{ "backed" };
-	::std::string_view content{ "Some content" };
-	::std::vector<
-		::std::tuple<
-			::std::string_view,
-			::std::string_view
-		>
-	> tags{};
-	::std::string_view tag_name_cpartition{ "channel.partition" };
-	::std::string_view tag_name_cname{ "channel.name" };
-	::std::vector<
-		::std::tuple<
-			::std::string_view,
-			::std::string_view
-		>
-	> appends{
-		::std::make_tuple(
-			tag_name_cpartition,
-			partition
-		),
-		::std::make_tuple(
-			tag_name_cname,
-			name
-		)
+	string_t partition{ "test" };
+	string_t slot{ "backed" };
+	string_t content{ "Some content" };
+	tags_t tags{};
+	tag_t _appends[]{
+		tag_t{ "channel.partition", partition },
+		tag_t{ "channel.slot", slot }
 	};
+	tags_t appends{ _appends };
 
-	StrictMock<
-		ParticipantClusterMock
-	> participantCluster{};
+	mocks::CommunicationCluster communicationCluster{};
 
 	backed<
-		StrictMock<
-			ParticipantClusterMock
-		>,
-		StrictMock<
-			MediaMock
-		>
-	> instance{
+		mocks::CommunicationCluster,
+		mocks::Media
+	> target{
 		partition,
-		name,
-		participantCluster,
-		[&](MediaMock *that)->void {
+		slot,
+		communicationCluster,
+		[&](mocks::Media *that)->void {
 			EXPECT_CALL(
 				*that,
 				insert_back(
 					_,
-					UnorderedElementsAreArray(
-						appends.begin(),
-						appends.end()
-					)
+					_,
+					UnorderedElementsAreArray(appends)
 				)
 			).Times(
 				Exactly(1)
-			).WillOnce(
-				Return(nullptr)
 			);
 		}
 	};
 
-	instance.push(
+	target.push(
 		content,
 		tags
 	);
 };
 TEST(BackedThreadTests, PushOverridesChannel) {
-	::std::string_view partition{ "test" };
-	::std::string_view name{ "backed" };
-	::std::string_view content{ "Some content" };
-	::std::string_view tag_name_cpartition{ "channel.partition" };
-	::std::string_view tag_value_cpartition{ "other_test" };
-	::std::string_view tag_name_cname{ "channel.name" };
-	::std::string_view tag_value_cname{ "other_backed" };
-	::std::vector<
-		::std::tuple<
-			::std::string_view,
-			::std::string_view
-		>
-	> tags{
-		::std::make_tuple(
-			tag_name_cpartition,
-			tag_value_cpartition
-		),
-		::std::make_tuple(
-			tag_name_cname,
-			tag_value_cpartition
-		)
+	string_t partition{ "test" };
+	string_t slot{ "backed" };
+	string_t content{ "Some content" };
+	tag_t _tags[]{
+		tag_t{ "channel.partition", "other_test" },
+		tag_t{ "channel.slot", "other_backed" }
 	};
-	::std::vector<
-		::std::tuple<
-			::std::string_view,
-			::std::string_view
-		>
-	> overrides{
-		::std::make_tuple(
-			tag_name_cpartition,
-			partition
-		),
-		::std::make_tuple(
-			tag_name_cname,
-			name
-		)
+	tags_t tags{ _tags };
+	tag_t _overrides[]{
+		tag_t{ "channel.partition", partition },
+		tag_t{ "channel.slot", slot }
 	};
+	tags_t overrides{ _overrides };
 
-	StrictMock<
-		ParticipantClusterMock
-	> participantCluster{};
+	mocks::CommunicationCluster communicationCluster{};
 
 	backed<
-		StrictMock<
-			ParticipantClusterMock
-		>,
-		StrictMock<
-			MediaMock
-		>
-	> instance{
+		mocks::CommunicationCluster,
+		mocks::Media
+	> target{
 		partition,
-		name,
-		participantCluster,
-		[&](MediaMock *that)->void {
+		slot,
+		communicationCluster,
+		[&](mocks::Media *that)->void {
 			EXPECT_CALL(
 				*that,
 				insert_back(
 					_,
-					UnorderedElementsAreArray(
-						overrides.begin(),
-						overrides.end()
-					)
+					_,
+					UnorderedElementsAreArray(overrides)
 				)
 			).Times(
 				Exactly(1)
-			).WillOnce(
-				Return(nullptr)
 			);
 		}
 	};
 
-	instance.push(
+	target.push(
 		content,
 		tags
 	);
 };
 TEST(BackedThreadTests, PushNotifiesReceivers) {
-	::std::string_view partition{ "test" };
-	::std::string_view name{ "backed" };
-	::std::string_view content{ "Some content" };
-	::std::string_view tag_name_a{ "Name A" };
-	::std::string_view tag_value_a{ "Value A" };
-	::std::string_view tag_name_b{ "Name B" };
-	::std::string_view tag_value_b{ "Value B" };
-	::std::vector<
-		::std::tuple<
-			::std::string_view,
-			::std::string_view
-		>
-	> tags{
-		::std::make_tuple(
-			tag_name_a,
-			tag_value_a
-		),
-		::std::make_tuple(
-			tag_name_b,
-			tag_value_b
-		)
+	string_t partition{ "test" };
+	string_t slot{ "backed" };
+	string_t content{ "Some content" };
+	tag_t _tags[]{
+		tag_t{ "Name A", "Value A" },
+		tag_t{ "Name B", "Value B" }
 	};
-	long long timestamp{ 10 };
-	::std::tuple<
-		long long,
-		::std::string_view,
-		::std::span<
-			::std::tuple<
-				::std::string_view,
-				::std::string_view
-			>
-		>
-	> message{
+	tags_t tags{ _tags };
+	timepoint_t timestamp{ -1 };
+	message_t _message{
 		timestamp,
 		content,
 		tags
 	};
-	::std::string_view rpartition{ "receivers" };
-	::std::string_view rname_a{ "some a" };
-	::std::string_view rname_b{ "some b" };
-	StrictMock<
-		ParticipantClusterMock
-	> participantCluster{};
+	message_t *message{ &_message };
+	string_t rpartition_a{ "rtest_a" };
+	string_t rslot_a{ "mock_a" };
+	string_t rpartition_b{ "rtest_b" };
+	string_t rslot_b{ "mock_b" };
+	string_t rpartition_c{ "rtest_c" };
+	string_t rslot_c{ "mock_c" };
+
+	mocks::CommunicationCluster communicationCluster{};
+
 	EXPECT_CALL(
-		participantCluster,
+		communicationCluster,
 		notify(
-			Eq(rpartition),
-			Eq(rname_a),
-			Eq(timestamp),
-			Eq(content),
-			UnorderedElementsAreArray(
-				tags.begin(),
-				tags.end()
-			)
+			Eq(rpartition_a),
+			Eq(rslot_a),
+			Eq(get_timestamp(*message)),
+			Eq(get_content(*message)),
+			ElementsAreArray(get_tags(*message))
+		)
+	).Times(
+		Exactly(1)
+	);
+	EXPECT_CALL(
+		communicationCluster,
+		notify(
+			Eq(rpartition_b),
+			Eq(rslot_b),
+			Eq(get_timestamp(*message)),
+			Eq(get_content(*message)),
+			ElementsAreArray(get_tags(*message))
+		)
+	).Times(
+		Exactly(0)
+	);
+	EXPECT_CALL(
+		communicationCluster,
+		notify(
+			Eq(rpartition_c),
+			Eq(rslot_c),
+			Eq(get_timestamp(*message)),
+			Eq(get_content(*message)),
+			ElementsAreArray(get_tags(*message))
 		)
 	).Times(
 		Exactly(1)
 	);
 
 	backed<
-		StrictMock<
-			ParticipantClusterMock
-		>,
-		StrictMock<
-			MediaMock
-		>
-	> instance{
+		mocks::CommunicationCluster,
+		mocks::Media
+	> target{
 		partition,
-		name,
-		participantCluster,
-		[&](MediaMock *that)->void {
-			EXPECT_CALL(
+		slot,
+		communicationCluster,
+		[&](mocks::Media *that)->void {
+			ON_CALL(
 				*that,
 				insert_back(
 					_,
+					_,
 					_
 				)
-			).Times(
-				Exactly(1)
-			).WillOnce(
-				Return(&message)
+			).WillByDefault(
+				Return(message)
 			);
 		}
 	};
 
-	instance.accept(
-		rpartition,
-		rname_a
+	target.accept(
+		rpartition_a,
+		rslot_a
 	);
-	instance.accept(
-		rpartition,
-		rname_b
+	target.accept(
+		rpartition_b,
+		rslot_b
 	);
-	instance.dismiss(
-		rpartition,
-		rname_b
+	target.accept(
+		rpartition_c,
+		rslot_c
 	);
-	instance.push(
+	target.dismiss(
+		rpartition_b,
+		rslot_b
+	);
+	target.push(
+		content,
+		tags
+	);
+};
+TEST(BackedThreadTests, PushIsResilient) {
+	string_t partition{ "test" };
+	string_t slot{ "backed" };
+	string_t content{ "Some content" };
+	tags_t tags{};
+	timepoint_t timestamp{ -1 };
+	message_t _message{
+		timestamp,
+		content,
+		tags
+	};
+	message_t *message{ &_message };
+	string_t rpartition_a{ "rtest_a" };
+	string_t rslot_a{ "mock_a" };
+	string_t rpartition_b{ "rtest_b" };
+	string_t rslot_b{ "mock_b" };
+
+	mocks::CommunicationCluster communicationCluster{};
+
+	EXPECT_CALL(
+		communicationCluster,
+		notify(
+			Eq(rpartition_a),
+			Eq(rslot_a),
+			_,
+			_,
+			_
+		)
+	).Times(
+		Exactly(1)
+	).WillOnce(
+		Throw("error_a")
+	);
+	EXPECT_CALL(
+		communicationCluster,
+		notify(
+			Eq(rpartition_b),
+			Eq(rslot_b),
+			_,
+			_,
+			_
+		)
+	).Times(
+		Exactly(1)
+	).WillOnce(
+		Throw("error_b")
+	);
+
+	backed<
+		mocks::CommunicationCluster,
+		mocks::Media
+	> target{
+		partition,
+		slot,
+		communicationCluster,
+		[&](mocks::Media *that)->void {
+			ON_CALL(
+				*that,
+				insert_back(
+					_,
+					_,
+					_
+				)
+			).WillByDefault(
+				Return(message)
+			);
+		}
+	};
+
+	target.accept(
+		rpartition_a,
+		rslot_a
+	);
+	target.accept(
+		rpartition_b,
+		rslot_b
+	);
+	target.push(
 		content,
 		tags
 	);

@@ -1,22 +1,41 @@
-cmake_minimum_required(VERSION 3.25.1)
+cmake_minimum_required(
+	VERSION 3.25.1
+)
 
-project(AI.Chat.Test.Threads.Backed VERSION 0.1)
+project(
+	AI.Chat.Test.Threads.Backed
+	VERSION 0.1
+)
 
-find_package(GTest CONFIG REQUIRED)
+find_package(
+	GTest CONFIG REQUIRED
+)
 
-add_library(_ai_chat_test_threads_backed INTERFACE)
-target_compile_features(_ai_chat_test_threads_backed INTERFACE cxx_std_20)
-target_link_libraries(_ai_chat_test_threads_backed
+add_library(
+	_ai_chat_test_threads_backed
+	INTERFACE
+)
+target_compile_features(
+	_ai_chat_test_threads_backed
+	INTERFACE cxx_std_20
+)
+target_link_libraries(
+	_ai_chat_test_threads_backed
 	INTERFACE
 		GTest::gtest
-		GTest::gmock
+		::AI::Chat::Test::Mocks
+		::AI::Chat::Model
 		::AI::Chat::Threads::Backed
 )
-target_sources(_ai_chat_test_threads_backed
+target_sources(
+	_ai_chat_test_threads_backed
 	INTERFACE FILE_SET HEADERS
 	BASE_DIRS include
 	FILES
-		include/ai/threads/backed_tests.hpp
+		include/ai/chat/threads/backed_tests.hpp
 )
 
-add_library(::AI::Chat::Test::Threads::Backed ALIAS _ai_chat_test_threads_backed)
+add_library(
+	::AI::Chat::Test::Threads::Backed
+	ALIAS _ai_chat_test_threads_backed
+)

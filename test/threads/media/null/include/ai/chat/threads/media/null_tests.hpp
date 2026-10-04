@@ -2,8 +2,8 @@
 #define AI_CHAT_THREADS_MEDIA_NULL_TESTS_HPP
 
 #include <functional>
-#include <vector>
 
+#include "ai/chat/model.hpp"
 #include "ai/chat/threads/media/null.hpp"
 
 using namespace ::testing;
@@ -14,10 +14,10 @@ namespace threads {
 namespace media {
 
 TEST(NullMediaTests, EmptyRange) {
-	null instance{};
+	null target{};
 
-	auto begin = instance.begin();
-	auto end = instance.end();
+	auto begin = target.begin();
+	auto end = target.end();
 
 	ASSERT_THAT(
 		begin,
@@ -25,23 +25,20 @@ TEST(NullMediaTests, EmptyRange) {
 	);
 };
 TEST(NullMediaTests, InsertBackImmediatelyDiscards) {
-	::std::string content{};
-	::std::vector<
-		::std::tuple<
-			::std::string_view,
-			::std::string_view
-		>
-	> tags{};
+	timepoint_t timestamp{};
+	string_t content{};
+	tags_t tags{};
 
-	null instance{};
+	null target{};
 
-	auto message = instance.insert_back(
+	auto message = target.insert_back(
+		timestamp,
 		content,
 		tags
 	);
 
-	auto begin = instance.begin();
-	auto end = instance.end();
+	auto begin = target.begin();
+	auto end = target.end();
 
 	ASSERT_THAT(
 		begin,
@@ -49,22 +46,19 @@ TEST(NullMediaTests, InsertBackImmediatelyDiscards) {
 	);
 };
 TEST(NullMediaTests, InsertBackIsTemporary) {
-	::std::string content{};
-	::std::vector<
-		::std::tuple<
-			::std::string_view,
-			::std::string_view
-		>
-	> tags{};
+	timepoint_t timestamp{};
+	string_t content{};
+	tags_t tags{};
 
-	null instance{};
+	null target{};
 
-	auto message = instance.insert_back(
+	auto message = target.insert_back(
+		timestamp,
 		content,
 		tags
 	);
 
-	auto end = instance.end();
+	auto end = target.end();
 
 	ASSERT_THAT(
 		message,
@@ -83,44 +77,33 @@ TEST(NullMediaTests, InsertBackIsTemporary) {
 	);
 };
 TEST(NullMediaTests, InsertBackIsMeaningful) {
-	::std::string_view content{ "Some content" };
-	::std::string_view tag_name_a{ "Some name A" };
-	::std::string_view tag_value_a{ "Some value A" };
-	::std::string_view tag_name_b{ "Some name B" };
-	::std::string_view tag_value_b{ "Some value B" };
-	::std::vector<
-		::std::tuple<
-			::std::string_view,
-			::std::string_view
-		>
-	> tags{
-		::std::make_tuple(
-			tag_name_a,
-			tag_value_a
-		),
-		::std::make_tuple(
-			tag_name_b,
-			tag_value_b
-		)
+	timepoint_t timestamp{ -1 };
+	string_t content{ "Some content" };
+	tag_t _tags[]{
+		tag_t{ "Name A", "Value A" },
+		tag_t{ "Name B", "Value B" }
 	};
+	tags_t tags{ _tags };
 
-	null instance{};
+	null target{};
 
-	auto message = instance.insert_back(
+	auto message = target.insert_back(
+		timestamp,
 		content,
 		tags
 	);
 
 	ASSERT_THAT(
-		*message,
-		FieldsAre(
-			Gt(0),
-			Eq(content),
-			ElementsAreArray(
-				tags.begin(),
-				tags.end()
-			)
-		)
+		get_timestamp(*message),
+		Eq(timestamp)
+	);
+	ASSERT_THAT(
+		get_content(*message),
+		Eq(content)
+	);
+	ASSERT_THAT(
+		get_tags(*message),
+		ElementsAreArray(tags)
 	);
 };
 
