@@ -3,7 +3,7 @@ cmake_minimum_required(
 )
 
 project(
-	AI.Chat.Participants
+	AI.Chat.Test.Participants
 	VERSION 0.1
 )
 

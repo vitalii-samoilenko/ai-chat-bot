@@ -2,10 +2,10 @@
 #define AI_CHAT_PARTICIPANTS_CONSOLE_HPP
 
 #include <optional>
-#include <span>
 #include <string>
-#include <string_view>
-#include <tuple>
+#include <utility>
+
+#include "ai/chat/model.hpp"
 
 namespace ai {
 namespace chat {
@@ -16,16 +16,16 @@ template<
 > class console {
 private:
 	::std::string const _partition;
-	::std::string const _name;
+	::std::string const _slot;
 	TThreadCluster const &_threadCluster;
 	::std::optional<
-		::std::tuple<
+		::std::pair<
 			::std::string,
 			::std::string
 		>
 	> _inputThread;
 	::std::optional<
-		::std::tuple<
+		::std::pair<
 			::std::string,
 			::std::string
 		>
@@ -33,39 +33,51 @@ private:
 
 public:
 	console(
-		::std::string_view partition,
-		::std::string_view name,
+		string_t partition,
+		string_t slot,
 		TThreadCluster const &threadCluster
 	);
-	console() = delete;
-	console(console const &) = delete;
-	console(console &&) = default;
-
-	~console() = default;
-
-	console &operator=(console const &) = delete;
-	console &operator=(console &&) = default;
-
-	void operator()() const;
-
-	void join(
-		::std::string_view partition,
-		::std::string_view name
-	);
-	void leave(
-		::std::string_view partition,
-		::std::string_view name
+	console(
+	) = delete;
+	console(
+		console const &
+	) = delete;
+	console(
+		console &&other
 	);
 
-	void notify(
-		long long timestamp,
-		::std::string_view content,
-		::std::span<
-			::std::tuple<
-				::std::string_view,
-				::std::string_view
-			>
-		> tags
+	~console(
+	);
+
+	console
+	&operator=(
+		console const &
+	) = delete;
+	console
+	&operator=(
+		console &&
+	) = default;
+
+	void
+	operator()(
+	) const;
+
+	void
+	join(
+		string_t partition,
+		string_t slot
+	);
+	void
+	leave(
+		string_t partition,
+		string_t slot
+	);
+
+	void
+	notify(
+		timepoint_t timestamp,
+		string_t content,
+		tags_t tags
 	) const;
 };
 

@@ -26,6 +26,7 @@ target_link_libraries(
 		GTest::gtest
 		::AI::Chat::Test::Threads::Backed
 		::AI::Chat::Test::Threads::Media::Null
+		::AI::Chat::Test::Participants::Console
 )
 
 add_custom_command(

@@ -2,25 +2,65 @@
 #define AI_CHAT_PARTICIPANTS_IMPL_CONSOLE_IPP
 
 #include <chrono>
-#include <iostream>
+#include <sstream>
+#include <string_view>
 #include <vector>
 
 #include "re2/re2.h"
+
+void
+console_open(
+);
+bool
+console_try_read(
+	::std::string_view *in
+);
+void
+console_write(
+	::std::string_view out
+);
+void
+console_close(
+);
 
 template<
 	typename TThreadCluster
 > ::ai::chat::participants::console<
 	TThreadCluster
 >::console(
-	::std::string_view partition,
-	::std::string_view name,
+	::ai::chat::string_t partition,
+	::ai::chat::string_t slot,
 	TThreadCluster const &threadCluster
 ) : _partition{ partition }
-	, _name{ name }
+	, _slot{ slot }
 	, _threadCluster{ threadCluster }
 	, _inputThread{ ::std::nullopt }
 	, _commandThread{ ::std::nullopt } {
+	::console_open();
+};
+template<
+	typename TThreadCluster
+> ::ai::chat::participants::console<
+	TThreadCluster
+>::console(
+	::ai::chat::participants::console<
+		TThreadCluster
+	> &&other
+) : _partition{ ::std::move(other._partition) }
+	, _slot{ ::std::move(other._slot) }
+	, _threadCluster{ ::std::move(other._threadCluster) }
+	, _inputThread{ ::std::move(other._inputThread) }
+	, _commandThread{ ::std::move(other._commandThread) } {
+	::console_open();
+};
 
+template<
+	typename TThreadCluster
+> ::ai::chat::participants::console<
+	TThreadCluster
+>::~console(
+) {
+	::console_close();
 };
 
 template<
@@ -28,29 +68,21 @@ template<
 > void
 ::ai::chat::participants::console<
 	TThreadCluster
->::operator()() const {
-	::std::string line{};
-	::std::getline(::std::cin, line);
-	if (line.empty())
+>::operator()(
+) const {
+	::std::string_view line{};
+	if (!::console_try_read(&line)
+		|| line.empty())
 		return;
-	::std::string_view content{ line };
+	string_t content{ line };
 	::std::vector<
-		::std::tuple<
-			::std::string_view,
-			::std::string_view
-		>
-	> tags{
-		::std::make_tuple(
-			::std::string_view{ "producer.partition" },
-			::std::string_view{ _partition }
-		),
-		::std::make_tuple(
-			::std::string_view{ "producer.name" },
-			::std::string_view{ _name }
-		)
+		tag_t
+	> _tags{
+		tag_t{ "producer.partition", _partition },
+		tag_t{ "producer.slot", _slot }
 	};
 	::std::optional<
-		::std::tuple<
+		::std::pair<
 			::std::string_view,
 			::std::string_view
 		>
@@ -59,19 +91,17 @@ template<
 		content = content.substr(1);
 		thread = _commandThread;
 	} else {
-		static const ::RE2 a_receiver{ "@(\\w+)", ::RE2::Quiet };
-		for (
-			::std::string_view cursor{ content }, receiver{};
-			::RE2::Consume(&cursor, a_receiver, &receiver);
-
-		) {
-			tags.push_back(
-				::std::make_tuple(
-					::std::string_view{ "receiver.name" },
-					receiver
-				)
+		static const ::RE2 a_receiver{
+			"@(\\w+)",
+			::RE2::Quiet
+		};
+		for (::std::string_view cursor{ content }
+				, receiver{}
+				;::RE2::Consume(&cursor, a_receiver, &receiver)
+				;)
+			_tags.push_back(
+				tag_t{ "receiver.slot", receiver }
 			);
-		}
 	}
 	if (!thread)
 		return;
@@ -80,7 +110,7 @@ template<
 			::std::get<0>(*thread),
 			::std::get<1>(*thread),
 			content,
-			tags
+			_tags
 		);
 	} catch (...) {
 
@@ -93,11 +123,11 @@ template<
 ::ai::chat::participants::console<
 	TThreadCluster
 >::join(
-	::std::string_view partition,
-	::std::string_view name
+	::ai::chat::string_t partition,
+	::ai::chat::string_t slot
 ) {
 	::std::optional<
-		::std::tuple<
+		::std::pair<
 			::std::string,
 			::std::string
 		>
@@ -106,9 +136,9 @@ template<
 			? _commandThread
 			: _inputThread
 	};
-	thread = ::std::make_tuple(
+	thread = ::std::make_pair(
 		::std::string{ partition },
-		::std::string{ name }
+		::std::string{ slot }
 	);
 };
 template<
@@ -117,11 +147,11 @@ template<
 ::ai::chat::participants::console<
 	TThreadCluster
 >::leave(
-	::std::string_view partition,
-	::std::string_view name
+	::ai::chat::string_t partition,
+	::ai::chat::string_t slot
 ) {
 	::std::optional<
-		::std::tuple<
+		::std::pair<
 			::std::string,
 			::std::string
 		>
@@ -132,7 +162,7 @@ template<
 	};
 	if (!thread
 		|| ::std::get<0>(*thread) != partition
-		|| ::std::get<1>(*thread) != name)
+		|| ::std::get<1>(*thread) != slot)
 		return;
 	thread = ::std::nullopt;
 };
@@ -143,69 +173,65 @@ template<
 ::ai::chat::participants::console<
 	TThreadCluster
 >::notify(
-	long long timestamp,
-	::std::string_view content,
-	::std::span<
-		::std::tuple<
-			::std::string_view,
-			::std::string_view
-		>
-	> tags
+	::ai::chat::timepoint_t timestamp,
+	::ai::chat::string_t content,
+	::ai::chat::tags_t tags
 ) const {
-	enum partition_t{
+	enum type_t{
 		input, reject, review,
 		command, unauthorized, error
 	};
-	partition_t partition{ input };
-	::std::tuple<
-		::std::string_view,
-		::std::string_view
-	> producer{};
-	for (auto tag : tags) {
+	type_t type{ input };
+	string_t partition{};
+	string_t slot{};
+	for (tag_t &tag : tags) {
 		if (::std::get<0>(tag) == "channel.partition") {
 			if (::std::get<1>(tag) == "reject") {
-				partition = reject;
+				type = reject;
 			} else if (::std::get<1>(tag) == "review") {
-				partition = review;
+				type = review;
 			} else if (::std::get<1>(tag) == "command") {
-				partition = command;
+				type = command;
 			} else if (::std::get<1>(tag) == "unauthorized") {
-				partition = unauthorized;
+				type = unauthorized;
 			} else if (::std::get<1>(tag) == "error") {
-				partition = error;
+				type = error;
 			}
 		} else if (::std::get<0>(tag) == "producer.partition") {
-			::std::get<0>(producer) = ::std::get<1>(tag);
-		} else if (::std::get<0>(tag) == "producer.name") {
-			::std::get<1>(producer) = ::std::get<1>(tag);
+			partition = ::std::get<1>(tag);
+		} else if (::std::get<0>(tag) == "producer.slot") {
+			slot = ::std::get<1>(tag);
 		}
 	}
-	switch (partition) {
+	::std::ostringstream sout{};
+	sout << ::std::chrono::system_clock::time_point{
+			::std::chrono::system_clock::duration{
+				timestamp
+			}
+		};
+	switch (type) {
 	case input:
-		if (::std::get<0>(producer) == _partition
-			&& ::std::get<1>(producer) == _name)
-			break;
-		::std::cout << ::std::chrono::system_clock::time_point{
-				::std::chrono::system_clock::duration{
-					timestamp
-				}
-			} << " " << ::std::get<1>(producer)
-			<< ": " << content
-			<< ::std::endl;
+			sout << " " << partition << "/" << slot
+				<< ": " << content;
 		break;
 	case reject:
-		::std::cout << "Message is rejected" << ::std::endl;
+		sout << ": Message is rejected";
 		break;
 	case review:
-		::std::cout << "Message is in review" << ::std::endl;
+		sout << ": Message is in review";
 		break;
 	case unauthorized:
-		::std::cout << "Command not authorized" << ::std::endl;
+		sout << ": Command not authorized";
 		break;
 	case error:
-		::std::cout << "Command failed" << ::std::endl;
+		sout << ": Command failed";
 		break;
 	}
+	sout << ::std::endl;
+	::std::string _line{ sout.str() };
+	::console_write(_line);
 };
+
+#include "ai/chat/participants/impl/linux_console.ipp"
 
 #endif

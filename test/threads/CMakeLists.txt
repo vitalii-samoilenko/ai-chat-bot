@@ -9,5 +9,3 @@ project(
 
 add_subdirectory(backed)
 add_subdirectory(media/null)
-#add_subdirectory(media/memory)
-#add_subdirectory(media/sqlite)

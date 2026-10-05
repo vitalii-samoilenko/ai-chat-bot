@@ -42,7 +42,7 @@ TEST(PipeRepositoryTests, EmptyRange) {
 };
 TEST(PipeRepositoryTests, SpawnsChannel) {
 	string_t partition{ "test" };
-	string_t socket{ "pipe" };
+	string_t slot{ "pipe" };
 
 	mocks::PipeConfig pipeConfig{};
 	mocks::ThreadConfig threadConfig{};
@@ -83,7 +83,7 @@ TEST(PipeRepositoryTests, SpawnsChannel) {
 
 	auto channel = target.find(
 		partition,
-		socket
+		slot
 	);
 	auto end = target.end();
 
@@ -94,8 +94,8 @@ TEST(PipeRepositoryTests, SpawnsChannel) {
 };
 TEST(PipeRepositoryTests, CachesChannel) {
 	string_t partition{ "test" };
-	string_t socket_a{ "pipe_a" };
-	string_t socket_b{ "pipe_b" };
+	string_t slot_a{ "pipe_a" };
+	string_t slot_b{ "pipe_b" };
 
 	mocks::PipeConfig pipeConfig{};
 	mocks::ThreadConfig threadConfig{};
@@ -137,11 +137,11 @@ TEST(PipeRepositoryTests, CachesChannel) {
 	{
 		auto channel_a = target.find(
 			partition,
-			socket_a
+			slot_a
 		);
 		auto cached_a = target.find(
 			partition,
-			socket_a
+			slot_a
 		);
 
 		ASSERT_THAT(
@@ -152,11 +152,11 @@ TEST(PipeRepositoryTests, CachesChannel) {
 	{
 		auto channel_b = target.find(
 			partition,
-			socket_b
+			slot_b
 		);
 		auto cached_b = target.find(
 			partition,
-			socket_b
+			slot_b
 		);
 
 		ASSERT_THAT(
@@ -183,7 +183,7 @@ TEST(PipeRepositoryTests, CachesChannel) {
 };
 TEST(PipeRepositoryTests, ControlledByConfig) {
 	string_t partition{ "test" };
-	string_t socket{ "pipe" };
+	string_t slot{ "pipe" };
 
 	mocks::PipeConfig pipeConfig{};
 	mocks::ThreadConfig threadConfig{};
@@ -224,7 +224,7 @@ TEST(PipeRepositoryTests, ControlledByConfig) {
 
 	auto channel = target.find(
 		partition,
-		socket
+		slot
 	);
 	auto end = target.end();
 
@@ -236,7 +236,7 @@ TEST(PipeRepositoryTests, ControlledByConfig) {
 TEST(PipeRepositoryTests, ValidatesPartition) {
 	string_t partition_a{ "test_a" };
 	string_t partition_b{ "test_b" };
-	string_t socket{ "pipe" };
+	string_t slot{ "pipe" };
 
 	mocks::PipeConfig pipeConfig{};
 	mocks::ThreadConfig threadConfig{};
@@ -277,7 +277,7 @@ TEST(PipeRepositoryTests, ValidatesPartition) {
 
 	auto channel = target.find(
 		partition_b,
-		socket
+		slot
 	);
 	auto end = target.end();
 
