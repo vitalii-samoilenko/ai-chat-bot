@@ -4,6 +4,7 @@
 #include "ai/chat/threads/media/null_tests.hpp"
 #include "ai/chat/repositories/pipe_tests.hpp"
 #include "ai/chat/participants/console_tests.hpp"
+#include "ai/chat/repositories/console_tests.hpp"
 
 using namespace ::testing;
 

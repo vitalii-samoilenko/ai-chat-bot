@@ -1,6 +1,8 @@
 #ifndef AI_CHAT_REPOSITORIES_IMPL_CONSOLE_IPP
 #define AI_CHAT_REPOSITORIES_IMPL_CONSOLE_IPP
 
+#include "ai/chat/repositories/console.hpp"
+
 template<
 	typename TGlobalConfig,
 	typename TThreadCluster
@@ -8,10 +10,9 @@ template<
 	TGlobalConfig,
 	TThreadCluster
 >::iterator::iterator(
-	::ai::chat::repositories::console<
-		TGlobalConfig,
+	::ai::chat::participants::console<
 		TThreadCluster
-	>::value_type *that
+	> *that
 ) : that{ that } {
 
 };
@@ -41,34 +42,35 @@ template<
 &::ai::chat::repositories::console<
 	TGlobalConfig,
 	TThreadCluster
->::iterator::operator++() {
+>::iterator::operator++(
+) {
 	that = nullptr;
 	return *this;
 };
 template<
 	typename TGlobalConfig,
 	typename TThreadCluster
-> ::ai::chat::repositories::console<
-	TGlobalConfig,
+> ::ai::chat::participants::console<
 	TThreadCluster
->::value_type
+>
 &::ai::chat::repositories::console<
 	TGlobalConfig,
 	TThreadCluster
->::iterator::operator*() {
+>::iterator::operator*(
+) {
 	return *that;
 };
 template<
 	typename TGlobalConfig,
 	typename TThreadCluster
-> ::ai::chat::repositories::console<
-	TGlobalConfig,
+> ::ai::chat::participants::console<
 	TThreadCluster
->::value_type
+>
 *::ai::chat::repositories::console<
 	TGlobalConfig,
 	TThreadCluster
->::iterator::operator->() {
+>::iterator::operator->(
+) {
 	return that;
 };
 
@@ -79,11 +81,11 @@ template<
 	TGlobalConfig,
 	TThreadCluster
 >::console(
-	::std::string_view partition,
+	::ai::chat::string_t partition,
 	TGlobalConfig const &globalConfig,
 	TThreadCluster const &threadCluster
 ) : _partition{ partition }
-	, _recepient{ ::std::nullopt }
+	, _receiver{ ::std::nullopt }
 	, _globalConfig{ globalConfig }
 	, _threadCluster{ threadCluster } {
 
@@ -99,13 +101,14 @@ template<
 ai::chat::repositories::console<
 	TGlobalConfig,
 	TThreadCluster
->::begin() const {
-	if (!_recepient)
+>::begin(
+) const {
+	if (!_receiver)
 		return iterator{
 			nullptr
 		};
 	return iterator{
-		&(*_recepient)
+		&(*_receiver)
 	};
 };
 template<
@@ -119,8 +122,8 @@ ai::chat::repositories::console<
 	TGlobalConfig,
 	TThreadCluster
 >::find(
-	::std::string_view partition,
-	::std::string_view name
+	::ai::chat::string_t partition,
+	::ai::chat::string_t name
 ) const {
 	if (partition != _partition)
 		return iterator{
@@ -131,31 +134,31 @@ ai::chat::repositories::console<
 			.get_console()
 			.get_enabled()
 	};
-	::std::string_view allowed{
+	string_t allowed{
 		_globalConfig.get_participant()
 			.get_console()
-			.get_name()
+			.get_slot()
 	};
 	if (!enabled || name != allowed)
 		return iterator{
 			nullptr
 		};
-	if (!_recepient) {
+	if (!_receiver) {
 	/*
-		_recepient = value_type{
+		_receiver = value_type{
 			partition,
 			name,
 			_threadCluster
 		};
 	*/
-		_recepient.emplace(
+		_receiver.emplace(
 			partition,
 			name,
 			_threadCluster
 		);
 	}
 	return iterator{
-		&(*_recepient)
+		&(*_receiver)
 	};
 };
 template<
@@ -168,7 +171,8 @@ template<
 ai::chat::repositories::console<
 	TGlobalConfig,
 	TThreadCluster
->::end() const {
+>::end(
+) const {
 	return iterator{
 		nullptr
 	};

@@ -1,6 +1,8 @@
 #ifndef AI_CHAT_MOCKS_GLOBAL_CONFIG_HPP
 #define AI_CHAT_MOCKS_GLOBAL_CONFIG_HPP
 
+#include <string_view>
+
 #include "gmock/gmock.h"
 
 using namespace ::testing;
@@ -43,6 +45,46 @@ public:
 	);
 };
 
+class console_config {
+private:
+
+
+public:
+	console_config(
+	) = default;
+	console_config(
+		console_config const &
+	) = delete;
+	console_config(
+		console_config &&
+	) = default;
+
+	~console_config(
+	) = default;
+
+	console_config
+	&operator=(
+		console_config const &
+	) = delete;
+	console_config
+	&operator=(
+		console_config &&
+	) = default;
+
+	MOCK_METHOD(
+		bool,
+		get_enabled, (
+		),
+		(const)
+	);
+	MOCK_METHOD(
+		::std::string_view,
+		get_slot, (
+		),
+		(const)
+	);
+};
+
 class thread_config {
 private:
 
@@ -70,13 +112,46 @@ public:
 	) = default;
 
 	MOCK_METHOD(
-		pipe_config
-		const &, get_pipe, (
+		pipe_config const
+		&, get_pipe, (
 		),
 		(const)
 	);
 };
 
+class participant_config {
+private:
+
+
+public:
+	participant_config(
+	) = default;
+	participant_config(
+		participant_config const &
+	) = delete;
+	participant_config(
+		participant_config &&
+	) = default;
+
+	~participant_config(
+	) = default;
+
+	participant_config
+	&operator=(
+		participant_config const &
+	) = delete;
+	participant_config
+	&operator=(
+		participant_config &&
+	) = default;
+
+	MOCK_METHOD(
+		console_config const
+		&, get_console, (
+		),
+		(const)
+	);
+};
 class global_config {
 private:
 
@@ -104,8 +179,14 @@ public:
 	) = default;
 
 	MOCK_METHOD(
-		thread_config
-		const &, get_thread, (
+		thread_config const
+		&, get_thread, (
+		),
+		(const)
+	);
+	MOCK_METHOD(
+		participant_config const
+		&, get_participant, (
 		),
 		(const)
 	);

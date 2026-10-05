@@ -377,6 +377,44 @@ TEST(ConsoleParticipantTests, CommandDoesNotLeak) {
 	shell.write(line);
 	target();
 };
+TEST(ConsoleParticipantTests, PushIsResilient) {
+	string_t partition{};
+	string_t slot{};
+	string_t ipartition{ "itest" };
+	string_t islot{ "imock" };
+	::std::string_view line{ "Hello, World!\n" };
+	tags_t tags{};
+
+	mocks::communication_cluster communicationCluster{};
+	stubs::console shell{};
+
+	EXPECT_CALL(
+		communicationCluster, push(
+			Eq(ipartition),
+			Eq(islot),
+			_,
+			_
+		)
+	).WillRepeatedly(
+		Throw("some error")
+	);
+
+	console<
+		mocks::communication_cluster
+	> target{
+		partition,
+		slot,
+		communicationCluster
+	};
+
+	target.join(
+		ipartition,
+		islot
+	);
+
+	shell.write(line);
+	target();
+};
 TEST(ConsoleParticipantTests, LeavesRecentOnly) {
 	string_t partition{};
 	string_t slot{};

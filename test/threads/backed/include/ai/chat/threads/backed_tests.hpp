@@ -232,7 +232,7 @@ TEST(BackedThreadTests, PushNotifiesReceivers) {
 		tags
 	);
 };
-TEST(BackedThreadTests, PushIsResilient) {
+TEST(BackedThreadTests, NotifyIsResilient) {
 	string_t partition{ "test" };
 	string_t slot{ "backed" };
 	string_t content{ "Some content" };
