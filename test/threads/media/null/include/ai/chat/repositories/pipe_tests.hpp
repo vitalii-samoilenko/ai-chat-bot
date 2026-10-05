@@ -20,12 +20,12 @@ namespace repositories {
 TEST(PipeRepositoryTests, EmptyRange) {
 	string_t partition{};
 
-	mocks::GlobalConfig globalConfig{};
-	mocks::CommunicationCluster communicationCluster{};
+	mocks::global_config globalConfig{};
+	mocks::communication_cluster communicationCluster{};
 
 	pipe<
-		mocks::GlobalConfig,
-		mocks::CommunicationCluster
+		mocks::global_config,
+		mocks::communication_cluster
 	> target{
 		partition,
 		globalConfig,
@@ -44,10 +44,10 @@ TEST(PipeRepositoryTests, SpawnsChannel) {
 	string_t partition{ "test" };
 	string_t slot{ "pipe" };
 
-	mocks::PipeConfig pipeConfig{};
-	mocks::ThreadConfig threadConfig{};
-	mocks::GlobalConfig globalConfig{};
-	mocks::CommunicationCluster communicationCluster{};
+	mocks::pipe_config pipeConfig{};
+	mocks::thread_config threadConfig{};
+	mocks::global_config globalConfig{};
+	mocks::communication_cluster communicationCluster{};
 
 	EXPECT_CALL(
 		pipeConfig, get_enabled(
@@ -59,7 +59,7 @@ TEST(PipeRepositoryTests, SpawnsChannel) {
 		threadConfig, get_pipe(
 		)
 	).WillRepeatedly(
-		[&]()->mocks::PipeConfig const & {
+		[&]()->mocks::pipe_config const & {
 			return pipeConfig;
 		}
 	);
@@ -67,14 +67,14 @@ TEST(PipeRepositoryTests, SpawnsChannel) {
 		globalConfig, get_thread(
 		)
 	).WillRepeatedly(
-		[&]()->mocks::ThreadConfig const & {
+		[&]()->mocks::thread_config const & {
 			return threadConfig;
 		}
 	);
 
 	pipe<
-		mocks::GlobalConfig,
-		mocks::CommunicationCluster
+		mocks::global_config,
+		mocks::communication_cluster
 	> target{
 		partition,
 		globalConfig,
@@ -97,10 +97,10 @@ TEST(PipeRepositoryTests, CachesChannel) {
 	string_t slot_a{ "pipe_a" };
 	string_t slot_b{ "pipe_b" };
 
-	mocks::PipeConfig pipeConfig{};
-	mocks::ThreadConfig threadConfig{};
-	mocks::GlobalConfig globalConfig{};
-	mocks::CommunicationCluster communicationCluster{};
+	mocks::pipe_config pipeConfig{};
+	mocks::thread_config threadConfig{};
+	mocks::global_config globalConfig{};
+	mocks::communication_cluster communicationCluster{};
 
 	EXPECT_CALL(
 		pipeConfig, get_enabled(
@@ -112,7 +112,7 @@ TEST(PipeRepositoryTests, CachesChannel) {
 		threadConfig, get_pipe(
 		)
 	).WillRepeatedly(
-		[&]()->mocks::PipeConfig const & {
+		[&]()->mocks::pipe_config const & {
 			return pipeConfig;
 		}
 	);
@@ -120,14 +120,14 @@ TEST(PipeRepositoryTests, CachesChannel) {
 		globalConfig, get_thread(
 		)
 	).WillRepeatedly(
-		[&]()->mocks::ThreadConfig const & {
+		[&]()->mocks::thread_config const & {
 			return threadConfig;
 		}
 	);
 
 	pipe<
-		mocks::GlobalConfig,
-		mocks::CommunicationCluster
+		mocks::global_config,
+		mocks::communication_cluster
 	> target{
 		partition,
 		globalConfig,
@@ -185,10 +185,10 @@ TEST(PipeRepositoryTests, ControlledByConfig) {
 	string_t partition{ "test" };
 	string_t slot{ "pipe" };
 
-	mocks::PipeConfig pipeConfig{};
-	mocks::ThreadConfig threadConfig{};
-	mocks::GlobalConfig globalConfig{};
-	mocks::CommunicationCluster communicationCluster{};
+	mocks::pipe_config pipeConfig{};
+	mocks::thread_config threadConfig{};
+	mocks::global_config globalConfig{};
+	mocks::communication_cluster communicationCluster{};
 
 	EXPECT_CALL(
 		pipeConfig, get_enabled(
@@ -200,7 +200,7 @@ TEST(PipeRepositoryTests, ControlledByConfig) {
 		threadConfig, get_pipe(
 		)
 	).WillRepeatedly(
-		[&]()->mocks::PipeConfig const & {
+		[&]()->mocks::pipe_config const & {
 			return pipeConfig;
 		}
 	);
@@ -208,14 +208,14 @@ TEST(PipeRepositoryTests, ControlledByConfig) {
 		globalConfig, get_thread(
 		)
 	).WillRepeatedly(
-		[&]()->mocks::ThreadConfig const & {
+		[&]()->mocks::thread_config const & {
 			return threadConfig;
 		}
 	);
 
 	pipe<
-		mocks::GlobalConfig,
-		mocks::CommunicationCluster
+		mocks::global_config,
+		mocks::communication_cluster
 	> target{
 		partition,
 		globalConfig,
@@ -238,10 +238,10 @@ TEST(PipeRepositoryTests, ValidatesPartition) {
 	string_t partition_b{ "test_b" };
 	string_t slot{ "pipe" };
 
-	mocks::PipeConfig pipeConfig{};
-	mocks::ThreadConfig threadConfig{};
-	mocks::GlobalConfig globalConfig{};
-	mocks::CommunicationCluster communicationCluster{};
+	mocks::pipe_config pipeConfig{};
+	mocks::thread_config threadConfig{};
+	mocks::global_config globalConfig{};
+	mocks::communication_cluster communicationCluster{};
 
 	EXPECT_CALL(
 		pipeConfig, get_enabled(
@@ -253,7 +253,7 @@ TEST(PipeRepositoryTests, ValidatesPartition) {
 		threadConfig, get_pipe(
 		)
 	).WillRepeatedly(
-		[&]()->mocks::PipeConfig const & {
+		[&]()->mocks::pipe_config const & {
 			return pipeConfig;
 		}
 	);
@@ -261,14 +261,14 @@ TEST(PipeRepositoryTests, ValidatesPartition) {
 		globalConfig, get_thread(
 		)
 	).WillRepeatedly(
-		[&]()->mocks::ThreadConfig const & {
+		[&]()->mocks::thread_config const & {
 			return threadConfig;
 		}
 	);
 
 	pipe<
-		mocks::GlobalConfig,
-		mocks::CommunicationCluster
+		mocks::global_config,
+		mocks::communication_cluster
 	> target{
 		partition_a,
 		globalConfig,

@@ -8,6 +8,8 @@
 
 #include "re2/re2.h"
 
+#include "ai/chat/participants/console.hpp"
+
 void
 console_open(
 );
@@ -97,7 +99,7 @@ template<
 		};
 		for (::std::string_view cursor{ content }
 				, receiver{}
-				;::RE2::Consume(&cursor, a_receiver, &receiver)
+				;::RE2::FindAndConsume(&cursor, a_receiver, &receiver)
 				;)
 			_tags.push_back(
 				tag_t{ "receiver.slot", receiver }
@@ -179,7 +181,7 @@ template<
 ) const {
 	enum type_t{
 		input, reject, review,
-		command, unauthorized, error
+		command, unauthorize, error
 	};
 	type_t type{ input };
 	string_t partition{};
@@ -192,8 +194,8 @@ template<
 				type = review;
 			} else if (::std::get<1>(tag) == "command") {
 				type = command;
-			} else if (::std::get<1>(tag) == "unauthorized") {
-				type = unauthorized;
+			} else if (::std::get<1>(tag) == "unauthorize") {
+				type = unauthorize;
 			} else if (::std::get<1>(tag) == "error") {
 				type = error;
 			}
@@ -211,6 +213,7 @@ template<
 		};
 	switch (type) {
 	case input:
+	case command:
 			sout << " " << partition << "/" << slot
 				<< ": " << content;
 		break;
@@ -220,7 +223,7 @@ template<
 	case review:
 		sout << ": Message is in review";
 		break;
-	case unauthorized:
+	case unauthorize:
 		sout << ": Command not authorized";
 		break;
 	case error:

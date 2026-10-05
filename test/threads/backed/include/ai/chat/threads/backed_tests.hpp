@@ -25,16 +25,16 @@ TEST(BackedThreadTests, PushWritesToMedia) {
 	};
 	tags_t tags{ _tags };
 
-	mocks::CommunicationCluster communicationCluster{};
+	mocks::communication_cluster communicationCluster{};
 
 	backed<
-		mocks::CommunicationCluster,
-		mocks::Media
+		mocks::communication_cluster,
+		mocks::media
 	> target{
 		partition,
 		slot,
 		communicationCluster,
-		[&](mocks::Media *that)->void {
+		[&](mocks::media *that)->void {
 			EXPECT_CALL(
 				*that, insert_back(
 					Gt(0),
@@ -63,16 +63,16 @@ TEST(BackedThreadTests, PushAppendsChannel) {
 	};
 	tags_t appends{ _appends };
 
-	mocks::CommunicationCluster communicationCluster{};
+	mocks::communication_cluster communicationCluster{};
 
 	backed<
-		mocks::CommunicationCluster,
-		mocks::Media
+		mocks::communication_cluster,
+		mocks::media
 	> target{
 		partition,
 		slot,
 		communicationCluster,
-		[&](mocks::Media *that)->void {
+		[&](mocks::media *that)->void {
 			EXPECT_CALL(
 				*that, insert_back(
 					_,
@@ -105,16 +105,16 @@ TEST(BackedThreadTests, PushOverridesChannel) {
 	};
 	tags_t overrides{ _overrides };
 
-	mocks::CommunicationCluster communicationCluster{};
+	mocks::communication_cluster communicationCluster{};
 
 	backed<
-		mocks::CommunicationCluster,
-		mocks::Media
+		mocks::communication_cluster,
+		mocks::media
 	> target{
 		partition,
 		slot,
 		communicationCluster,
-		[&](mocks::Media *that)->void {
+		[&](mocks::media *that)->void {
 			EXPECT_CALL(
 				*that, insert_back(
 					_,
@@ -155,7 +155,7 @@ TEST(BackedThreadTests, PushNotifiesReceivers) {
 	string_t rpartition_c{ "rtest_c" };
 	string_t rslot_c{ "mock_c" };
 
-	mocks::CommunicationCluster communicationCluster{};
+	mocks::communication_cluster communicationCluster{};
 
 	EXPECT_CALL(
 		communicationCluster, notify(
@@ -192,13 +192,13 @@ TEST(BackedThreadTests, PushNotifiesReceivers) {
 	);
 
 	backed<
-		mocks::CommunicationCluster,
-		mocks::Media
+		mocks::communication_cluster,
+		mocks::media
 	> target{
 		partition,
 		slot,
 		communicationCluster,
-		[&](mocks::Media *that)->void {
+		[&](mocks::media *that)->void {
 			EXPECT_CALL(
 				*that, insert_back(
 					_,
@@ -249,7 +249,7 @@ TEST(BackedThreadTests, PushIsResilient) {
 	string_t rpartition_b{ "rtest_b" };
 	string_t rslot_b{ "mock_b" };
 
-	mocks::CommunicationCluster communicationCluster{};
+	mocks::communication_cluster communicationCluster{};
 
 	EXPECT_CALL(
 		communicationCluster, notify(
@@ -279,13 +279,13 @@ TEST(BackedThreadTests, PushIsResilient) {
 	);
 
 	backed<
-		mocks::CommunicationCluster,
-		mocks::Media
+		mocks::communication_cluster,
+		mocks::media
 	> target{
 		partition,
 		slot,
 		communicationCluster,
-		[&](mocks::Media *that)->void {
+		[&](mocks::media *that)->void {
 			EXPECT_CALL(
 				*that, insert_back(
 					_,

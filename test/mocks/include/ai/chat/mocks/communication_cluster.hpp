@@ -11,30 +11,30 @@ namespace ai {
 namespace chat {
 namespace mocks {
 
-class CommunicationCluster {
+class communication_cluster {
 private:
 
 
 public:
-	CommunicationCluster(
+	communication_cluster(
 	) = default;
-	CommunicationCluster(
-		CommunicationCluster const &
+	communication_cluster(
+		communication_cluster const &
 	) = delete;
-	CommunicationCluster(
-		CommunicationCluster &&
+	communication_cluster(
+		communication_cluster &&
 	) = delete;
 
-	~CommunicationCluster(
+	~communication_cluster(
 	) = default;
 
-	CommunicationCluster
+	communication_cluster
 	&operator=(
-		CommunicationCluster const &
+		communication_cluster const &
 	) = delete;
-	CommunicationCluster
+	communication_cluster
 	&operator=(
-		CommunicationCluster &&
+		communication_cluster &&
 	) = delete;
 
 	MOCK_METHOD(

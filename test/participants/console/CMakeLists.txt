@@ -10,6 +10,9 @@ project(
 find_package(
 	GTest CONFIG REQUIRED
 )
+find_package(
+	re2 CONFIG REQUIRED
+)
 
 add_library(
 	_ai_chat_test_participants_console
@@ -23,7 +26,9 @@ target_link_libraries(
 	_ai_chat_test_participants_console
 	INTERFACE
 		GTest::gtest
+		re2::re2
 		::AI::Chat::Test::Mocks
+		::AI::Chat::Test::Stubs
 		::AI::Chat::Model
 		::AI::Chat::Participants::Console
 )

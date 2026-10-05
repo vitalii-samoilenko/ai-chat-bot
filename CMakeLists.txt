@@ -47,6 +47,7 @@ add_subdirectory(src/threads)
 add_subdirectory(src/participants)
 
 add_subdirectory(test/mocks)
+add_subdirectory(test/stubs)
 add_subdirectory(test/threads)
 add_subdirectory(test/participants)
 add_subdirectory(test/runners/console)

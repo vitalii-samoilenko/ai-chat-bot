@@ -8,6 +8,8 @@
 #include <sys/epoll.h>
 #include <unistd.h>
 
+#include "ai/chat/participants/impl/console.ipp"
+
 int g_console_count{ 0 };
 int g_console_poll{ -1 };
 
@@ -56,8 +58,7 @@ console_try_read(
 			_in, sizeof _in
 		)
 	};
-	if (n == -1
-		|| n == 0)
+	if (n == -1 || n == 0)
 		return false;
 	if (_in[n - 1] == '\n') {
 		*in = ::std::string_view{
@@ -71,8 +72,7 @@ console_try_read(
 			n = read(STDIN_FILENO,
 				_, sizeof _
 			);
-			if (n == -1
-				|| n == 0)
+			if (n == -1 || n == 0)
 				break;
 		} while (_[n - 1] != '\n');
 	}

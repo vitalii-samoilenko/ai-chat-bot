@@ -9,30 +9,30 @@ namespace ai {
 namespace chat {
 namespace mocks {
 
-class PipeConfig {
+class pipe_config {
 private:
 
 
 public:
-	PipeConfig(
+	pipe_config(
 	) = default;
-	PipeConfig(
-		PipeConfig const &
+	pipe_config(
+		pipe_config const &
 	) = delete;
-	PipeConfig(
-		PipeConfig &&
+	pipe_config(
+		pipe_config &&
 	) = default;
 
-	~PipeConfig(
+	~pipe_config(
 	) = default;
 
-	PipeConfig
+	pipe_config
 	&operator=(
-		PipeConfig const &
+		pipe_config const &
 	) = delete;
-	PipeConfig
+	pipe_config
 	&operator=(
-		PipeConfig &&
+		pipe_config &&
 	) = default;
 
 	MOCK_METHOD(
@@ -43,68 +43,68 @@ public:
 	);
 };
 
-class ThreadConfig {
+class thread_config {
 private:
 
 
 public:
-	ThreadConfig(
+	thread_config(
 	) = default;
-	ThreadConfig(
-		ThreadConfig const &
+	thread_config(
+		thread_config const &
 	) = delete;
-	ThreadConfig(
-		ThreadConfig &&
+	thread_config(
+		thread_config &&
 	) = default;
 
-	~ThreadConfig(
+	~thread_config(
 	) = default;
 
-	ThreadConfig
+	thread_config
 	&operator=(
-		ThreadConfig const &
+		thread_config const &
 	) = delete;
-	ThreadConfig
+	thread_config
 	&operator=(
-		ThreadConfig &&
+		thread_config &&
 	) = default;
 
 	MOCK_METHOD(
-		PipeConfig
+		pipe_config
 		const &, get_pipe, (
 		),
 		(const)
 	);
 };
 
-class GlobalConfig {
+class global_config {
 private:
 
 
 public:
-	GlobalConfig(
+	global_config(
 	) = default;
-	GlobalConfig(
-		GlobalConfig const &
+	global_config(
+		global_config const &
 	) = delete;
-	GlobalConfig(
-		GlobalConfig &&
+	global_config(
+		global_config &&
 	) = default;
 
-	~GlobalConfig(
+	~global_config(
 	) = default;
 
-	GlobalConfig
+	global_config
 	&operator=(
-		GlobalConfig const &
+		global_config const &
 	) = delete;
-	GlobalConfig
+	global_config
 	&operator=(
-		GlobalConfig &&
+		global_config &&
 	) = default;
 
 	MOCK_METHOD(
-		ThreadConfig
+		thread_config
 		const &, get_thread, (
 		),
 		(const)

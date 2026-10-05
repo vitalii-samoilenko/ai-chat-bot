@@ -11,7 +11,7 @@ namespace ai {
 namespace chat {
 namespace mocks {
 
-class Media {
+class media {
 public:
 	using iterator = message_t *;
 
@@ -21,30 +21,30 @@ private:
 public:
 	template<
 		typename A
-	> explicit Media(
+	> explicit media(
 		A &&configure
 	) {
 		configure(this);
 	};
-	Media(
+	media(
 	) = delete;
-	Media(
-		Media const &
+	media(
+		media const &
 	) = delete;
-	Media(
-		Media &&
+	media(
+		media &&
 	) = default;
 
-	~Media(
+	~media(
 	) = default;
 
-	Media
+	media
 	&operator=(
-		Media const &
+		media const &
 	) = delete;
-	Media
+	media
 	&operator=(
-		Media &&
+		media &&
 	) = default;
 
 	MOCK_METHOD(
