@@ -7,6 +7,7 @@
 #include "re2/re2.h"
 
 #include "ai/chat/mocks/communication_cluster.hpp"
+#include "ai/chat/mocks/runtime.hpp"
 #include "ai/chat/stubs/console.hpp"
 
 #include "ai/chat/model.hpp"
@@ -19,16 +20,28 @@ namespace chat {
 namespace participants {
 
 TEST(ConsoleParticipantTests, AsyncUnitOfWork) {
-	string_t partition{};
-	string_t slot{};
+	string_t partition{ "test" };
+	string_t slot{ "console" };
 
+	mocks::runtime runtime{};
 	mocks::communication_cluster communicationCluster{};
 
+	EXPECT_CALL(
+		runtime, schedule(
+			Eq(partition),
+			Eq(slot)
+		)
+	).Times(
+		Exactly(2)
+	);
+
 	console<
+		mocks::runtime,
 		mocks::communication_cluster
 	> target{
 		partition,
 		slot,
+		runtime,
 		communicationCluster
 	};
 
@@ -47,9 +60,18 @@ TEST(ConsoleParticipantTests, PushesInput) {
 	};
 	tags_t tags{ _tags };
 
+	mocks::runtime runtime{};
 	mocks::communication_cluster communicationCluster{};
 	stubs::console shell{};
 
+	EXPECT_CALL(
+		runtime, schedule(
+			_,
+			_
+		)
+	).Times(
+		AnyNumber()
+	);
 	EXPECT_CALL(
 		communicationCluster, push(
 			Eq(ipartition),
@@ -62,10 +84,12 @@ TEST(ConsoleParticipantTests, PushesInput) {
 	);
 
 	console<
+		mocks::runtime,
 		mocks::communication_cluster
 	> target{
 		partition,
 		slot,
+		runtime,
 		communicationCluster
 	};
 
@@ -89,9 +113,18 @@ TEST(ConsoleParticipantTests, DetectsReceivers) {
 	};
 	tags_t tags{ _tags };
 
+	mocks::runtime runtime{};
 	mocks::communication_cluster communicationCluster{};
 	stubs::console shell{};
 
+	EXPECT_CALL(
+		runtime, schedule(
+			_,
+			_
+		)
+	).Times(
+		AnyNumber()
+	);
 	EXPECT_CALL(
 		communicationCluster, push(
 			Eq(ipartition),
@@ -104,10 +137,12 @@ TEST(ConsoleParticipantTests, DetectsReceivers) {
 	);
 
 	console<
+		mocks::runtime,
 		mocks::communication_cluster
 	> target{
 		partition,
 		slot,
+		runtime,
 		communicationCluster
 	};
 
@@ -129,9 +164,18 @@ TEST(ConsoleParticipantTests, SingleChannelInput) {
 	::std::string_view line{ "Hello, World!\n" };
 	tags_t tags{};
 
+	mocks::runtime runtime{};
 	mocks::communication_cluster communicationCluster{};
 	stubs::console shell{};
 
+	EXPECT_CALL(
+		runtime, schedule(
+			_,
+			_
+		)
+	).Times(
+		AnyNumber()
+	);
 	EXPECT_CALL(
 		communicationCluster, push(
 			Eq(ipartition_a),
@@ -154,10 +198,12 @@ TEST(ConsoleParticipantTests, SingleChannelInput) {
 	);
 
 	console<
+		mocks::runtime,
 		mocks::communication_cluster
 	> target{
 		partition,
 		slot,
+		runtime,
 		communicationCluster
 	};
 
@@ -186,9 +232,18 @@ TEST(ConsoleParticipantTests, PushesCommand) {
 	};
 	tags_t tags{ _tags };
 
+	mocks::runtime runtime{};
 	mocks::communication_cluster communicationCluster{};
 	stubs::console shell{};
 
+	EXPECT_CALL(
+		runtime, schedule(
+			_,
+			_
+		)
+	).Times(
+		AnyNumber()
+	);
 	EXPECT_CALL(
 		communicationCluster, push(
 			Eq(cpartition),
@@ -201,10 +256,12 @@ TEST(ConsoleParticipantTests, PushesCommand) {
 	);
 
 	console<
+		mocks::runtime,
 		mocks::communication_cluster
 	> target{
 		partition,
 		slot,
+		runtime,
 		communicationCluster
 	};
 
@@ -225,9 +282,18 @@ TEST(ConsoleParticipantTests, SingleChannelCommand) {
 	::std::string_view line{ "~Just Do It!\n" };
 	tags_t tags{};
 
+	mocks::runtime runtime{};
 	mocks::communication_cluster communicationCluster{};
 	stubs::console shell{};
 
+	EXPECT_CALL(
+		runtime, schedule(
+			_,
+			_
+		)
+	).Times(
+		AnyNumber()
+	);
 	EXPECT_CALL(
 		communicationCluster, push(
 			Eq(cpartition),
@@ -250,10 +316,12 @@ TEST(ConsoleParticipantTests, SingleChannelCommand) {
 	);
 
 	console<
+		mocks::runtime,
 		mocks::communication_cluster
 	> target{
 		partition,
 		slot,
+		runtime,
 		communicationCluster
 	};
 
@@ -279,9 +347,18 @@ TEST(ConsoleParticipantTests, InputDoesNotLeak) {
 	::std::string_view line{ "Hello, World!\n" };
 	tags_t tags{};
 
+	mocks::runtime runtime{};
 	mocks::communication_cluster communicationCluster{};
 	stubs::console shell{};
 
+	EXPECT_CALL(
+		runtime, schedule(
+			_,
+			_
+		)
+	).Times(
+		AnyNumber()
+	);
 	EXPECT_CALL(
 		communicationCluster, push(
 			Eq(cpartition),
@@ -304,10 +381,12 @@ TEST(ConsoleParticipantTests, InputDoesNotLeak) {
 	);
 
 	console<
+		mocks::runtime,
 		mocks::communication_cluster
 	> target{
 		partition,
 		slot,
+		runtime,
 		communicationCluster
 	};
 
@@ -333,9 +412,18 @@ TEST(ConsoleParticipantTests, CommandDoesNotLeak) {
 	::std::string_view line{ "~Just Do It!\n" };
 	tags_t tags{};
 
+	mocks::runtime runtime{};
 	mocks::communication_cluster communicationCluster{};
 	stubs::console shell{};
 
+	EXPECT_CALL(
+		runtime, schedule(
+			_,
+			_
+		)
+	).Times(
+		AnyNumber()
+	);
 	EXPECT_CALL(
 		communicationCluster, push(
 			Eq(cpartition),
@@ -358,10 +446,12 @@ TEST(ConsoleParticipantTests, CommandDoesNotLeak) {
 	);
 
 	console<
+		mocks::runtime,
 		mocks::communication_cluster
 	> target{
 		partition,
 		slot,
+		runtime,
 		communicationCluster
 	};
 
@@ -385,9 +475,18 @@ TEST(ConsoleParticipantTests, PushIsResilient) {
 	::std::string_view line{ "Hello, World!\n" };
 	tags_t tags{};
 
+	mocks::runtime runtime{};
 	mocks::communication_cluster communicationCluster{};
 	stubs::console shell{};
 
+	EXPECT_CALL(
+		runtime, schedule(
+			_,
+			_
+		)
+	).Times(
+		AnyNumber()
+	);
 	EXPECT_CALL(
 		communicationCluster, push(
 			Eq(ipartition),
@@ -400,10 +499,12 @@ TEST(ConsoleParticipantTests, PushIsResilient) {
 	);
 
 	console<
+		mocks::runtime,
 		mocks::communication_cluster
 	> target{
 		partition,
 		slot,
+		runtime,
 		communicationCluster
 	};
 
@@ -425,9 +526,18 @@ TEST(ConsoleParticipantTests, LeavesRecentOnly) {
 	::std::string_view line{ "Hello, World!\n" };
 	tags_t tags{};
 
+	mocks::runtime runtime{};
 	mocks::communication_cluster communicationCluster{};
 	stubs::console shell{};
 
+	EXPECT_CALL(
+		runtime, schedule(
+			_,
+			_
+		)
+	).Times(
+		AnyNumber()
+	);
 	EXPECT_CALL(
 		communicationCluster, push(
 			Eq(ipartition_a),
@@ -450,10 +560,12 @@ TEST(ConsoleParticipantTests, LeavesRecentOnly) {
 	);
 
 	console<
+		mocks::runtime,
 		mocks::communication_cluster
 	> target{
 		partition,
 		slot,
+		runtime,
 		communicationCluster
 	};
 
@@ -493,14 +605,26 @@ TEST(ConsoleParticipantTests, NotifiesInputDelivery) {
 	};
 	tags_t tags{ _tags };
 
+	mocks::runtime runtime{};
 	mocks::communication_cluster communicationCluster{};
 	stubs::console shell{};
 
+	EXPECT_CALL(
+		runtime, schedule(
+			_,
+			_
+		)
+	).Times(
+		AnyNumber()
+	);
+
 	console<
+		mocks::runtime,
 		mocks::communication_cluster
 	> target{
 		partition,
 		slot,
+		runtime,
 		communicationCluster
 	};
 
@@ -538,14 +662,26 @@ TEST(ConsoleParticipantTests, NotifiesCommandDelivery) {
 	};
 	tags_t tags{ _tags };
 
+	mocks::runtime runtime{};
 	mocks::communication_cluster communicationCluster{};
 	stubs::console shell{};
 
+	EXPECT_CALL(
+		runtime, schedule(
+			_,
+			_
+		)
+	).Times(
+		AnyNumber()
+	);
+
 	console<
+		mocks::runtime,
 		mocks::communication_cluster
 	> target{
 		partition,
 		slot,
+		runtime,
 		communicationCluster
 	};
 
@@ -585,14 +721,26 @@ TEST(ConsoleParticipantTests, NotifiesInput) {
 	};
 	tags_t tags{ _tags };
 
+	mocks::runtime runtime{};
 	mocks::communication_cluster communicationCluster{};
 	stubs::console shell{};
 
+	EXPECT_CALL(
+		runtime, schedule(
+			_,
+			_
+		)
+	).Times(
+		AnyNumber()
+	);
+
 	console<
+		mocks::runtime,
 		mocks::communication_cluster
 	> target{
 		partition,
 		slot,
+		runtime,
 		communicationCluster
 	};
 
@@ -628,14 +776,26 @@ TEST(ConsoleParticipantTests, NotifiesReject) {
 	};
 	tags_t tags{ _tags };
 
+	mocks::runtime runtime{};
 	mocks::communication_cluster communicationCluster{};
 	stubs::console shell{};
 
+	EXPECT_CALL(
+		runtime, schedule(
+			_,
+			_
+		)
+	).Times(
+		AnyNumber()
+	);
+
 	console<
+		mocks::runtime,
 		mocks::communication_cluster
 	> target{
 		partition,
 		slot,
+		runtime,
 		communicationCluster
 	};
 
@@ -663,14 +823,26 @@ TEST(ConsoleParticipantTests, NotifiesReview) {
 	};
 	tags_t tags{ _tags };
 
+	mocks::runtime runtime{};
 	mocks::communication_cluster communicationCluster{};
 	stubs::console shell{};
 
+	EXPECT_CALL(
+		runtime, schedule(
+			_,
+			_
+		)
+	).Times(
+		AnyNumber()
+	);
+
 	console<
+		mocks::runtime,
 		mocks::communication_cluster
 	> target{
 		partition,
 		slot,
+		runtime,
 		communicationCluster
 	};
 
@@ -698,14 +870,26 @@ TEST(ConsoleParticipantTests, NotifiesUnauthorize) {
 	};
 	tags_t tags{ _tags };
 
+	mocks::runtime runtime{};
 	mocks::communication_cluster communicationCluster{};
 	stubs::console shell{};
 
+	EXPECT_CALL(
+		runtime, schedule(
+			_,
+			_
+		)
+	).Times(
+		AnyNumber()
+	);
+
 	console<
+		mocks::runtime,
 		mocks::communication_cluster
 	> target{
 		partition,
 		slot,
+		runtime,
 		communicationCluster
 	};
 
@@ -733,14 +917,26 @@ TEST(ConsoleParticipantTests, NotifiesError) {
 	};
 	tags_t tags{ _tags };
 
+	mocks::runtime runtime{};
 	mocks::communication_cluster communicationCluster{};
 	stubs::console shell{};
 
+	EXPECT_CALL(
+		runtime, schedule(
+			_,
+			_
+		)
+	).Times(
+		AnyNumber()
+	);
+
 	console<
+		mocks::runtime,
 		mocks::communication_cluster
 	> target{
 		partition,
 		slot,
+		runtime,
 		communicationCluster
 	};
 

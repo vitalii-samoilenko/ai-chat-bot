@@ -5,12 +5,15 @@
 
 template<
 	typename TGlobalConfig,
+	typename TRuntime,
 	typename TThreadCluster
 > ::ai::chat::repositories::console<
 	TGlobalConfig,
+	TRuntime,
 	TThreadCluster
 >::iterator::iterator(
 	::ai::chat::participants::console<
+		TRuntime,
 		TThreadCluster
 	> *that
 ) : that{ that } {
@@ -19,14 +22,17 @@ template<
 
 template<
 	typename TGlobalConfig,
+	typename TRuntime,
 	typename TThreadCluster
 > bool
 ::ai::chat::repositories::console<
 	TGlobalConfig,
+	TRuntime,
 	TThreadCluster
 >::iterator::operator==(
 	::ai::chat::repositories::console<
 		TGlobalConfig,
+		TRuntime,
 		TThreadCluster
 	>::iterator const &other
 ) const {
@@ -34,13 +40,16 @@ template<
 };
 template<
 	typename TGlobalConfig,
+	typename TRuntime,
 	typename TThreadCluster
 > ::ai::chat::repositories::console<
 	TGlobalConfig,
+	TRuntime,
 	TThreadCluster
 >::iterator
 &::ai::chat::repositories::console<
 	TGlobalConfig,
+	TRuntime,
 	TThreadCluster
 >::iterator::operator++(
 ) {
@@ -49,12 +58,15 @@ template<
 };
 template<
 	typename TGlobalConfig,
+	typename TRuntime,
 	typename TThreadCluster
 > ::ai::chat::participants::console<
+	TRuntime,
 	TThreadCluster
 >
 &::ai::chat::repositories::console<
 	TGlobalConfig,
+	TRuntime,
 	TThreadCluster
 >::iterator::operator*(
 ) {
@@ -62,12 +74,15 @@ template<
 };
 template<
 	typename TGlobalConfig,
+	typename TRuntime,
 	typename TThreadCluster
 > ::ai::chat::participants::console<
+	TRuntime,
 	TThreadCluster
 >
 *::ai::chat::repositories::console<
 	TGlobalConfig,
+	TRuntime,
 	TThreadCluster
 >::iterator::operator->(
 ) {
@@ -76,30 +91,37 @@ template<
 
 template<
 	typename TGlobalConfig,
+	typename TRuntime,
 	typename TThreadCluster
 > ::ai::chat::repositories::console<
 	TGlobalConfig,
+	TRuntime,
 	TThreadCluster
 >::console(
 	::ai::chat::string_t partition,
 	TGlobalConfig const &globalConfig,
+	TRuntime const &runtime,
 	TThreadCluster const &threadCluster
 ) : _partition{ partition }
 	, _receiver{ ::std::nullopt }
 	, _globalConfig{ globalConfig }
+	, _runtime{ runtime }
 	, _threadCluster{ threadCluster } {
 
 };
 
 template<
 	typename TGlobalConfig,
+	typename TRuntime,
 	typename TThreadCluster
 > ::ai::chat::repositories::console<
 	TGlobalConfig,
+	TRuntime,
 	TThreadCluster
 >::iterator
 ai::chat::repositories::console<
 	TGlobalConfig,
+	TRuntime,
 	TThreadCluster
 >::begin(
 ) const {
@@ -113,13 +135,16 @@ ai::chat::repositories::console<
 };
 template<
 	typename TGlobalConfig,
+	typename TRuntime,
 	typename TThreadCluster
 > ::ai::chat::repositories::console<
 	TGlobalConfig,
+	TRuntime,
 	TThreadCluster
 >::iterator
 ai::chat::repositories::console<
 	TGlobalConfig,
+	TRuntime,
 	TThreadCluster
 >::find(
 	::ai::chat::string_t partition,
@@ -154,6 +179,7 @@ ai::chat::repositories::console<
 		_receiver.emplace(
 			partition,
 			name,
+			_runtime,
 			_threadCluster
 		);
 	}
@@ -163,13 +189,16 @@ ai::chat::repositories::console<
 };
 template<
 	typename TGlobalConfig,
+	typename TRuntime,
 	typename TThreadCluster
 > ::ai::chat::repositories::console<
 	TGlobalConfig,
+	TRuntime,
 	TThreadCluster
 >::iterator
 ai::chat::repositories::console<
 	TGlobalConfig,
+	TRuntime,
 	TThreadCluster
 >::end(
 ) const {

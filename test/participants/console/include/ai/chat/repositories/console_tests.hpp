@@ -7,6 +7,7 @@
 
 #include "ai/chat/mocks/global_config.hpp"
 #include "ai/chat/mocks/communication_cluster.hpp"
+#include "ai/chat/mocks/runtime.hpp"
 
 #include "ai/chat/model.hpp"
 #include "ai/chat/repositories/console.hpp"
@@ -21,14 +22,17 @@ TEST(ConsoleRepositoryTests, EmptyRange) {
 	string_t partition{};
 
 	mocks::global_config globalConfig{};
+	mocks::runtime runtime{};
 	mocks::communication_cluster communicationCluster{};
 
 	repositories::console<
 		mocks::global_config,
+		mocks::runtime,
 		mocks::communication_cluster
 	> target{
 		partition,
 		globalConfig,
+		runtime,
 		communicationCluster
 	};
 
@@ -47,6 +51,7 @@ TEST(ConsoleRepositoryTests, SpawnsReceiver) {
 	mocks::console_config consoleConfig{};
 	mocks::participant_config participantConfig{};
 	mocks::global_config globalConfig{};
+	mocks::runtime runtime{};
 	mocks::communication_cluster communicationCluster{};
 
 	EXPECT_CALL(
@@ -77,13 +82,21 @@ TEST(ConsoleRepositoryTests, SpawnsReceiver) {
 			return participantConfig;
 		}
 	);
+	EXPECT_CALL(
+		runtime, schedule(
+			_,
+			_
+		)
+	);
 
 	repositories::console<
 		mocks::global_config,
+		mocks::runtime,
 		mocks::communication_cluster
 	> target{
 		partition,
 		globalConfig,
+		runtime,
 		communicationCluster
 	};
 
@@ -105,6 +118,7 @@ TEST(ConsoleRepositoryTests, CachesReceiver) {
 	mocks::console_config consoleConfig{};
 	mocks::participant_config participantConfig{};
 	mocks::global_config globalConfig{};
+	mocks::runtime runtime{};
 	mocks::communication_cluster communicationCluster{};
 
 	EXPECT_CALL(
@@ -135,13 +149,21 @@ TEST(ConsoleRepositoryTests, CachesReceiver) {
 			return participantConfig;
 		}
 	);
+	EXPECT_CALL(
+		runtime, schedule(
+			_,
+			_
+		)
+	);
 
 	repositories::console<
 		mocks::global_config,
+		mocks::runtime,
 		mocks::communication_cluster
 	> target{
 		partition,
 		globalConfig,
+		runtime,
 		communicationCluster
 	};
 
@@ -180,6 +202,7 @@ TEST(ConsoleRepositoryTests, ControlledByConfig) {
 	mocks::console_config consoleConfig{};
 	mocks::participant_config participantConfig{};
 	mocks::global_config globalConfig{};
+	mocks::runtime runtime{};
 	mocks::communication_cluster communicationCluster{};
 
 	EXPECT_CALL(
@@ -213,10 +236,12 @@ TEST(ConsoleRepositoryTests, ControlledByConfig) {
 
 	repositories::console<
 		mocks::global_config,
+		mocks::runtime,
 		mocks::communication_cluster
 	> target{
 		partition,
 		globalConfig,
+		runtime,
 		communicationCluster
 	};
 
@@ -239,6 +264,7 @@ TEST(ConsoleRepositoryTests, ValidatesPartition) {
 	mocks::console_config consoleConfig{};
 	mocks::participant_config participantConfig{};
 	mocks::global_config globalConfig{};
+	mocks::runtime runtime{};
 	mocks::communication_cluster communicationCluster{};
 
 	EXPECT_CALL(
@@ -272,10 +298,12 @@ TEST(ConsoleRepositoryTests, ValidatesPartition) {
 
 	repositories::console<
 		mocks::global_config,
+		mocks::runtime,
 		mocks::communication_cluster
 	> target{
 		partition_a,
 		globalConfig,
+		runtime,
 		communicationCluster
 	};
 
@@ -298,6 +326,7 @@ TEST(ConsoleRepositoryTests, ValidatesSlot) {
 	mocks::console_config consoleConfig{};
 	mocks::participant_config participantConfig{};
 	mocks::global_config globalConfig{};
+	mocks::runtime runtime{};
 	mocks::communication_cluster communicationCluster{};
 
 	EXPECT_CALL(
@@ -331,10 +360,12 @@ TEST(ConsoleRepositoryTests, ValidatesSlot) {
 
 	repositories::console<
 		mocks::global_config,
+		mocks::runtime,
 		mocks::communication_cluster
 	> target{
 		partition,
 		globalConfig,
+		runtime,
 		communicationCluster
 	};
 

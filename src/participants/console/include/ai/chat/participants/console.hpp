@@ -12,11 +12,13 @@ namespace chat {
 namespace participants {
 
 template<
+	typename TRuntime,
 	typename TThreadCluster
 > class console {
 private:
 	::std::string const _partition;
 	::std::string const _slot;
+	TRuntime const &_runtime;
 	TThreadCluster const &_threadCluster;
 	::std::optional<
 		::std::pair<
@@ -35,6 +37,7 @@ public:
 	console(
 		string_t partition,
 		string_t slot,
+		TRuntime const &runtime,
 		TThreadCluster const &threadCluster
 	);
 	console(

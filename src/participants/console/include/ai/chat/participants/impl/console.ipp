@@ -10,6 +10,8 @@
 
 #include "ai/chat/participants/console.hpp"
 
+size_t g_console_count{ 0 };
+
 void
 console_open(
 );
@@ -26,52 +28,74 @@ console_close(
 );
 
 template<
+	typename TRuntime,
 	typename TThreadCluster
 > ::ai::chat::participants::console<
+	TRuntime,
 	TThreadCluster
 >::console(
 	::ai::chat::string_t partition,
 	::ai::chat::string_t slot,
+	TRuntime const &runtime,
 	TThreadCluster const &threadCluster
 ) : _partition{ partition }
 	, _slot{ slot }
+	, _runtime{ runtime }
 	, _threadCluster{ threadCluster }
 	, _inputThread{ ::std::nullopt }
 	, _commandThread{ ::std::nullopt } {
-	::console_open();
+	if (++g_console_count == 1)
+		::console_open();
+	_runtime.schedule(
+		_partition,
+		_slot
+	);
 };
 template<
+	typename TRuntime,
 	typename TThreadCluster
 > ::ai::chat::participants::console<
+	TRuntime,
 	TThreadCluster
 >::console(
 	::ai::chat::participants::console<
+		TRuntime,
 		TThreadCluster
 	> &&other
 ) : _partition{ ::std::move(other._partition) }
 	, _slot{ ::std::move(other._slot) }
+	, _runtime{ ::std::move(other._runtime) }
 	, _threadCluster{ ::std::move(other._threadCluster) }
 	, _inputThread{ ::std::move(other._inputThread) }
 	, _commandThread{ ::std::move(other._commandThread) } {
-	::console_open();
+	++g_console_count;
 };
 
 template<
+	typename TRuntime,
 	typename TThreadCluster
 > ::ai::chat::participants::console<
+	TRuntime,
 	TThreadCluster
 >::~console(
 ) {
-	::console_close();
+	if (--g_console_count == 0)
+		::console_close();
 };
 
 template<
+	typename TRuntime,
 	typename TThreadCluster
 > void
 ::ai::chat::participants::console<
+	TRuntime,
 	TThreadCluster
 >::operator()(
 ) const {
+	_runtime.schedule(
+		_partition,
+		_slot
+	);
 	::std::string_view line{};
 	if (!::console_try_read(&line)
 		|| line.empty())
@@ -120,9 +144,11 @@ template<
 };
 
 template<
+	typename TRuntime,
 	typename TThreadCluster
 > void
 ::ai::chat::participants::console<
+	TRuntime,
 	TThreadCluster
 >::join(
 	::ai::chat::string_t partition,
@@ -144,9 +170,11 @@ template<
 	);
 };
 template<
+	typename TRuntime,
 	typename TThreadCluster
 > void
 ::ai::chat::participants::console<
+	TRuntime,
 	TThreadCluster
 >::leave(
 	::ai::chat::string_t partition,
@@ -170,9 +198,11 @@ template<
 };
 
 template<
+	typename TRuntime,
 	typename TThreadCluster
 > void
 ::ai::chat::participants::console<
+	TRuntime,
 	TThreadCluster
 >::notify(
 	::ai::chat::timepoint_t timestamp,

@@ -13,17 +13,20 @@ namespace repositories {
 
 template<
 	typename TGlobalConfig,
+	typename TRuntime,
 	typename TThreadCluster
 > class console {
 public:
 	class iterator {
 	private:
 		participants::console<
+			TRuntime,
 			TThreadCluster
 		> *that;
 
 		explicit iterator(
 			participants::console<
+				TRuntime,
 				TThreadCluster
 			> *that
 		);
@@ -60,11 +63,13 @@ public:
 		&operator++(
 		);
 		participants::console<
+			TRuntime,
 			TThreadCluster
 		>
 		&operator*(
 		);
 		participants::console<
+			TRuntime,
 			TThreadCluster
 		>
 		*operator->(
@@ -75,16 +80,19 @@ private:
 	::std::string const _partition;
 	::std::optional<
 		participants::console<
+			TRuntime,
 			TThreadCluster
 		>
 	> mutable _receiver;
 	TGlobalConfig const &_globalConfig;
+	TRuntime const &_runtime;
 	TThreadCluster const &_threadCluster;
 
 public:
 	console(
 		string_t partition,
 		TGlobalConfig const &globalConfig,
+		TRuntime const &_runtime,
 		TThreadCluster const &threadCluster
 	);
 	console(

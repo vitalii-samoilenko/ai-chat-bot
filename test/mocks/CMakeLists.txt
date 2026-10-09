@@ -34,6 +34,7 @@ target_sources(
 		include/ai/chat/mocks/communication_cluster.hpp
 		include/ai/chat/mocks/global_config.hpp
 		include/ai/chat/mocks/media.hpp
+		include/ai/chat/mocks/runtime.hpp
 )
 
 add_library(

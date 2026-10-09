@@ -10,16 +10,11 @@
 
 #include "ai/chat/participants/impl/console.ipp"
 
-int g_console_count{ 0 };
 int g_console_poll{ -1 };
 
 void
 console_open(
 ) {
-	if (g_console_count) {
-		++g_console_count;
-		return;
-	}
 	if (g_console_poll != -1)
 		throw ::std::runtime_error{
 			"console open failed (1)"
@@ -39,7 +34,6 @@ console_open(
 				"console open failed (3)"
 			};
 		}
-	g_console_count = 1;
 	g_console_poll = poll;
 };
 bool
@@ -95,11 +89,6 @@ console_write(
 void
 console_close(
 ) {
-	if (1 < g_console_count) {
-		--g_console_count;
-		return;
-	}
-	g_console_count = 0;
 	if (close(g_console_poll) == -1)
 		return;
 	g_console_poll = -1;
